@@ -1,19 +1,21 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
-
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import "./App.css";
+import HomePage from "./HomePage"; // Import HomePage
+import View1 from "./pages/view1/View1"; // Ensure the path is correct
+import View2 from "./pages/view2/View2";
+import View3 from "./pages/view3/View3";
 function App() {
-  
-
   return (
-    <>
-    <div className="bg-zinc-900">
-      <p className="text-white">hiii</p>
-      <p className="text-white">hello</p>
-    </div>
-    </>
-  )
+    <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/view-1" element={<View1 />} />
+          <Route path="/view-2" element={<View2 />} />
+          <Route path="/view-3" element={<View3 />} />
+        </Routes>
+      
+    </BrowserRouter>
+  );
 }
 
-export default App
+export default App;
