@@ -1,363 +1,391 @@
 
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import Header from './components/common/Header';
-import FilterPanel from './components/filters/FilterPanel';
-import Dashboard from './components/dashboard/Dashboard';
-import TabNavigation from './components/common/TabNavigation';
-import FunnelView from './components/funnels/FunnelView';
-import { transformApiData } from './utils/apiTransformers';
+
 
 function App() {
-  const [expandedFunnels, setExpandedFunnels] = useState({});
-  const [applicationId, setApplicationId] = useState('');
-  const [inputApplicationId, setInputApplicationId] = useState('');
-  const [funnelData, setFunnelData] = useState([]);
-  const [filteredFunnelData, setFilteredFunnelData] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [activeTab, setActiveTab] = useState('list'); // 'list' or 'dashboard'
-  const [hideNewStatus, setHideNewStatus] = useState(true); // Default to hide NEW status
-  
-  // Comprehensive filter states with default to hide NEW status
-  const [filters, setFilters] = useState({
-    taskId: '',
-    status: 'HIDE_NEW', // Default to hide NEW status
-    updatedDate: '',
-    actorId: '',
-    funnelType: '',
-    dateRange: '',
-    startDate: '',
-    endDate: '',
-    sortBy: 'updatedAt',
-    sortOrder: 'asc' // Default to ascending (oldest first) to match backend order
-  });
-  const [showFilters, setShowFilters] = useState(false);
+  const [applicationId, setApplicationId] = React.useState("1234");
+  const [activityLogs, setActivityLogs] = React.useState([]);
+  const [loading, setLoading] = React.useState(false);
+  const [error, setError] = React.useState(null);
+  const [showVisualization, setShowVisualization] = React.useState(false);
 
-  useEffect(() => {
-    if (applicationId) {
-      fetchFunnelData();
-    }
-  }, [applicationId]);
-
-  // Apply filters whenever filters or funnelData changes
-  useEffect(() => {
-    applyFilters();
-  }, [filters, funnelData, hideNewStatus]);
-
-  const fetchFunnelData = async () => {
+  // Function to fetch activity logs based on application ID
+  const fetchActivityLogs = (id) => {
     setLoading(true);
-    try {
-      const url = `http://localhost:8080/applicationLog/${applicationId}`;
-      const response = await axios.get(url);
-      const transformedData = transformApiData(response.data);
-      
-      setFunnelData(transformedData);
-      
-      // Initialize expanded state for all funnels
-      const initialExpandedState = Object.fromEntries(
-        transformedData.map(funnel => [funnel.id, false]) // Default collapsed
-      );
-      setExpandedFunnels(initialExpandedState);
-      
-      setError(null);
-    } catch (err) {
-      console.error('Error fetching funnel data:', err);
-      setError('Failed to load activity data. Please try again later.');
-    } finally {
+    setError(null);
+    
+    setTimeout(() => {
+      if (id.trim() === "") {
+        setError("Please enter a valid Application ID");
+        setActivityLogs([]);
+        setShowVisualization(false);
+      } else {
+        // For demo purposes, we'll use sample data
+        const sampleLogs = [
+          // Sourcing phase
+          { id: 1, phase: "Sourcing", task: "Task 3", startTime: new Date("2023-01-01T02:47:00"), duration: 3, color: "#4A9BFF" },
+          { id: 2, phase: "Sourcing", task: "Task 1", startTime: new Date("2023-01-01T12:21:00"), duration: 1, color: "#4A9BFF" },
+          { id: 3, phase: "Sourcing", task: "Task 2", startTime: new Date("2023-01-01T03:00:00"), duration: 2, color: "#4A9BFF" },
+          
+          // Credit phase
+          { id: 4, phase: "Credit", task: "Task 1", startTime: new Date("2023-01-01T05:30:00"), duration: 7, color: "#4CAF50" },
+          { id: 5, phase: "Credit", task: "Task 2", startTime: new Date("2023-01-01T12:33:00"), duration: 2, color: "#4CAF50" },
+          
+          // Conversion phase
+          { id: 6, phase: "Conversion", task: "Task 1", startTime: new Date("2023-01-01T01:30:00"), duration: 2, color: "#FFC107" },
+          { id: 7, phase: "Conversion", task: "Task 2", startTime: new Date("2023-01-01T07:00:00"), duration: 3, color: "#FFC107" },
+          
+          // Fulfillment phase
+          { id: 8, phase: "Fulfillment", task: "Task 1", startTime: new Date("2023-01-01T10:00:00"), duration: 1, color: "#9C27B0" },
+          { id: 9, phase: "Fulfillment", task: "Task 2", startTime: new Date("2023-01-01T10:00:00"), duration: 1, color: "#9C27B0" },
+          
+          // Risk phase
+          { id: 10, phase: "Risk", task: "Task 2", startTime: new Date("2023-01-01T01:30:00"), duration: 3, color: "#FF7043" },
+          { id: 11, phase: "Risk", task: "Task 1", startTime: new Date("2023-01-01T12:30:00"), duration: 3, color: "#FF7043" },
+          
+          // Disbursal phase
+          { id: 12, phase: "Disbursal", task: "Task 1", startTime: new Date("2023-01-01T05:30:00"), duration: 3, color: "#29B6F6" }
+        ];
+        
+        // Calculate endTime for each task
+        sampleLogs.forEach(log => {
+          const endTime = new Date(log.startTime);
+          endTime.setHours(endTime.getHours() + log.duration);
+          log.endTime = endTime;
+        });
+        
+        setActivityLogs(sampleLogs);
+        setShowVisualization(true);
+      }
       setLoading(false);
-    }
+    }, 1000);
   };
 
-  const applyFilters = () => {
-    // Start with all funnel data - preserve original order
-    let result = [...funnelData];
-    
-    // Filter by funnel type if specified
-    if (filters.funnelType) {
-      result = result.filter(funnel => 
-        funnel.name.toUpperCase().includes(filters.funnelType.toUpperCase())
-      );
-    }
-    
-    // Apply date range filters if specified
-    if (filters.dateRange) {
-      const now = new Date();
-      let startDate;
-      
-      switch (filters.dateRange) {
-        case 'today':
-          startDate = new Date(now.setHours(0, 0, 0, 0));
-          break;
-        case 'yesterday':
-          startDate = new Date(now);
-          startDate.setDate(startDate.getDate() - 1);
-          startDate.setHours(0, 0, 0, 0);
-          break;
-        case 'last7days':
-          startDate = new Date(now);
-          startDate.setDate(startDate.getDate() - 7);
-          break;
-        case 'last30days':
-          startDate = new Date(now);
-          startDate.setDate(startDate.getDate() - 30);
-          break;
-        case 'custom':
-          if (filters.startDate) {
-            startDate = new Date(filters.startDate);
-          }
-          break;
-        default:
-          startDate = null;
-      }
-      
-      let endDate = null;
-      if (filters.dateRange === 'custom' && filters.endDate) {
-        endDate = new Date(filters.endDate);
-        // Set to end of day
-        endDate.setHours(23, 59, 59, 999);
-      }
-      
-      // Apply date range filter to tasks
-      if (startDate || endDate) {
-        result = result.map(funnel => {
-          const filteredTasks = funnel.tasks.filter(task => {
-            if (!task.statusHistory || task.statusHistory.length === 0) return false;
-            
-            // Check the dates in status history
-            return task.statusHistory.some(status => {
-              const statusDate = new Date(status.updatedAt);
-              
-              if (startDate && statusDate < startDate) {
-                return false;
-              }
-              
-              if (endDate && statusDate > endDate) {
-                return false;
-              }
-              
-              return true;
-            });
-          });
-          
-          return {
-            ...funnel,
-            tasks: filteredTasks
-          };
-        });
-      }
-    }
-    
-    // Apply status filter to hide NEW tasks if hideNewStatus is true or if status filter is HIDE_NEW
-    if (hideNewStatus || filters.status === 'HIDE_NEW') {
-      result = result.map(funnel => {
-        const filteredTasks = funnel.tasks.filter(task => task.currentStatus !== 'NEW');
-        
-        return {
-          ...funnel,
-          tasks: filteredTasks
-        };
-      });
-    }
-    // Apply specific status filter if it's not HIDE_NEW
-    else if (filters.status && filters.status !== 'HIDE_NEW') {
-      result = result.map(funnel => {
-        const filteredTasks = funnel.tasks.filter(task => task.currentStatus === filters.status);
-        
-        return {
-          ...funnel,
-          tasks: filteredTasks
-        };
-      });
-    }
-    
-    // If we have any other active filters
-    if (filters.taskId || filters.actorId) {
-      // Map through each funnel
-      result = result.map(funnel => {
-        // Filter the tasks based on criteria
-        const filteredTasks = funnel.tasks.filter(task => {
-          // Task ID filter
-          if (filters.taskId && !task.id.toLowerCase().includes(filters.taskId.toLowerCase())) {
-            return false;
-          }
-          
-          // Actor ID filter
-          if (filters.actorId && !task.handledBy.toString().toLowerCase().includes(filters.actorId.toLowerCase())) {
-            return false;
-          }
-          
-          return true;
-        });
-        
-        // Return a new funnel object with filtered tasks
-        return {
-          ...funnel,
-          tasks: filteredTasks
-        };
-      });
-    }
-    
-    // Update progress for all funnels based on filtered tasks
-    result = result.map(funnel => {
-      const completedTasks = funnel.tasks.filter(task => task.currentStatus === 'COMPLETED').length;
-      return {
-        ...funnel,
-        progress: `${completedTasks}/${funnel.tasks.length}`,
-        status: completedTasks === funnel.tasks.length && funnel.tasks.length > 0 ? 'completed' : 'in-progress'
-      };
-    });
-    
-    // Remove empty funnels (those with no tasks after filtering)
-    result = result.filter(funnel => funnel.tasks.length > 0);
-    
-    setFilteredFunnelData(result);
-  };
+  // Feedback paths - removed "Sendback" from labels
+  const feedbackPaths = [
+    { from: "Credit", to: "Sourcing", label: "to Task 3", yPercent: 18 },
+    { from: "Conversion", to: "Credit", label: "to Task 2", yPercent: 25 }
+  ];
 
-  const toggleFunnel = (funnelId) => {
-    setExpandedFunnels(prev => ({
-      ...prev,
-      [funnelId]: !prev[funnelId]
-    }));
-  };
+  // Funnel names (x-axis) in the correct order
+  const phaseNames = ["Sourcing", "Credit", "Conversion", "Fulfillment", "Risk", "Disbursal"];
 
-  const handleApplicationIdSubmit = (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
-    if (inputApplicationId.trim()) {
-      setApplicationId(inputApplicationId);
-    }
+    fetchActivityLogs(applicationId);
   };
 
-  const handleRefresh = () => {
-    if (applicationId) {
-      fetchFunnelData();
-    }
+  const formatTime = (date) => {
+    let hours = date.getHours();
+    const minutes = date.getMinutes();
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    hours = hours % 12;
+    hours = hours ? hours : 12;
+    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')} ${ampm}`;
   };
 
-  const handleFilterChange = (name, value) => {
-    if (name === 'status') {
-      // If status is being changed, update hideNewStatus accordingly
-      setHideNewStatus(value === 'HIDE_NEW');
+  const formatDate = (date) => {
+    return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
+  };
+
+  // Get min and max timestamps for y-axis scale
+  const getTimeRange = () => {
+    if (activityLogs.length === 0) {
+      return { 
+        minTime: new Date("2023-01-01T00:00:00"), 
+        maxTime: new Date("2023-01-01T15:00:00") 
+      };
     }
     
-    setFilters(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    const allTimes = activityLogs.flatMap(log => [log.startTime, log.endTime]);
+    const minTime = new Date(Math.min(...allTimes.map(t => t.getTime())));
+    const maxTime = new Date(Math.max(...allTimes.map(t => t.getTime())));
+    
+    // Round to nearest hour for cleaner display
+    minTime.setMinutes(0, 0, 0);
+    if (maxTime.getMinutes() > 0) {
+      maxTime.setHours(maxTime.getHours() + 1);
+      maxTime.setMinutes(0, 0, 0);
+    }
+    
+    return { minTime, maxTime };
   };
 
-  const clearFilters = () => {
-    setHideNewStatus(true); // Reset to hide NEW status
-    setFilters({
-      taskId: '',
-      status: 'HIDE_NEW', // Reset to hide NEW status
-      updatedDate: '',
-      actorId: '',
-      funnelType: '',
-      dateRange: '',
-      startDate: '',
-      endDate: '',
-      sortBy: 'updatedAt',
-      sortOrder: 'asc' // Reset to ascending (oldest first) to match backend order
-    });
+  const { minTime, maxTime } = getTimeRange();
+
+  // Generate uniform time ticks for y-axis
+  const generateUniformTimeTicks = () => {
+    const ticks = [];
+    const startHour = minTime.getHours();
+    const endHour = maxTime.getHours();
+    const totalHours = endHour - startHour + (endHour < startHour ? 24 : 0);
+    
+    // Create 6 evenly spaced time ticks
+    const tickCount = 6;
+    const hourStep = totalHours / tickCount;
+    
+    for (let i = 0; i <= tickCount; i++) {
+      const tickHour = (startHour + i * hourStep) % 24;
+      const tickDate = new Date(minTime);
+      tickDate.setHours(Math.floor(tickHour));
+      tickDate.setMinutes(Math.round((tickHour - Math.floor(tickHour)) * 60));
+      tickDate.setSeconds(0);
+      
+      if (i > 0 && tickDate <= minTime) {
+        tickDate.setDate(tickDate.getDate() + 1);
+      }
+      
+      ticks.push(tickDate);
+    }
+    
+    // Make sure we include the exact min and max times
+    if (ticks[0].getTime() !== minTime.getTime()) {
+      ticks.unshift(minTime);
+    }
+    if (ticks[ticks.length - 1].getTime() !== maxTime.getTime()) {
+      ticks.push(maxTime);
+    }
+    
+    return ticks.sort((a, b) => a - b);
   };
 
-  const toggleFilters = () => {
-    setShowFilters(prev => !prev);
+  const timeTicks = generateUniformTimeTicks();
+
+  // Get all tasks for a specific phase and organize them to avoid overlaps
+  const getPhaseTaskPositions = (phase) => {
+    const tasks = activityLogs.filter(log => log.phase === phase);
+    // Sort by start time
+    tasks.sort((a, b) => a.startTime - b.startTime);
+    return tasks;
   };
 
-  // Get the data to display (filtered or original)
-  const displayData = filteredFunnelData.length > 0 || Object.values(filters).some(f => f !== '' && f !== 'updatedAt' && f !== 'asc' && f !== 'HIDE_NEW') || hideNewStatus
-    ? filteredFunnelData 
-    : funnelData;
-
-  // Render the active tab content
-  const renderTabContent = () => {
-    if (!applicationId) {
-      return (
-        <div className="flex flex-col items-center justify-center h-64 text-gray-500">
-          Please enter an application ID to view data.
-        </div>
-      );
-    }
-
-    if (loading) {
-      return (
-        <div className="flex flex-col items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500"></div>
-          <p className="text-gray-500 mt-4">Loading data...</p>
-        </div>
-      );
-    }
-
-    if (error) {
-      return (
-        <div className="bg-red-50 p-4 rounded-lg text-red-700 mb-4">
-          <p className="font-medium">Error</p>
-          <p>{error}</p>
-          <button 
-            onClick={handleRefresh}
-            className="mt-2 px-3 py-1 bg-indigo-600 text-white rounded-md text-sm shadow-sm hover:bg-indigo-700"
-          >
-            Try Again
-          </button>
-        </div>
-      );
-    }
-
-    if (activeTab === 'list') {
-      return (
-        <FunnelView 
-          funnelData={displayData}
-          expandedFunnels={expandedFunnels}
-          toggleFunnel={toggleFunnel}
-        />
-      );
-    } else {
-      return <Dashboard funnelData={displayData} />;
-    }
+  // Calculate time percentage for positioning
+  const getTimePosition = (time) => {
+    const totalRange = maxTime - minTime;
+    return ((time - minTime) / totalRange) * 100;
   };
+
+  // Initial fetch when component mounts
+  React.useEffect(() => {
+    if (applicationId) {
+      fetchActivityLogs(applicationId);
+    }
+  }, []);
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Header 
-        inputApplicationId={inputApplicationId}
-        setInputApplicationId={setInputApplicationId}
-        handleApplicationIdSubmit={handleApplicationIdSubmit}
-        applicationId={applicationId}
-        handleRefresh={handleRefresh}
-        toggleFilters={toggleFilters}
-        showFilters={showFilters}
-      />
-
-      <main className="max-w-7xl mx-auto px-4 py-4">
-        {applicationId && (
-          <div className="mb-3 px-3 py-2 bg-indigo-50 text-indigo-700 border border-indigo-200 rounded-md text-sm font-medium">
-            Application ID: {applicationId}
+    <div className="mx-auto p-4 max-w-6xl">
+      <h1 className="text-2xl font-bold mb-6 text-center">Application Process Flow</h1>
+      
+      <div className="bg-white p-4 rounded-lg shadow-md mb-5">
+        <h2 className="text-lg font-semibold mb-3">Enter Application ID to View Process Flow</h2>
+        <form onSubmit={handleSubmit} className="mb-2">
+          <div className="flex items-center space-x-2">
+            <input
+              type="text"
+              value={applicationId}
+              onChange={(e) => setApplicationId(e.target.value)}
+              placeholder="Enter Application ID"
+              className="flex-grow p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            <button 
+              type="submit" 
+              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              disabled={loading}
+            >
+              {loading ? "Loading..." : "Visualize"}
+            </button>
           </div>
-        )}
-        
-        {applicationId && (
-          <TabNavigation 
-            activeTab={activeTab} 
-            setActiveTab={setActiveTab} 
-          />
-        )}
-        
-        {showFilters && applicationId && activeTab === 'list' && (
-          <FilterPanel 
-            filters={filters}
-            handleFilterChange={handleFilterChange}
-            clearFilters={clearFilters}
-            hideNewStatus={hideNewStatus}
-            setHideNewStatus={setHideNewStatus}
-          />
-        )}
-        
-        {renderTabContent()}
-      </main>
+        </form>
+        <p className="text-sm text-gray-500">Enter an application ID to see its complete process flow visualization</p>
+      </div>
+
+      {error && (
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+          {error}
+        </div>
+      )}
+
+      {loading ? (
+        <div className="flex justify-center items-center h-64 bg-white rounded-lg shadow-md">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+        </div>
+      ) : showVisualization ? (
+        <div className="bg-white p-4 rounded-lg shadow-md">
+          <div className="flex justify-between items-center mb-3">
+            <h2 className="text-xl font-semibold">Process Flow for Application ID: <span className="text-blue-600">{applicationId}</span></h2>
+            <div className="bg-pink-500 text-white px-3 py-1 rounded text-sm">Application ID: {applicationId}</div>
+          </div>
+          
+          {/* Improved layout with legend next to visualization header */}
+          <div className="flex justify-end mb-2">
+            <div className="p-2 bg-white border border-gray-200 rounded inline-flex items-center space-x-6">
+              <div className="text-sm font-bold">Legend:</div>
+              <div className="flex items-center">
+                <div className="w-6 h-0 border-t-2 border-blue-500 mr-2"></div>
+                <span className="text-sm">Normal Flow</span>
+              </div>
+              <div className="flex items-center">
+                <div className="w-6 h-0 border-t-2 border-red-500 border-dashed mr-2"></div>
+                <span className="text-sm">Sendback</span>
+              </div>
+              <div className="flex items-center">
+                <div className="w-4 h-4 bg-pink-500 mr-2"></div>
+                <span className="text-sm">Application ID</span>
+              </div>
+            </div>
+          </div>
+          
+          {/* Optimized chart container */}
+          <div className="relative border border-gray-200 rounded" style={{ height: "550px" }}>
+            {/* Y-axis (Timestamps) with uniform spacing */}
+            <div className="absolute top-0 bottom-0 left-0 w-20 border-r border-gray-300 bg-gray-50">
+              {timeTicks.map((time, index) => (
+                <div 
+                  key={index} 
+                  className="text-xs text-gray-600 flex items-center justify-end pr-2"
+                  style={{
+                    position: 'absolute',
+                    top: `${getTimePosition(time)}%`,
+                    right: 0,
+                    transform: 'translateY(-50%)'
+                  }}
+                >
+                  {formatTime(time)}
+                </div>
+              ))}
+            </div>
+            
+            {/* X-axis (Phase Names) */}
+            <div className="absolute bottom-0 left-20 right-0 flex justify-between border-t border-gray-300 bg-gray-50">
+              {phaseNames.map((phase, index) => (
+                <div 
+                  key={index} 
+                  className="text-center"
+                  style={{ 
+                    width: `${100 / phaseNames.length}%`
+                  }}
+                >
+                  <div className="text-sm font-medium text-gray-700 py-2">{phase}</div>
+                </div>
+              ))}
+            </div>
+            
+            {/* Grid lines */}
+            <div className="absolute top-0 bottom-0 left-20 right-0">
+              {timeTicks.map((time, index) => (
+                <div 
+                  key={index}
+                  className="absolute border-t border-gray-200 w-full"
+                  style={{ top: `${getTimePosition(time)}%` }}
+                ></div>
+              ))}
+              {phaseNames.map((_, index) => (
+                <div 
+                  key={index}
+                  className="absolute border-l border-gray-200 h-full"
+                  style={{ 
+                    left: `${(index / phaseNames.length) * 100}%`,
+                    width: `${100 / phaseNames.length}%`
+                  }}
+                ></div>
+              ))}
+            </div>
+            
+            {/* Task blocks */}
+            <div className="absolute top-0 bottom-0 left-20 right-0">
+              {phaseNames.map((phase, phaseIndex) => {
+                const phaseTasks = getPhaseTaskPositions(phase);
+                const phaseWidth = 100 / phaseNames.length;
+                const taskWidth = 80; // in pixels
+                
+                return phaseTasks.map((task, taskIndex) => {
+                  const startPercent = getTimePosition(task.startTime);
+                  const endPercent = getTimePosition(task.endTime);
+                  const height = endPercent - startPercent;
+                  
+                  // Position in the center of each phase column
+                  const xPercent = (phaseIndex / phaseNames.length) * 100 + (phaseWidth / 2);
+                  
+                  const colorMap = {
+                    "Sourcing": "#4A9BFF",
+                    "Credit": "#4CAF50",
+                    "Conversion": "#FFC107",
+                    "Fulfillment": "#9C27B0",
+                    "Risk": "#FF7043",
+                    "Disbursal": "#29B6F6"
+                  };
+                  
+                  return (
+                    <div 
+                      key={`${phase}-${task.id}`}
+                      className="absolute rounded flex items-center justify-center text-white text-sm font-medium"
+                      style={{
+                        left: `calc(${xPercent}% - ${taskWidth/2}px)`,
+                        top: `${startPercent}%`,
+                        width: `${taskWidth}px`,
+                        height: `${Math.max(height, 5)}%`,
+                        backgroundColor: colorMap[phase],
+                        minHeight: '24px',
+                        zIndex: 5
+                      }}
+                    >
+                      {task.task} ({task.duration}h)
+                    </div>
+                  );
+                });
+              })}
+            </div>
+            
+            {/* Flow lines with positioned sendbacks */}
+            <svg className="absolute top-0 bottom-0 left-20 right-0 pointer-events-none">
+              {/* Feedback paths */}
+              {feedbackPaths.map((path, index) => {
+                const fromIndex = phaseNames.indexOf(path.from);
+                const toIndex = phaseNames.indexOf(path.to);
+                const phaseWidth = 100 / phaseNames.length;
+                
+                const fromX = (fromIndex / phaseNames.length) * 100 + (phaseWidth / 2);
+                const toX = (toIndex / phaseNames.length) * 100 + (phaseWidth / 2);
+                const yPosition = path.yPercent;
+                
+                return (
+                  <g key={index}>
+                    <path 
+                      d={`M ${fromX}% ${yPosition}% C ${(fromX + toX) / 2}% ${yPosition - 5}%, ${(fromX + toX) / 2}% ${yPosition - 5}%, ${toX}% ${yPosition}%`}
+                      stroke="#e74c3c"
+                      strokeWidth="2"
+                      fill="none"
+                      strokeDasharray="5,5"
+                    />
+                    <text 
+                      x={`${(fromX + toX) / 2}%`} 
+                      y={`${yPosition - 1}%`}
+                      textAnchor="middle"
+                      fill="#e74c3c"
+                      fontSize="12"
+                      fontWeight="500"
+                    >
+                      {path.label}
+                    </text>
+                  </g>
+                );
+              })}
+            </svg>
+          </div>
+          
+          <div className="mt-3 text-sm text-gray-500 text-center">
+            Time period: Jan 1 {formatTime(minTime)} - Jan 1 {formatTime(maxTime)}
+          </div>
+        </div>
+      ) : (
+        <div className="bg-gray-100 p-8 rounded-lg text-center text-gray-600">
+          <svg className="w-16 h-16 mx-auto mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+          </svg>
+          <p className="text-lg">Enter an Application ID above to view its process flow visualization</p>
+        </div>
+      )}
     </div>
   );
 }
-
 export default App;
