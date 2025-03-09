@@ -61,10 +61,10 @@ function App() {
     }, 1000);
   };
 
-  // Feedback paths - removed "Sendback" from labels
+  // Feedback paths - removed all text
   const feedbackPaths = [
-    { from: "Credit", to: "Sourcing", label: "to Task 3", yPercent: 18 },
-    { from: "Conversion", to: "Credit", label: "to Task 2", yPercent: 25 }
+    { from: "Credit", to: "Sourcing", yPercent: 18 },
+    { from: "Conversion", to: "Credit", yPercent: 25 }
   ];
 
   // Funnel names (x-axis) in the correct order
@@ -112,41 +112,22 @@ function App() {
   };
 
   const { minTime, maxTime } = getTimeRange();
+  const totalTimeRangeMs = maxTime - minTime;
 
-  // Generate uniform time ticks for y-axis
+  // Generate truly uniform time ticks for y-axis (fixed spacing)
   const generateUniformTimeTicks = () => {
     const ticks = [];
-    const startHour = minTime.getHours();
-    const endHour = maxTime.getHours();
-    const totalHours = endHour - startHour + (endHour < startHour ? 24 : 0);
+    const totalHours = (maxTime - minTime) / (1000 * 60 * 60);
     
-    // Create 6 evenly spaced time ticks
+    // Always create exactly 7 evenly spaced ticks
     const tickCount = 6;
-    const hourStep = totalHours / tickCount;
     
     for (let i = 0; i <= tickCount; i++) {
-      const tickHour = (startHour + i * hourStep) % 24;
-      const tickDate = new Date(minTime);
-      tickDate.setHours(Math.floor(tickHour));
-      tickDate.setMinutes(Math.round((tickHour - Math.floor(tickHour)) * 60));
-      tickDate.setSeconds(0);
-      
-      if (i > 0 && tickDate <= minTime) {
-        tickDate.setDate(tickDate.getDate() + 1);
-      }
-      
-      ticks.push(tickDate);
+      const tickTime = new Date(minTime.getTime() + (i / tickCount) * totalTimeRangeMs);
+      ticks.push(tickTime);
     }
     
-    // Make sure we include the exact min and max times
-    if (ticks[0].getTime() !== minTime.getTime()) {
-      ticks.unshift(minTime);
-    }
-    if (ticks[ticks.length - 1].getTime() !== maxTime.getTime()) {
-      ticks.push(maxTime);
-    }
-    
-    return ticks.sort((a, b) => a - b);
+    return ticks;
   };
 
   const timeTicks = generateUniformTimeTicks();
@@ -159,10 +140,15 @@ function App() {
     return tasks;
   };
 
-  // Calculate time percentage for positioning
+  // Calculate time percentage for positioning - fixed for absolute positioning
   const getTimePosition = (time) => {
-    const totalRange = maxTime - minTime;
-    return ((time - minTime) / totalRange) * 100;
+    return ((time - minTime) / totalTimeRangeMs) * 100;
+  };
+
+  // Get pixel position for a given time (for absolute positioning)
+  const getTimePixelPosition = (time, totalHeight) => {
+    const percentage = getTimePosition(time);
+    return (percentage / 100) * totalHeight;
   };
 
   // Initial fetch when component mounts
@@ -235,142 +221,139 @@ function App() {
             </div>
           </div>
           
-          {/* Optimized chart container */}
+          {/* Chart container with fixed sizing */}
           <div className="relative border border-gray-200 rounded" style={{ height: "550px" }}>
-            {/* Y-axis (Timestamps) with uniform spacing */}
-            <div className="absolute top-0 bottom-0 left-0 w-20 border-r border-gray-300 bg-gray-50">
-              {timeTicks.map((time, index) => (
-                <div 
-                  key={index} 
-                  className="text-xs text-gray-600 flex items-center justify-end pr-2"
-                  style={{
-                    position: 'absolute',
-                    top: `${getTimePosition(time)}%`,
-                    right: 0,
-                    transform: 'translateY(-50%)'
-                  }}
-                >
-                  {formatTime(time)}
-                </div>
-              ))}
-            </div>
-            
-            {/* X-axis (Phase Names) */}
-            <div className="absolute bottom-0 left-20 right-0 flex justify-between border-t border-gray-300 bg-gray-50">
-              {phaseNames.map((phase, index) => (
-                <div 
-                  key={index} 
-                  className="text-center"
-                  style={{ 
-                    width: `${100 / phaseNames.length}%`
-                  }}
-                >
-                  <div className="text-sm font-medium text-gray-700 py-2">{phase}</div>
-                </div>
-              ))}
-            </div>
-            
-            {/* Grid lines */}
-            <div className="absolute top-0 bottom-0 left-20 right-0">
-              {timeTicks.map((time, index) => (
-                <div 
-                  key={index}
-                  className="absolute border-t border-gray-200 w-full"
-                  style={{ top: `${getTimePosition(time)}%` }}
-                ></div>
-              ))}
-              {phaseNames.map((_, index) => (
-                <div 
-                  key={index}
-                  className="absolute border-l border-gray-200 h-full"
-                  style={{ 
-                    left: `${(index / phaseNames.length) * 100}%`,
-                    width: `${100 / phaseNames.length}%`
-                  }}
-                ></div>
-              ))}
-            </div>
-            
-            {/* Task blocks */}
-            <div className="absolute top-0 bottom-0 left-20 right-0">
-              {phaseNames.map((phase, phaseIndex) => {
-                const phaseTasks = getPhaseTaskPositions(phase);
-                const phaseWidth = 100 / phaseNames.length;
-                const taskWidth = 80; // in pixels
-                
-                return phaseTasks.map((task, taskIndex) => {
-                  const startPercent = getTimePosition(task.startTime);
-                  const endPercent = getTimePosition(task.endTime);
-                  const height = endPercent - startPercent;
-                  
-                  // Position in the center of each phase column
-                  const xPercent = (phaseIndex / phaseNames.length) * 100 + (phaseWidth / 2);
-                  
-                  const colorMap = {
-                    "Sourcing": "#4A9BFF",
-                    "Credit": "#4CAF50",
-                    "Conversion": "#FFC107",
-                    "Fulfillment": "#9C27B0",
-                    "Risk": "#FF7043",
-                    "Disbursal": "#29B6F6"
-                  };
-                  
-                  return (
+            {/* Fixed chart structure */}
+            <div className="flex h-full">
+              {/* Y-axis (left side) - fixed width */}
+              <div className="relative w-20 h-full border-r border-gray-300 bg-gray-50 z-10">
+                {timeTicks.map((time, i) => (
+                  <div 
+                    key={i} 
+                    className="absolute right-0 text-xs text-gray-600 pr-2"
+                    style={{
+                      top: `${getTimePosition(time)}%`,
+                      transform: 'translateY(-50%)',
+                      width: '100%',
+                      textAlign: 'right'
+                    }}
+                  >
+                    {formatTime(time)}
+                  </div>
+                ))}
+              </div>
+              
+              {/* Chart body - scrollable */}
+              <div className="relative flex-grow h-full">
+                {/* Bottom phase names - fixed position */}
+                <div className="absolute bottom-0 left-0 right-0 flex border-t border-gray-300 bg-gray-50 z-10">
+                  {phaseNames.map((phase, index) => (
                     <div 
-                      key={`${phase}-${task.id}`}
-                      className="absolute rounded flex items-center justify-center text-white text-sm font-medium"
-                      style={{
-                        left: `calc(${xPercent}% - ${taskWidth/2}px)`,
-                        top: `${startPercent}%`,
-                        width: `${taskWidth}px`,
-                        height: `${Math.max(height, 5)}%`,
-                        backgroundColor: colorMap[phase],
-                        minHeight: '24px',
-                        zIndex: 5
-                      }}
+                      key={index} 
+                      className="text-center flex-grow"
+                      style={{ width: `${100 / phaseNames.length}%` }}
                     >
-                      {task.task} ({task.duration}h)
+                      <div className="text-sm font-medium text-gray-700 py-2">{phase}</div>
                     </div>
-                  );
-                });
-              })}
+                  ))}
+                </div>
+                
+                {/* Scrollable chart content */}
+                <div className="absolute top-0 bottom-30px left-0 right-0 overflow-y-auto" style={{ height: "calc(100% - 30px)" }}>
+                  <div className="relative" style={{ height: "1000px", minWidth: "100%" }}>
+                    {/* Horizontal time grid lines */}
+                    {timeTicks.map((time, i) => (
+                      <div 
+                        key={i}
+                        className="absolute left-0 right-0 border-t border-gray-200"
+                        style={{ top: `${getTimePosition(time)}%` }}
+                      ></div>
+                    ))}
+                    
+                    {/* Vertical phase grid lines */}
+                    {phaseNames.map((_, index) => (
+                      <div 
+                        key={index}
+                        className="absolute top-0 bottom-0 border-l border-gray-200"
+                        style={{ 
+                          left: `${(index / phaseNames.length) * 100}%`,
+                          width: `${100 / phaseNames.length}%`
+                        }}
+                      ></div>
+                    ))}
+                    
+                    {/* Task blocks */}
+                    {phaseNames.map((phase, phaseIndex) => {
+                      const phaseTasks = getPhaseTaskPositions(phase);
+                      const phaseWidth = 100 / phaseNames.length;
+                      const taskWidth = 80; // in pixels
+                      
+                      return phaseTasks.map((task, taskIndex) => {
+                        const startPercent = getTimePosition(task.startTime);
+                        const endPercent = getTimePosition(task.endTime);
+                        const height = endPercent - startPercent;
+                        
+                        // Position in the center of each phase column
+                        const xPercent = (phaseIndex / phaseNames.length) * 100 + (phaseWidth / 2);
+                        
+                        const colorMap = {
+                          "Sourcing": "#4A9BFF",
+                          "Credit": "#4CAF50",
+                          "Conversion": "#FFC107",
+                          "Fulfillment": "#9C27B0",
+                          "Risk": "#FF7043",
+                          "Disbursal": "#29B6F6"
+                        };
+                        
+                        return (
+                          <div 
+                            key={`${phase}-${task.id}`}
+                            className="absolute rounded flex items-center justify-center text-white text-sm font-medium"
+                            style={{
+                              left: `calc(${xPercent}% - ${taskWidth/2}px)`,
+                              top: `${startPercent}%`,
+                              width: `${taskWidth}px`,
+                              height: `${Math.max(height, 5)}%`,
+                              backgroundColor: colorMap[phase],
+                              minHeight: '24px',
+                              zIndex: 5
+                            }}
+                          >
+                            {task.task} ({task.duration}h)
+                          </div>
+                        );
+                      });
+                    })}
+                    
+                    {/* Flow lines with positioned sendbacks */}
+                    <svg className="absolute top-0 bottom-0 left-0 right-0 pointer-events-none" style={{ width: "100%", height: "100%" }}>
+                      {/* Feedback paths */}
+                      {feedbackPaths.map((path, index) => {
+                        const fromIndex = phaseNames.indexOf(path.from);
+                        const toIndex = phaseNames.indexOf(path.to);
+                        const phaseWidth = 100 / phaseNames.length;
+                        
+                        const fromX = (fromIndex / phaseNames.length) * 100 + (phaseWidth / 2);
+                        const toX = (toIndex / phaseNames.length) * 100 + (phaseWidth / 2);
+                        const yPosition = path.yPercent;
+                        
+                        return (
+                          <g key={index}>
+                            <path 
+                              d={`M ${fromX}% ${yPosition}% C ${(fromX + toX) / 2}% ${yPosition - 5}%, ${(fromX + toX) / 2}% ${yPosition - 5}%, ${toX}% ${yPosition}%`}
+                              stroke="#e74c3c"
+                              strokeWidth="2"
+                              fill="none"
+                              strokeDasharray="5,5"
+                            />
+                          </g>
+                        );
+                      })}
+                    </svg>
+                  </div>
+                </div>
+              </div>
             </div>
-            
-            {/* Flow lines with positioned sendbacks */}
-            <svg className="absolute top-0 bottom-0 left-20 right-0 pointer-events-none">
-              {/* Feedback paths */}
-              {feedbackPaths.map((path, index) => {
-                const fromIndex = phaseNames.indexOf(path.from);
-                const toIndex = phaseNames.indexOf(path.to);
-                const phaseWidth = 100 / phaseNames.length;
-                
-                const fromX = (fromIndex / phaseNames.length) * 100 + (phaseWidth / 2);
-                const toX = (toIndex / phaseNames.length) * 100 + (phaseWidth / 2);
-                const yPosition = path.yPercent;
-                
-                return (
-                  <g key={index}>
-                    <path 
-                      d={`M ${fromX}% ${yPosition}% C ${(fromX + toX) / 2}% ${yPosition - 5}%, ${(fromX + toX) / 2}% ${yPosition - 5}%, ${toX}% ${yPosition}%`}
-                      stroke="#e74c3c"
-                      strokeWidth="2"
-                      fill="none"
-                      strokeDasharray="5,5"
-                    />
-                    <text 
-                      x={`${(fromX + toX) / 2}%`} 
-                      y={`${yPosition - 1}%`}
-                      textAnchor="middle"
-                      fill="#e74c3c"
-                      fontSize="12"
-                      fontWeight="500"
-                    >
-                      {path.label}
-                    </text>
-                  </g>
-                );
-              })}
-            </svg>
           </div>
           
           <div className="mt-3 text-sm text-gray-500 text-center">
