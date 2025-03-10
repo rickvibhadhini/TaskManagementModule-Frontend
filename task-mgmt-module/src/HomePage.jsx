@@ -17,7 +17,7 @@ const HomePage = () => {
         Task Management Module
       </h1>
       
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-100">
         {views.map((view) => (
           <Link
             to={view.path}
