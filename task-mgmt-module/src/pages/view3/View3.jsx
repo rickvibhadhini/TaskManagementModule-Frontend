@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import axios from 'axios';
 
@@ -44,7 +44,7 @@ const View3 = () => {
     
     for (let i = 0; i < parts.length; i += 2) {
       const value = parseFloat(parts[i]);
-      const unit = parts[i + 1];
+      const unit = parts[i + 1] || '';
       
       if (unit.startsWith('hrs')) totalMinutes += value * 60;
       else if (unit.startsWith('min')) totalMinutes += value;
@@ -66,66 +66,63 @@ const View3 = () => {
   const funnelOrder = ["sourcing", "credit", "conversion", "fulfillment"];
 
   // Format the funnel data for the bar chart with specific order
-  const getFunnelChartData = () => {
-    if (!data) return [];
+  const getFunnelChartData = useMemo(() => {
+    if (!data || !data.funnels) return [];
     
     return funnelOrder.map(funnel => ({
       name: funnel.charAt(0).toUpperCase() + funnel.slice(1),
-      minutes: convertTimeToMinutes(data.averageTimePerFunnel[funnel]),
-      displayTime: data.averageTimePerFunnel[funnel],
+      minutes: convertTimeToMinutes(data.funnels[funnel].timeTaken),
+      displayTime: data.funnels[funnel].timeTaken,
       color: funnelColors[funnel]
     }));
-  };
+  }, [data]);
   
   // Create task data organized by funnel
-  const getTasksByFunnel = () => {
-    if (!data) return {};
+  const getTasksByFunnel = useMemo(() => {
+    if (!data || !data.funnels) return {};
     
     const tasksByFunnel = {};
     
-    Object.entries(data.averageTimePerTask).forEach(([taskId, time]) => {
-      const [funnel, taskNum] = taskId.split('_');
-      if (!tasksByFunnel[funnel]) {
-        tasksByFunnel[funnel] = [];
-      }
+    Object.entries(data.funnels).forEach(([funnel, funnelData]) => {
+      tasksByFunnel[funnel] = [];
       
-      const minutes = convertTimeToMinutes(time);
-      
-      // Determine performance level
-      let performanceLevel = "good"; // Green - Good (below 60%)
-      if (minutes >= 90) {
-        performanceLevel = "critical"; // Red - Critical (>=90%)
-      } else if (minutes >= 60) {
-        performanceLevel = "warning"; // Yellow - Warning (60-90%)
-      }
-      
-      tasksByFunnel[funnel].push({
-        taskId,
-        taskNumber: parseInt(taskNum.replace('task', '')),
-        time,
-        minutes,
-        sendbacks: data.totalSendbacksPerTask[taskId],
-        performanceLevel
+      Object.entries(funnelData.tasks).forEach(([taskId, taskData]) => {
+        const taskNum = taskId.split('_')[1].replace('task', '');
+        const taskNumber = parseInt(taskNum, 10);
+        const minutes = convertTimeToMinutes(taskData.timeTaken);
+        
+        // Determine performance level
+        let performanceLevel = "good"; // Green - Good (below 60%)
+        if (minutes >= 90) {
+          performanceLevel = "critical"; // Red - Critical (>=90%)
+        } else if (minutes >= 60) {
+          performanceLevel = "warning"; // Yellow - Warning (60-90%)
+        }
+        
+        tasksByFunnel[funnel].push({
+          taskId,
+          taskNumber,
+          time: taskData.timeTaken,
+          minutes,
+          sendbacks: taskData.noOfSendbacks,
+          performanceLevel
+        });
       });
-    });
-    
-    // Sort tasks by task number within each funnel
-    Object.keys(tasksByFunnel).forEach(funnel => {
+      
+      // Sort tasks by task number within each funnel
       tasksByFunnel[funnel].sort((a, b) => a.taskNumber - b.taskNumber);
     });
     
     return tasksByFunnel;
-  };
+  }, [data]);
 
   // Prepare line chart data based on selected funnel
-  const getLineChartData = () => {
-    if (!data) return [];
-    
-    const tasksByFunnel = getTasksByFunnel();
+  const getLineChartData = useMemo(() => {
+    if (!data || !data.funnels) return [];
     
     if (selectedFunnel === 'all') {
       // For 'all', create a combined view with all funnels
-      return Object.entries(tasksByFunnel).flatMap(([funnel, tasks]) => 
+      return Object.entries(getTasksByFunnel).flatMap(([funnel, tasks]) => 
         tasks.map(task => ({
           name: `${funnel.charAt(0).toUpperCase() + funnel.slice(1)} Task ${task.taskNumber}`,
           minutes: task.minutes,
@@ -137,7 +134,7 @@ const View3 = () => {
       );
     } else {
       // For specific funnel, show only that funnel's tasks
-      return tasksByFunnel[selectedFunnel]?.map(task => ({
+      return getTasksByFunnel[selectedFunnel]?.map(task => ({
         name: `Task ${task.taskNumber}`,
         minutes: task.minutes,
         sendbacks: task.sendbacks,
@@ -146,43 +143,49 @@ const View3 = () => {
         funnel: selectedFunnel
       })) || [];
     }
-  };
+  }, [getTasksByFunnel, selectedFunnel]);
 
   // Prepare table data
-  const getTableData = () => {
-    if (!data) return [];
+  const getTableData = useMemo(() => {
+    if (!data || !data.funnels) return [];
     
-    return Object.entries(data.averageTimePerTask).map(([taskId, time]) => {
-      const [funnel, taskNumPart] = taskId.split('_');
-      const minutes = convertTimeToMinutes(time);
-      
-      // Determine performance level for table
-      let performanceLevel = "good"; // Green - Good (below 60%)
-      if (minutes >= 90) {
-        performanceLevel = "critical"; // Red - Critical (>=90%)
-      } else if (minutes >= 60) {
-        performanceLevel = "warning"; // Yellow - Warning (60-90%)
-      }
-      
-      return {
-        taskId,
-        funnel,
-        displayName: `${funnel.charAt(0).toUpperCase() + funnel.slice(1)} Task ${taskNumPart.replace('task', '')}`,
-        time,
-        minutes,
-        sendbacks: data.totalSendbacksPerTask[taskId],
-        performanceLevel
-      };
+    const tableData = [];
+    
+    Object.entries(data.funnels).forEach(([funnel, funnelData]) => {
+      Object.entries(funnelData.tasks).forEach(([taskId, taskData]) => {
+        const taskNumPart = taskId.split('_')[1];
+        const minutes = convertTimeToMinutes(taskData.timeTaken);
+        
+        // Determine performance level for table
+        let performanceLevel = "good"; // Green - Good (below 60%)
+        if (minutes >= 90) {
+          performanceLevel = "critical"; // Red - Critical (>=90%)
+        } else if (minutes >= 60) {
+          performanceLevel = "warning"; // Yellow - Warning (60-90%)
+        }
+        
+        tableData.push({
+          taskId,
+          funnel,
+          displayName: `${funnel.charAt(0).toUpperCase() + funnel.slice(1)} ${taskNumPart.charAt(0).toUpperCase() + taskNumPart.slice(1)}`,
+          time: taskData.timeTaken,
+          minutes,
+          sendbacks: taskData.noOfSendbacks,
+          performanceLevel
+        });
+      });
     });
-  };
+    
+    return tableData;
+  }, [data]);
 
   // Filter table data based on selected funnel
-  const getFilteredTableData = () => {
-    const tableData = getTableData();
+  const getFilteredTableData = useMemo(() => {
+    const tableData = getTableData;
     return selectedFunnel === 'all' 
       ? tableData 
-      : tableData.filter(item => item.taskId.startsWith(selectedFunnel));
-  };
+      : tableData.filter(item => item.funnel === selectedFunnel);
+  }, [getTableData, selectedFunnel]);
 
   // Custom tooltip for the bar chart
   const FunnelTooltip = ({ active, payload }) => {
@@ -408,7 +411,7 @@ const View3 = () => {
             <div className="h-72">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart 
-                  data={getFunnelChartData()} 
+                  data={getFunnelChartData} 
                   margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
                   onClick={handleBarClick}
                   className="cursor-pointer"
@@ -423,7 +426,7 @@ const View3 = () => {
                     radius={[4, 4, 0, 0]}
                     animationDuration={1500}
                   >
-                    {getFunnelChartData().map((entry, index) => (
+                    {getFunnelChartData.map((entry, index) => (
                       <rect key={`rect-${index}`} fill={entry.color} />
                     ))}
                   </Bar>
@@ -471,7 +474,7 @@ const View3 = () => {
             <div className="h-72">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart 
-                  data={getLineChartData()} 
+                  data={getLineChartData} 
                   margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
                   onClick={handleTaskClick}
                   className="cursor-pointer"
@@ -549,7 +552,7 @@ const View3 = () => {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {getFilteredTableData().map((task) => (
+                  {getFilteredTableData.map((task) => (
                     <tr key={task.taskId} className="hover:bg-gray-50 transition-colors">
                       <td className="px-6 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
                         <div className="flex items-center">
