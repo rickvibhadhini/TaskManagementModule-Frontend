@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import { 
   Layout, 
   Typography, 
@@ -15,7 +15,8 @@ import {
   Radio, 
   Tag, 
   Statistic,
-  Alert
+  Alert,
+  Tooltip as AntTooltip
 } from 'antd';
 import { 
   ClockCircleOutlined, 
@@ -26,7 +27,8 @@ import {
   CheckCircleFilled,
   WarningFilled,
   CloseCircleFilled,
-  InfoCircleOutlined
+  InfoCircleOutlined,
+  DownOutlined
 } from '@ant-design/icons';
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import axios from 'axios';
@@ -171,6 +173,7 @@ const View3 = () => {
             result.push({
               name: `${funnel.charAt(0).toUpperCase() + funnel.slice(1)} Task ${task.taskNumber}`,
               minutes: task.minutes,
+              percentOfTAT: task.percentOfTAT,
               sendbacks: task.sendbacks,
               displayTime: task.time,
               performanceLevel: task.performanceLevel,
@@ -284,6 +287,7 @@ const View3 = () => {
         <Card size="small" style={{ border: '1px solid #f0f0f0' }}>
           <Text strong>{data.name}</Text>
           <div>Time: {data.displayTime}</div>
+          <div>% of TAT: {data.percentOfTAT?.toFixed(1)}%</div>
           <div>Sendbacks: {data.sendbacks}</div>
           <div style={{ color: statusColor }}>
             Status: {data.performanceLevel.charAt(0).toUpperCase() + data.performanceLevel.slice(1)}
@@ -337,6 +341,13 @@ const View3 = () => {
       title: 'Average Time',
       dataIndex: 'time',
       key: 'time',
+    },
+    {
+      title: '% of TAT',
+      dataIndex: 'percentOfTAT',
+      key: 'percentOfTAT',
+      render: (percent) => `${percent.toFixed(1)}%`,
+      sorter: (a, b) => a.percentOfTAT - b.percentOfTAT,
     },
     {
       title: 'Total Sendbacks',
@@ -409,6 +420,16 @@ const View3 = () => {
           </Col>
           <Col>
             <Space size="large">
+              {data && (
+                <Button 
+                  type="primary" 
+                  icon={<TableOutlined />} 
+                  onClick={scrollToTable}
+                >
+                  View Table
+                </Button>
+              )}
+              
               <Form layout="inline" onFinish={() => fetchData(channel)}>
                 <Form.Item>
                   <Search
@@ -470,6 +491,15 @@ const View3 = () => {
                     </Space>
                   }
                   hoverable
+                  extra={
+                    <Button
+                      type="text"
+                      icon={<TableOutlined />}
+                      onClick={scrollToTable}
+                    >
+                      View Table
+                    </Button>
+                  }
                 >
                   <div style={{ height: 300 }}>
                     <ResponsiveContainer width="100%" height="100%">
@@ -536,28 +566,37 @@ const View3 = () => {
                   }
                   hoverable
                   extra={
-                    <Radio.Group 
-                      value={selectedFunnel}
-                      onChange={(e) => setSelectedFunnel(e.target.value)}
-                      optionType="button"
-                      buttonStyle="solid"
-                      size="small"
-                    >
-                      <Radio.Button value="all">All</Radio.Button>
-                      {funnelOrder.map(funnel => (
-                        <Radio.Button 
-                          key={funnel} 
-                          value={funnel}
-                          style={{ 
-                            color: selectedFunnel === funnel ? '#fff' : undefined,
-                            background: selectedFunnel === funnel ? funnelColors[funnel] : undefined,
-                            borderColor: selectedFunnel === funnel ? funnelColors[funnel] : undefined
-                          }}
-                        >
-                          {funnel.charAt(0).toUpperCase() + funnel.slice(1)}
-                        </Radio.Button>
-                      ))}
-                    </Radio.Group>
+                    <Space>
+                      <Button
+                        type="text"
+                        icon={<TableOutlined />}
+                        onClick={scrollToTable}
+                      >
+                        View Table
+                      </Button>
+                      <Radio.Group 
+                        value={selectedFunnel}
+                        onChange={(e) => setSelectedFunnel(e.target.value)}
+                        optionType="button"
+                        buttonStyle="solid"
+                        size="small"
+                      >
+                        <Radio.Button value="all">All</Radio.Button>
+                        {funnelOrder.map(funnel => (
+                          <Radio.Button 
+                            key={funnel} 
+                            value={funnel}
+                            style={{ 
+                              color: selectedFunnel === funnel ? '#fff' : undefined,
+                              background: selectedFunnel === funnel ? funnelColors[funnel] : undefined,
+                              borderColor: selectedFunnel === funnel ? funnelColors[funnel] : undefined
+                            }}
+                          >
+                            {funnel.charAt(0).toUpperCase() + funnel.slice(1)}
+                          </Radio.Button>
+                        ))}
+                      </Radio.Group>
+                    </Space>
                   }
                 >
                   <div style={{ height: 300 }}>
@@ -570,7 +609,10 @@ const View3 = () => {
                       >
                         <CartesianGrid strokeDasharray="3 3" />
                         <XAxis dataKey="name" />
-                        <YAxis label={{ value: 'Minutes', angle: -90, position: 'insideLeft' }} />
+                        <YAxis 
+                          label={{ value: 'Minutes', angle: -90, position: 'insideLeft' }} 
+                          domain={[0, Math.max(getTATMinutes * 1.2, ...getLineChartData.map(item => item.minutes))]}
+                        />
                         <Tooltip content={<TaskTooltip />} />
                         <Legend />
                         <Line 
@@ -590,16 +632,35 @@ const View3 = () => {
                   
                   <Divider />
                   
-                  <Space style={{ justifyContent: 'center' }}>
-                    <Tag color="success" icon={<CheckCircleFilled />}>Good (&lt;60 min)</Tag>
-                    <Tag color="warning" icon={<WarningFilled />}>Warning (60-90 min)</Tag>
-                    <Tag color="error" icon={<CloseCircleFilled />}>Critical (&gt;90 min)</Tag>
-                  </Space>
+                  <Row align="middle" justify="space-between">
+                    <Col>
+                      <Space wrap>
+                        <AntTooltip title="Less than 60% of Total TAT">
+                          <Tag color="success" icon={<CheckCircleFilled />}>Good (&lt;60% of TAT)</Tag>
+                        </AntTooltip>
+                        <AntTooltip title="Between 60% and 90% of Total TAT">
+                          <Tag color="warning" icon={<WarningFilled />}>Warning (60-90% of TAT)</Tag>
+                        </AntTooltip>
+                        <AntTooltip title="More than 90% of Total TAT">
+                          <Tag color="error" icon={<CloseCircleFilled />}>Critical (&gt;90% of TAT)</Tag>
+                        </AntTooltip>
+                      </Space>
+                    </Col>
+                    <Col>
+                      <Button 
+                        type="primary" 
+                        icon={<DownOutlined />} 
+                        onClick={scrollToTable}
+                      >
+                        View Table
+                      </Button>
+                    </Col>
+                  </Row>
                 </Card>
               </Col>
 
               {/* Task Metrics Table */}
-              <Col span={24}>
+              <Col span={24} ref={tableRef}>
                 <Card 
                   title={
                     <Space>
@@ -653,10 +714,11 @@ const View3 = () => {
                   Close
                 </Button>
               ]}
+              centered
             >
               {selectedTask && (
                 <Space direction="vertical" size="large" style={{ width: '100%' }}>
-                  <Card size="small">
+                  <Card size="small" bodyStyle={{ textAlign: 'center' }}>
                     <Statistic 
                       title="Average Time" 
                       value={selectedTask.displayTime} 
@@ -664,7 +726,20 @@ const View3 = () => {
                     />
                   </Card>
                   
-                  <Card size="small">
+                  <Card size="small" bodyStyle={{ textAlign: 'center' }}>
+                    <Statistic 
+                      title="% of Total TAT" 
+                      value={selectedTask.percentOfTAT?.toFixed(1)} 
+                      suffix="%" 
+                      precision={1}
+                      valueStyle={{ 
+                        color: selectedTask.performanceLevel === 'critical' ? '#f5222d' : 
+                               selectedTask.performanceLevel === 'warning' ? '#faad14' : '#52c41a'
+                      }}
+                    />
+                  </Card>
+                  
+                  <Card size="small" bodyStyle={{ textAlign: 'center' }}>
                     <Statistic 
                       title="Sendbacks" 
                       value={selectedTask.sendbacks} 
@@ -676,7 +751,7 @@ const View3 = () => {
                     )}
                   </Card>
                   
-                  <Card size="small">
+                  <Card size="small" bodyStyle={{ textAlign: 'center' }}>
                     <Statistic 
                       title="Status" 
                       value={selectedTask.performanceLevel.charAt(0).toUpperCase() + selectedTask.performanceLevel.slice(1)} 
@@ -688,7 +763,7 @@ const View3 = () => {
                     />
                   </Card>
                   
-                  <Card size="small">
+                  <Card size="small" bodyStyle={{ textAlign: 'center' }}>
                     <Statistic 
                       title="Funnel" 
                       value={selectedTask.funnel.charAt(0).toUpperCase() + selectedTask.funnel.slice(1)} 
