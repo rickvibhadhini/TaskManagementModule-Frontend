@@ -16,7 +16,8 @@ import {
   Tag, 
   Statistic,
   Alert,
-  Tooltip as AntTooltip
+  Tooltip as AntTooltip,
+  theme
 } from 'antd';
 import { 
   ClockCircleOutlined, 
@@ -30,7 +31,7 @@ import {
   InfoCircleOutlined,
   DownOutlined
 } from '@ant-design/icons';
-import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } from 'recharts';
 import axios from 'axios';
 
 const { Header, Content } = Layout;
@@ -38,6 +39,7 @@ const { Title, Text } = Typography;
 const { Search } = Input;
 
 const View3 = () => {
+  const { token } = theme.useToken();
   const [selectedFunnel, setSelectedFunnel] = useState('all');
   const [selectedTask, setSelectedTask] = useState(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
@@ -95,12 +97,12 @@ const View3 = () => {
     return convertTimeToMinutes(data.averageTAT);
   }, [data]);
 
-  // Define colors for each funnel
+  // Define colors for each funnel using Ant Design colors
   const funnelColors = {
-    sourcing: "#4ade80", // Green
-    credit: "#3b82f6",   // Blue
-    conversion: "#f97316", // Orange
-    fulfillment: "#8b5cf6" // Purple
+    sourcing: token.colorSuccess,     // Green
+    credit: token.colorInfo,          // Blue
+    conversion: token.colorWarning,   // Orange/Yellow
+    fulfillment: token.colorPrimary   // Purple/Blue
   };
 
   // Define funnel order
@@ -116,7 +118,7 @@ const View3 = () => {
       displayTime: data.funnels[funnel].timeTaken,
       color: funnelColors[funnel]
     }));
-  }, [data]);
+  }, [data, funnelColors]);
 
   // Create task data organized by funnel
   const getTasksByFunnel = useMemo(() => {
@@ -329,7 +331,7 @@ const View3 = () => {
             width: 8, 
             height: 8, 
             borderRadius: '50%', 
-            backgroundColor: funnelColors[record.funnel],
+            backgroundColor: '#000', // Black dot
             display: 'inline-block',
             marginRight: 8
           }} />
@@ -501,7 +503,7 @@ const View3 = () => {
                     </Button>
                   }
                 >
-                  <div style={{ height: 300 }}>
+                  <div style={{ height: 350 }}>
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart 
                         data={getFunnelChartData} 
@@ -512,7 +514,20 @@ const View3 = () => {
                         <XAxis dataKey="name" />
                         <YAxis label={{ value: 'Minutes', angle: -90, position: 'insideLeft' }} />
                         <Tooltip content={<FunnelTooltip />} />
-                        <Legend />
+                        <Legend 
+                          formatter={(value, entry) => {
+                            const funnel = value.toLowerCase();
+                            const color = funnelColors[funnel] || '#000';
+                            return <span style={{ color }}>{value}</span>;
+                          }}
+                          payload={
+                            funnelOrder.map(funnel => ({
+                              value: funnel.charAt(0).toUpperCase() + funnel.slice(1),
+                              type: 'square',
+                              color: funnelColors[funnel]
+                            }))
+                          }
+                        />
                         <Bar 
                           dataKey="minutes" 
                           name="Average Time (minutes)"
@@ -520,38 +535,12 @@ const View3 = () => {
                           animationDuration={1500}
                         >
                           {getFunnelChartData.map((entry, index) => (
-                            <rect key={`rect-${index}`} fill={entry.color} />
+                            <Cell key={`cell-${index}`} fill={entry.color} />
                           ))}
                         </Bar>
                       </BarChart>
                     </ResponsiveContainer>
                   </div>
-                  
-                  <Divider />
-                  
-                  <Space wrap style={{ justifyContent: 'center' }}>
-                    {funnelOrder.map(funnel => (
-                      <Button 
-                        key={funnel}
-                        type="text"
-                        onClick={() => setSelectedFunnel(funnel)}
-                        icon={
-                          <span 
-                            style={{ 
-                              display: 'inline-block',
-                              width: 12,
-                              height: 12,
-                              borderRadius: 2,
-                              background: funnelColors[funnel],
-                              marginRight: 8
-                            }} 
-                          />
-                        }
-                      >
-                        {funnel.charAt(0).toUpperCase() + funnel.slice(1)}
-                      </Button>
-                    ))}
-                  </Space>
                 </Card>
               </Col>
 
@@ -586,11 +575,6 @@ const View3 = () => {
                           <Radio.Button 
                             key={funnel} 
                             value={funnel}
-                            style={{ 
-                              color: selectedFunnel === funnel ? '#fff' : undefined,
-                              background: selectedFunnel === funnel ? funnelColors[funnel] : undefined,
-                              borderColor: selectedFunnel === funnel ? funnelColors[funnel] : undefined
-                            }}
                           >
                             {funnel.charAt(0).toUpperCase() + funnel.slice(1)}
                           </Radio.Button>
@@ -682,11 +666,6 @@ const View3 = () => {
                         <Radio.Button 
                           key={funnel} 
                           value={funnel}
-                          style={{ 
-                            color: selectedFunnel === funnel ? '#fff' : undefined,
-                            background: selectedFunnel === funnel ? funnelColors[funnel] : undefined,
-                            borderColor: selectedFunnel === funnel ? funnelColors[funnel] : undefined
-                          }}
                         >
                           {funnel.charAt(0).toUpperCase() + funnel.slice(1)}
                         </Radio.Button>
@@ -772,7 +751,7 @@ const View3 = () => {
                           width: 16, 
                           height: 16, 
                           borderRadius: '50%', 
-                          backgroundColor: funnelColors[selectedTask.funnel], 
+                          backgroundColor: '#000', // Black dot
                           display: 'inline-block',
                           marginRight: 8
                         }} />
