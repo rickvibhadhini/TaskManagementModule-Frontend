@@ -1,6 +1,39 @@
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useState, useMemo } from 'react';
+import { 
+  Layout, 
+  Typography, 
+  Input, 
+  Button, 
+  Form, 
+  Card, 
+  Space, 
+  Table, 
+  Modal, 
+  Row, 
+  Col, 
+  Divider, 
+  Radio, 
+  Tag, 
+  Statistic,
+  Alert
+} from 'antd';
+import { 
+  ClockCircleOutlined, 
+  ExclamationCircleOutlined, 
+  BarChartOutlined, 
+  LineChartOutlined,
+  TableOutlined,
+  CheckCircleFilled,
+  WarningFilled,
+  CloseCircleFilled,
+  InfoCircleOutlined
+} from '@ant-design/icons';
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import axios from 'axios';
+
+const { Header, Content } = Layout;
+const { Title, Text } = Typography;
+const { Search } = Input;
 
 const View3 = () => {
   const [selectedFunnel, setSelectedFunnel] = useState('all');
@@ -33,12 +66,6 @@ const View3 = () => {
     } finally {
       setLoading(false);
     }
-  };
-
-  // Handle channel input submission
-  const handleChannelSubmit = (e) => {
-    e.preventDefault();
-    fetchData(channel);
   };
 
   // Convert time strings to minutes for visualization
@@ -137,20 +164,25 @@ const View3 = () => {
   
     if (selectedFunnel === 'all') {
       // For 'all', create a combined view with all funnels
-      return Object.entries(getTasksByFunnel).flatMap(([funnel, tasks]) => 
-        tasks.map(task => ({
-          name: `${funnel.charAt(0).toUpperCase() + funnel.slice(1)} Task ${task.taskNumber}`,
-          minutes: task.minutes,
-          percentOfTAT: task.percentOfTAT,
-          sendbacks: task.sendbacks,
-          displayTime: task.time,
-          performanceLevel: task.performanceLevel,
-          funnel
-        }))
-      );
-    } else {
+      const result = [];
+      Object.entries(getTasksByFunnel).forEach(([funnel, tasks]) => {
+        if (Array.isArray(tasks)) {
+          tasks.forEach(task => {
+            result.push({
+              name: `${funnel.charAt(0).toUpperCase() + funnel.slice(1)} Task ${task.taskNumber}`,
+              minutes: task.minutes,
+              sendbacks: task.sendbacks,
+              displayTime: task.time,
+              performanceLevel: task.performanceLevel,
+              funnel
+            });
+          });
+        }
+      });
+      return result;
+    } else if (getTasksByFunnel[selectedFunnel]) {
       // For specific funnel, show only that funnel's tasks
-      return getTasksByFunnel[selectedFunnel]?.map(task => ({
+      return getTasksByFunnel[selectedFunnel].map(task => ({
         name: `Task ${task.taskNumber}`,
         minutes: task.minutes,
         percentOfTAT: task.percentOfTAT,
@@ -158,8 +190,10 @@ const View3 = () => {
         displayTime: task.time,
         performanceLevel: task.performanceLevel,
         funnel: selectedFunnel
-      })) || [];
+      }));
     }
+    
+    return [];
   }, [getTasksByFunnel, selectedFunnel]);
 
   // Prepare table data
@@ -184,6 +218,7 @@ const View3 = () => {
         }
       
         tableData.push({
+          key: taskId,
           taskId,
           funnel,
           displayName: `${funnel.charAt(0).toUpperCase() + funnel.slice(1)} ${taskNumPart.charAt(0).toUpperCase() + taskNumPart.slice(1)}`,
@@ -201,66 +236,12 @@ const View3 = () => {
 
   // Filter table data based on selected funnel
   const getFilteredTableData = useMemo(() => {
-    const tableData = getTableData;
+    if (!getTableData || !Array.isArray(getTableData)) return [];
+    
     return selectedFunnel === 'all' 
-      ? tableData 
-      : tableData.filter(item => item.funnel === selectedFunnel);
+      ? getTableData 
+      : getTableData.filter(item => item.funnel === selectedFunnel);
   }, [getTableData, selectedFunnel]);
-
-  // Custom tooltip for the bar chart
-  const FunnelTooltip = ({ active, payload }) => {
-    if (active && payload && payload.length) {
-      return (
-        <div className="bg-white p-3 border border-gray-200 shadow-lg rounded-md">
-          <p className="font-semibold text-lg">{payload[0].payload.name}</p>
-          <p className="text-gray-700">Average time: {payload[0].payload.displayTime}</p>
-          <p className="text-blue-600 font-medium">{payload[0].value.toFixed(1)} minutes</p>
-        </div>
-      );
-    }
-    return null;
-  };
-
-  // Custom tooltip for the line chart
-  const TaskTooltip = ({ active, payload }) => {
-    if (active && payload && payload.length) {
-      const data = payload[0].payload;
-      return (
-        <div className="bg-white p-3 border border-gray-200 shadow-lg rounded-md">
-          <p className="font-semibold text-lg">{data.name}</p>
-          <p className="text-gray-700">Time: {data.displayTime}</p>
-          <p className="text-gray-700">% of TAT: {data.percentOfTAT.toFixed(1)}%</p>
-          <p className="text-gray-700">Sendbacks: {data.sendbacks}</p>
-          <p className="font-medium" style={{ 
-            color: data.performanceLevel === 'critical' ? '#ef4444' : 
-                  data.performanceLevel === 'warning' ? '#f59e0b' : '#22c55e' 
-          }}>
-            Status: {data.performanceLevel.charAt(0).toUpperCase() + data.performanceLevel.slice(1)}
-          </p>
-        </div>
-      );
-    }
-    return null;
-  };
-
-  // Custom dot for the line chart
-  const CustomizedDot = (props) => {
-    const { cx, cy, payload } = props;
-  
-    let fillColor = "#22c55e"; // Green for good
-  
-    if (payload.performanceLevel === 'critical') {
-      fillColor = "#ef4444"; // Red for critical
-    } else if (payload.performanceLevel === 'warning') {
-      fillColor = "#f59e0b"; // Yellow for warning
-    }
-  
-    return (
-      <svg x={cx - 8} y={cy - 8} width={16} height={16} viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <circle cx={8} cy={8} r={8} fill={fillColor} />
-      </svg>
-    );
-  };
 
   // Handle bar click to filter by funnel
   const handleBarClick = (data) => {
@@ -278,404 +259,458 @@ const View3 = () => {
     }
   };
 
-  // Task Detail Modal
-  const TaskDetailModal = () => {
-    if (!selectedTask) return null;
+  // Custom tooltip for the bar chart
+  const FunnelTooltip = ({ active, payload }) => {
+    if (active && payload && payload.length) {
+      return (
+        <Card size="small" style={{ border: '1px solid #f0f0f0' }}>
+          <Text strong>{payload[0].payload.name}</Text>
+          <div>Average time: {payload[0].payload.displayTime}</div>
+          <div style={{ color: '#1890ff' }}>{payload[0].value.toFixed(1)} minutes</div>
+        </Card>
+      );
+    }
+    return null;
+  };
+
+  // Custom tooltip for the line chart
+  const TaskTooltip = ({ active, payload }) => {
+    if (active && payload && payload.length) {
+      const data = payload[0].payload;
+      const statusColor = data.performanceLevel === 'critical' ? '#f5222d' : 
+                          data.performanceLevel === 'warning' ? '#faad14' : '#52c41a';
+      
+      return (
+        <Card size="small" style={{ border: '1px solid #f0f0f0' }}>
+          <Text strong>{data.name}</Text>
+          <div>Time: {data.displayTime}</div>
+          <div>Sendbacks: {data.sendbacks}</div>
+          <div style={{ color: statusColor }}>
+            Status: {data.performanceLevel.charAt(0).toUpperCase() + data.performanceLevel.slice(1)}
+          </div>
+        </Card>
+      );
+    }
+    return null;
+  };
+
+  // Custom dot for the line chart
+  const CustomizedDot = (props) => {
+    const { cx, cy, payload } = props;
+    
+    let fillColor = "#52c41a"; // Green for good
+    
+    if (payload.performanceLevel === 'critical') {
+      fillColor = "#f5222d"; // Red for critical
+    } else if (payload.performanceLevel === 'warning') {
+      fillColor = "#faad14"; // Yellow for warning
+    }
   
     return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-xl font-bold">{selectedTask.name}</h3>
-            <button 
-              onClick={() => setShowDetailModal(false)}
-              className="text-gray-500 hover:text-gray-700 transition-colors"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
+      <svg x={cx - 8} y={cy - 8} width={16} height={16} viewBox="0 0 16 16" fill="none">
+        <circle cx={8} cy={8} r={8} fill={fillColor} />
+      </svg>
+    );
+  };
+
+  // Table columns
+  const columns = [
+    {
+      title: 'Task Name',
+      dataIndex: 'displayName',
+      key: 'displayName',
+      render: (text, record) => (
+        <Space>
+          <div style={{ 
+            width: 8, 
+            height: 8, 
+            borderRadius: '50%', 
+            backgroundColor: funnelColors[record.funnel],
+            display: 'inline-block',
+            marginRight: 8
+          }} />
+          {text}
+        </Space>
+      ),
+    },
+    {
+      title: 'Average Time',
+      dataIndex: 'time',
+      key: 'time',
+    },
+    {
+      title: 'Total Sendbacks',
+      dataIndex: 'sendbacks',
+      key: 'sendbacks',
+      render: (sendbacks) => (
+        <Space>
+          {sendbacks > 2 && <ExclamationCircleOutlined style={{ color: '#faad14' }} />}
+          {sendbacks}
+        </Space>
+      ),
+    },
+    {
+      title: 'Status',
+      dataIndex: 'performanceLevel',
+      key: 'performanceLevel',
+      render: (status) => {
+        let color = 'success';
+        let icon = <CheckCircleFilled />;
         
-          <div className="space-y-4">
-            <div className="p-4 bg-gray-50 rounded-lg">
-              <p className="text-sm text-gray-500">Average Time</p>
-              <p className="text-xl font-bold">{selectedTask.displayTime}</p>
-            </div>
-            
-            <div className="p-4 bg-gray-50 rounded-lg">
-              <p className="text-sm text-gray-500">% of Total TAT</p>
-              <p className="text-xl font-bold">{selectedTask.percentOfTAT?.toFixed(1)}%</p>
-            </div>
-          
-            <div className="p-4 bg-gray-50 rounded-lg">
-              <p className="text-sm text-gray-500">Sendbacks</p>
-              <div className="flex items-center">
-                <p className="text-xl font-bold">{selectedTask.sendbacks}</p>
-                {selectedTask.sendbacks > 2 && (
-                  <span className="ml-2 px-2 py-1 bg-amber-100 text-amber-600 text-xs font-medium rounded-full">
-                    High
-                  </span>
-                )}
-              </div>
-            </div>
-          
-            <div className="p-4 bg-gray-50 rounded-lg">
-              <p className="text-sm text-gray-500">Status</p>
-              <p className={`text-xl font-bold ${
-                selectedTask.performanceLevel === 'critical' ? 'text-red-600' : 
-                selectedTask.performanceLevel === 'warning' ? 'text-amber-600' : 
-                'text-green-600'
-              }`}>
-                {selectedTask.performanceLevel.charAt(0).toUpperCase() + selectedTask.performanceLevel.slice(1)}
-              </p>
-            </div>
-          
-            <div className="p-4 bg-gray-50 rounded-lg">
-              <p className="text-sm text-gray-500">Funnel</p>
-              <div className="flex items-center">
-                <div className="w-3 h-3 mr-2 rounded-full" style={{ backgroundColor: funnelColors[selectedTask.funnel] }}></div>
-                <p className="text-xl font-bold capitalize">{selectedTask.funnel}</p>
-              </div>
-            </div>
-          </div>
+        if (status === 'critical') {
+          color = 'error';
+          icon = <CloseCircleFilled />;
+        } else if (status === 'warning') {
+          color = 'warning';
+          icon = <WarningFilled />;
+        }
         
-          <button 
-            onClick={() => setShowDetailModal(false)}
-            className="mt-6 w-full py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors"
-          >
-            Close
-          </button>
-        </div>
-      </div>
-    );
-  };
+        return (
+          <Tag icon={icon} color={color}>
+            {status.charAt(0).toUpperCase() + status.slice(1)}
+          </Tag>
+        );
+      },
+    },
+    {
+      title: 'Actions',
+      key: 'actions',
+      render: (_, record) => (
+        <Button 
+          type="link" 
+          onClick={() => {
+            setSelectedTask({
+              ...record,
+              name: record.displayName,
+              displayTime: record.time,
+            });
+            setShowDetailModal(true);
+          }}
+        >
+          Details
+        </Button>
+      ),
+    },
+  ];
 
-  // Clock Component
-  const Clock = ({ size = 24, className = "" }) => {
-    return (
-      <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-        <circle cx="12" cy="12" r="10"></circle>
-        <polyline points="12 6 12 12 16 14"></polyline>
-      </svg>
-    );
-  };
-
-  // AlertCircle Component
-  const AlertCircle = ({ size = 24, className = "" }) => {
-    return (
-      <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-        <circle cx="12" cy="12" r="10"></circle>
-        <line x1="12" y1="8" x2="12" y2="12"></line>
-        <line x1="12" y1="16" x2="12.01" y2="16"></line>
-      </svg>
-    );
-  };
-
-  // Table icon component
-  const TableIcon = ({ size = 24, className = "" }) => {
-    return (
-      <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-        <line x1="3" y1="9" x2="21" y2="9"></line>
-        <line x1="3" y1="15" x2="21" y2="15"></line>
-        <line x1="9" y1="3" x2="9" y2="21"></line>
-        <line x1="15" y1="3" x2="15" y2="21"></line>
-      </svg>
-    );
+  // Get performance indicator
+  const getStatusIcon = (level) => {
+    if (level === 'critical') return <CloseCircleFilled style={{ color: '#f5222d' }} />;
+    if (level === 'warning') return <WarningFilled style={{ color: '#faad14' }} />;
+    return <CheckCircleFilled style={{ color: '#52c41a' }} />;
   };
 
   return (
-    <div className="flex flex-col w-full h-screen overflow-hidden bg-slate-50">
-      {showDetailModal && <TaskDetailModal />}
-    
-      <header className="bg-white p-4 shadow-md">
-        <div className="flex flex-col md:flex-row justify-between items-center">
-          <h1 className="text-2xl font-bold text-gray-800 mb-2 md:mb-0">SLA Monitoring Dashboard</h1>
-
-        
-        
-          <div className="flex flex-col sm:flex-row items-center gap-4">
-            <form onSubmit={handleChannelSubmit} className="flex items-center">
-              <input
-                type="text"
-                value={channel}
-                onChange={(e) => setChannel(e.target.value)}
-                placeholder="Enter channel"
-                className="px-3 py-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                required
-              />
-              <button
-                type="submit"
-                className="px-4 py-2 bg-blue-500 text-black rounded-r-md hover:bg-blue-600 transition-colors"
-                disabled={loading}
-              >
-                {loading ? 'Loading...' : 'Load Data'}
-              </button>
-            </form>
-          
-            {data && (
-              <div className="flex items-center p-3 bg-blue-50 rounded-md">
-                <Clock className="mr-2 text-blue-500" size={20} />
-                <span className="font-medium">Total Average Turnaround Time:</span>
-                <span className="ml-2 font-bold text-blue-700">{data.averageTAT}</span>
-              </div>
-            )}
-          </div>
-        </div>
-      
-        {error && (
-          <div className="mt-2 p-2 bg-red-100 text-red-700 rounded-md">
-            {error}
-          </div>
-        )}
-
-        {data && (
-          <button
-            onClick={scrollToTable}
-            className="ml-4 flex items-center px-3 py-2 bg-blue-500 text-black rounded-md hover:bg-blue-600 transition-colors"
-            title="View tabular data"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2">
-              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-              <line x1="3" y1="9" x2="21" y2="9"></line>
-              <line x1="3" y1="15" x2="21" y2="15"></line>
-              <line x1="9" y1="3" x2="9" y2="21"></line>
-              <line x1="15" y1="3" x2="15" y2="21"></line>
-            </svg>
-            View Table
-          </button>
-        )}
-
-      </header>
-    
-      {!data ? (
-        <div className="flex-1 flex items-center justify-center">
-          <div className="text-center p-8 max-w-md">
-            <h2 className="text-xl font-semibold mb-4">Welcome to SLA Monitoring Dashboard</h2>
-            <p className="text-gray-600 mb-6">Enter a channel in the input field above to load SLA monitoring data.</p>
-            <div className="p-8 bg-gray-100 rounded-lg">
-              <svg className="mx-auto h-16 w-16 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-              <p className="mt-4 text-sm text-gray-500">Data visualization will appear here</p>
-            </div>
-          </div>
-        </div>
-      ) : (
-        <main className="flex-1 overflow-auto p-4 grid grid-cols-1 lg:grid-cols-2 gap-4">
-          {/* Funnel Time Chart */}
-          <div className="bg-white p-4 rounded-lg shadow-md transition-all duration-300 hover:shadow-lg">
-            <h2 className="text-xl font-semibold mb-4">Average Time Per Funnel</h2>
-            <div className="h-72">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart 
-                  data={getFunnelChartData} 
-                  margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-                  onClick={handleBarClick}
-                  className="cursor-pointer"
-                >
-                  <XAxis dataKey="name" />
-                  <YAxis label={{ value: 'Minutes', angle: -90, position: 'insideLeft' }} />
-                  <Tooltip content={<FunnelTooltip />} />
-                  <Legend />
-                  <Bar 
-                    dataKey="minutes" 
-                    name="Average Time (minutes)"
-                    radius={[4, 4, 0, 0]}
-                    animationDuration={1500}
-                  >
-                    {getFunnelChartData.map((entry, index) => (
-                      <rect key={`rect-${index}`} fill={entry.color} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          
-            <div className="mt-4 flex justify-center space-x-4">
-              {funnelOrder.map(funnel => (
-                <div key={funnel} 
-                     className="flex items-center cursor-pointer hover:bg-gray-100 px-2 py-1 rounded-md transition-colors"
-                     onClick={() => setSelectedFunnel(funnel)}>
-                  <div className="w-4 h-4 mr-2 rounded" style={{ backgroundColor: funnelColors[funnel] }}></div>
-                  <span className="text-sm capitalize">{funnel}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Task Sequence Line Graph */}
-          <div className="bg-white p-4 rounded-lg shadow-md transition-all duration-300 hover:shadow-lg">
-            <div className="flex flex-col sm:flex-row justify-between items-center mb-4">
-              <h2 className="text-xl font-semibold mb-2 sm:mb-0">Task Sequence Timeline</h2>
-              <div className="flex flex-wrap justify-center space-x-2">
-                <button 
-                  onClick={() => setSelectedFunnel('all')} 
-                  className={`px-3 py-1 rounded transition-colors ${selectedFunnel === 'all' ? 'bg-blue-500 text-white' : 'bg-gray-200 hover:bg-gray-300'}`}
-                >
-                  All
-                </button>
-                {funnelOrder.map(funnel => (
-                  <button 
-                    key={funnel}
-                    onClick={() => setSelectedFunnel(funnel)} 
-                    className={`px-3 py-1 rounded capitalize transition-colors ${selectedFunnel === funnel ? 'text-white' : 'bg-gray-200 hover:bg-gray-300'}`}
-                    style={{ 
-                      backgroundColor: selectedFunnel === funnel ? funnelColors[funnel] : undefined,
-                    }}
-                  >
-                    {funnel}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <div className="h-72">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart 
-                  data={getLineChartData} 
-                  margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-                  onClick={handleTaskClick}
-                  className="cursor-pointer"
-                >
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" />
-                  <YAxis 
-                    label={{ value: 'Minutes', angle: -90, position: 'insideLeft' }}
-                    domain={[0, Math.max(getTATMinutes * 1.2, ...getLineChartData.map(item => item.minutes))]}
+    <Layout style={{ height: '100vh' }}>
+      <Header style={{ background: '#fff', padding: '0 24px', boxShadow: '0 1px 4px rgba(0,21,41,.08)' }}>
+        <Row justify="space-between" align="middle">
+          <Col>
+            <Title level={3} style={{ margin: '16px 0' }}>SLA Monitoring Dashboard</Title>
+          </Col>
+          <Col>
+            <Space size="large">
+              <Form layout="inline" onFinish={() => fetchData(channel)}>
+                <Form.Item>
+                  <Search
+                    placeholder="Enter channel"
+                    value={channel}
+                    onChange={(e) => setChannel(e.target.value)}
+                    onSearch={() => fetchData(channel)}
+                    enterButton="Load Data"
+                    loading={loading}
                   />
-                  <Tooltip content={<TaskTooltip />} />
-                  <Legend />
-                  <Line 
-                    type="monotone" 
-                    dataKey="minutes" 
-                    name="Time (minutes)"
-                    stroke="#3b82f6" 
-                    strokeWidth={2}
-                    dot={<CustomizedDot />}
-                    activeDot={{ r: 8 }}
-                    isAnimationActive={true}
-                    animationDuration={1500}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          
-            <div className="mt-4 flex flex-wrap justify-between">
-              <div className="flex flex-wrap justify-center space-x-4">
-                <div className="flex items-center">
-                  <div className="w-4 h-4 mr-1 rounded-full" style={{ backgroundColor: "#22c55e" }}></div>
-                  <span className="text-sm">Good (&lt;60% of TAT)</span>
-                </div>
-                <div className="flex items-center">
-                  <div className="w-4 h-4 mr-1 rounded-full" style={{ backgroundColor: "#f59e0b" }}></div>
-                  <span className="text-sm">Warning (60-90% of TAT)</span>
-                </div>
-                <div className="flex items-center">
-                  <div className="w-4 h-4 mr-1 rounded-full" style={{ backgroundColor: "#ef4444" }}></div>
-                  <span className="text-sm">Critical (&gt;90% of TAT)</span>
-                </div>
-              </div>
+                </Form.Item>
+              </Form>
               
-              <button
-                onClick={scrollToTable}
-                className="mt-2 sm:mt-0 flex items-center px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors"
-              >
-                <TableIcon size={18} className="mr-2" />
-                View Table
-              </button>
-            </div>
-          </div>
-
-          {/* Task Metrics Table */}
-          <div ref={tableRef} className="bg-white p-4 rounded-lg shadow-md col-span-1 lg:col-span-2 transition-all duration-300 hover:shadow-lg">
-            <div className="flex flex-col sm:flex-row justify-between items-center mb-4">
-              <h2 className="text-xl font-semibold mb-2 sm:mb-0">Task Metrics</h2>
-              <div className="flex flex-wrap justify-center space-x-2">
-                <button 
-                  onClick={() => setSelectedFunnel('all')} 
-                  className={`px-3 py-1 rounded transition-colors ${selectedFunnel === 'all' ? 'bg-blue-500 text-white' : 'bg-gray-200 hover:bg-gray-300'}`}
-                >
-                  All
-                </button>
-                {funnelOrder.map(funnel => (
-                  <button 
-                    key={funnel}
-                    onClick={() => setSelectedFunnel(funnel)} 
-                    className={`px-3 py-1 rounded capitalize transition-colors ${selectedFunnel === funnel ? 'text-white' : 'bg-gray-200 hover:bg-gray-300'}`}
-                    style={{ 
-                      backgroundColor: selectedFunnel === funnel ? funnelColors[funnel] : undefined,
-                    }}
-                  >
-                    {funnel}
-                  </button>
-                ))}
+              {data && (
+                <Card size="small" style={{ background: '#f0f5ff', borderColor: '#d6e4ff' }}>
+                  <Space>
+                    <ClockCircleOutlined style={{ color: '#1890ff' }} />
+                    <Text strong>Total Average Turnaround Time:</Text>
+                    <Text strong style={{ color: '#1890ff' }}>{data.averageTAT}</Text>
+                  </Space>
+                </Card>
+              )}
+            </Space>
+          </Col>
+        </Row>
+        
+        {error && (
+          <Alert
+            message={error}
+            type="error"
+            showIcon
+            style={{ marginTop: 16 }}
+          />
+        )}
+      </Header>
+      
+      <Content style={{ padding: '24px', background: '#f0f2f5', overflowY: 'auto' }}>
+        {!data ? (
+          <Card style={{ textAlign: 'center', marginTop: 48 }}>
+            <Space direction="vertical" size="large" style={{ width: '100%' }}>
+              <Title level={4}>Welcome to SLA Monitoring Dashboard</Title>
+              <Text type="secondary">Enter a channel in the input field above to load SLA monitoring data.</Text>
+              <div style={{ padding: 32, background: '#f9f9f9', borderRadius: 8 }}>
+                <BarChartOutlined style={{ fontSize: 64, color: '#d9d9d9' }} />
+                <div style={{ marginTop: 16, color: '#8c8c8c' }}>Data visualization will appear here</div>
               </div>
-            </div>
-            <div className="overflow-x-auto" style={{ maxHeight: 'calc(100vh - 400px)' }}>
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50 sticky top-0 z-10">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Task Name</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Average Time</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">% of TAT</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Sendbacks</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {getFilteredTableData.map((task) => (
-                    <tr key={task.taskId} className="hover:bg-gray-50 transition-colors">
-                      <td className="px-6 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
-                        <div className="flex items-center">
-                          <div className="w-3 h-3 rounded-full mr-2" style={{ backgroundColor: funnelColors[task.funnel] }}></div>
-                          {task.displayName}
-                        </div>
-                      </td>
-                      <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-500">{task.time}</td>
-                      <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-500">{task.percentOfTAT.toFixed(1)}%</td>
-                      <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-500">
-                        <div className="flex items-center">
-                          {task.sendbacks > 2 ? (
-                            <AlertCircle className="mr-1 text-amber-500" size={16} />
-                          ) : null}
-                          {task.sendbacks}
-                        </div>
-                      </td>
-                      <td className="px-6 py-3 whitespace-nowrap text-sm">
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          task.performanceLevel === 'critical' ? 'bg-red-100 text-red-600' : 
-                          task.performanceLevel === 'warning' ? 'bg-amber-100 text-amber-600' : 
-                          'bg-green-100 text-green-600'
-                        }`}>
-                          {task.performanceLevel.charAt(0).toUpperCase() + task.performanceLevel.slice(1)}
-                        </span>
-                      </td>
-                      <td className="px-6 py-3 whitespace-nowrap text-sm">
-                        <button 
-                          onClick={() => {
-                            setSelectedTask({
-                              ...task,
-                              name: task.displayName,
-                              displayTime: task.time,
-                            });
-                            setShowDetailModal(true);
-                          }}
-                          className="px-3 py-1 bg-blue-50 text-blue-600 rounded-md hover:bg-blue-100 transition-colors"
+            </Space>
+          </Card>
+        ) : (
+          <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+            <Row gutter={[16, 16]}>
+              {/* Funnel Time Chart */}
+              <Col xs={24} lg={12}>
+                <Card 
+                  title={
+                    <Space>
+                      <BarChartOutlined />
+                      <span>Average Time Per Funnel</span>
+                    </Space>
+                  }
+                  hoverable
+                >
+                  <div style={{ height: 300 }}>
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart 
+                        data={getFunnelChartData} 
+                        margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                        onClick={handleBarClick}
+                        style={{ cursor: 'pointer' }}
+                      >
+                        <XAxis dataKey="name" />
+                        <YAxis label={{ value: 'Minutes', angle: -90, position: 'insideLeft' }} />
+                        <Tooltip content={<FunnelTooltip />} />
+                        <Legend />
+                        <Bar 
+                          dataKey="minutes" 
+                          name="Average Time (minutes)"
+                          radius={[4, 4, 0, 0]}
+                          animationDuration={1500}
                         >
-                          Details
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </main>
-      )}
-    </div>
+                          {getFunnelChartData.map((entry, index) => (
+                            <rect key={`rect-${index}`} fill={entry.color} />
+                          ))}
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                  
+                  <Divider />
+                  
+                  <Space wrap style={{ justifyContent: 'center' }}>
+                    {funnelOrder.map(funnel => (
+                      <Button 
+                        key={funnel}
+                        type="text"
+                        onClick={() => setSelectedFunnel(funnel)}
+                        icon={
+                          <span 
+                            style={{ 
+                              display: 'inline-block',
+                              width: 12,
+                              height: 12,
+                              borderRadius: 2,
+                              background: funnelColors[funnel],
+                              marginRight: 8
+                            }} 
+                          />
+                        }
+                      >
+                        {funnel.charAt(0).toUpperCase() + funnel.slice(1)}
+                      </Button>
+                    ))}
+                  </Space>
+                </Card>
+              </Col>
+
+              {/* Task Sequence Line Graph */}
+              <Col xs={24} lg={12}>
+                <Card 
+                  title={
+                    <Space>
+                      <LineChartOutlined />
+                      <span>Task Sequence Timeline</span>
+                    </Space>
+                  }
+                  hoverable
+                  extra={
+                    <Radio.Group 
+                      value={selectedFunnel}
+                      onChange={(e) => setSelectedFunnel(e.target.value)}
+                      optionType="button"
+                      buttonStyle="solid"
+                      size="small"
+                    >
+                      <Radio.Button value="all">All</Radio.Button>
+                      {funnelOrder.map(funnel => (
+                        <Radio.Button 
+                          key={funnel} 
+                          value={funnel}
+                          style={{ 
+                            color: selectedFunnel === funnel ? '#fff' : undefined,
+                            background: selectedFunnel === funnel ? funnelColors[funnel] : undefined,
+                            borderColor: selectedFunnel === funnel ? funnelColors[funnel] : undefined
+                          }}
+                        >
+                          {funnel.charAt(0).toUpperCase() + funnel.slice(1)}
+                        </Radio.Button>
+                      ))}
+                    </Radio.Group>
+                  }
+                >
+                  <div style={{ height: 300 }}>
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart 
+                        data={getLineChartData} 
+                        margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                        onClick={handleTaskClick}
+                        style={{ cursor: 'pointer' }}
+                      >
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="name" />
+                        <YAxis label={{ value: 'Minutes', angle: -90, position: 'insideLeft' }} />
+                        <Tooltip content={<TaskTooltip />} />
+                        <Legend />
+                        <Line 
+                          type="monotone" 
+                          dataKey="minutes" 
+                          name="Time (minutes)"
+                          stroke="#1890ff" 
+                          strokeWidth={2}
+                          dot={<CustomizedDot />}
+                          activeDot={{ r: 8 }}
+                          isAnimationActive={true}
+                          animationDuration={1500}
+                        />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+                  
+                  <Divider />
+                  
+                  <Space style={{ justifyContent: 'center' }}>
+                    <Tag color="success" icon={<CheckCircleFilled />}>Good (&lt;60 min)</Tag>
+                    <Tag color="warning" icon={<WarningFilled />}>Warning (60-90 min)</Tag>
+                    <Tag color="error" icon={<CloseCircleFilled />}>Critical (&gt;90 min)</Tag>
+                  </Space>
+                </Card>
+              </Col>
+
+              {/* Task Metrics Table */}
+              <Col span={24}>
+                <Card 
+                  title={
+                    <Space>
+                      <TableOutlined />
+                      <span>Task Metrics</span>
+                    </Space>
+                  }
+                  hoverable
+                  extra={
+                    <Radio.Group 
+                      value={selectedFunnel}
+                      onChange={(e) => setSelectedFunnel(e.target.value)}
+                      optionType="button"
+                      buttonStyle="solid"
+                      size="small"
+                    >
+                      <Radio.Button value="all">All</Radio.Button>
+                      {funnelOrder.map(funnel => (
+                        <Radio.Button 
+                          key={funnel} 
+                          value={funnel}
+                          style={{ 
+                            color: selectedFunnel === funnel ? '#fff' : undefined,
+                            background: selectedFunnel === funnel ? funnelColors[funnel] : undefined,
+                            borderColor: selectedFunnel === funnel ? funnelColors[funnel] : undefined
+                          }}
+                        >
+                          {funnel.charAt(0).toUpperCase() + funnel.slice(1)}
+                        </Radio.Button>
+                      ))}
+                    </Radio.Group>
+                  }
+                >
+                  <Table 
+                    columns={columns} 
+                    dataSource={getFilteredTableData} 
+                    pagination={{ pageSize: 10 }}
+                    scroll={{ y: 'calc(100vh - 500px)' }}
+                  />
+                </Card>
+              </Col>
+            </Row>
+            
+            {/* Task Detail Modal */}
+            <Modal
+              title={selectedTask?.name || "Task Details"}
+              open={showDetailModal}
+              onCancel={() => setShowDetailModal(false)}
+              footer={[
+                <Button key="close" type="primary" onClick={() => setShowDetailModal(false)}>
+                  Close
+                </Button>
+              ]}
+            >
+              {selectedTask && (
+                <Space direction="vertical" size="large" style={{ width: '100%' }}>
+                  <Card size="small">
+                    <Statistic 
+                      title="Average Time" 
+                      value={selectedTask.displayTime} 
+                      prefix={<ClockCircleOutlined />} 
+                    />
+                  </Card>
+                  
+                  <Card size="small">
+                    <Statistic 
+                      title="Sendbacks" 
+                      value={selectedTask.sendbacks} 
+                      prefix={selectedTask.sendbacks > 2 ? <ExclamationCircleOutlined style={{ color: '#faad14' }} /> : null}
+                      valueStyle={selectedTask.sendbacks > 2 ? { color: '#faad14' } : undefined}
+                    />
+                    {selectedTask.sendbacks > 2 && (
+                      <Text type="warning">High number of sendbacks</Text>
+                    )}
+                  </Card>
+                  
+                  <Card size="small">
+                    <Statistic 
+                      title="Status" 
+                      value={selectedTask.performanceLevel.charAt(0).toUpperCase() + selectedTask.performanceLevel.slice(1)} 
+                      prefix={getStatusIcon(selectedTask.performanceLevel)}
+                      valueStyle={{ 
+                        color: selectedTask.performanceLevel === 'critical' ? '#f5222d' : 
+                               selectedTask.performanceLevel === 'warning' ? '#faad14' : '#52c41a'
+                      }}
+                    />
+                  </Card>
+                  
+                  <Card size="small">
+                    <Statistic 
+                      title="Funnel" 
+                      value={selectedTask.funnel.charAt(0).toUpperCase() + selectedTask.funnel.slice(1)} 
+                      prefix={
+                        <div style={{ 
+                          width: 16, 
+                          height: 16, 
+                          borderRadius: '50%', 
+                          backgroundColor: funnelColors[selectedTask.funnel], 
+                          display: 'inline-block',
+                          marginRight: 8
+                        }} />
+                      }
+                    />
+                  </Card>
+                </Space>
+              )}
+            </Modal>
+          </Space>
+        )}
+      </Content>
+    </Layout>
   );
 };
 
