@@ -1,42 +1,45 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { motion } from "framer-motion";
-import audit from "./assets/AuditLogView.jpeg";
-import agentview from "./assets/AgentView.jpeg";
-import sla from "./assets/SLAView.jpeg";
-
-const views = [
-  { 
-    id: 1, 
-    name: "Activity Logs", 
-    path: "/view-1", 
-    image: audit, 
-    description: "View and track all task movement across various stages.",
-    icon: "📈"
-  },
-  { 
-    id: 2, 
-    name: "Agent Tracking", 
-    path: "/view-2", 
-    image: agentview, 
-    description: "Monitor agent performance and allocation metrics.",
-    icon: "👤"
-  },
-  { 
-    id: 3, 
-    name: "SLA Monitoring", 
-    hoverName: "SLA Time Monitoring", 
-    path: "/view-3", 
-    image: sla, 
-    description: "Track service level agreements and response time metrics.",
-    icon: "⏱️"
-  }
-];
 
 const HomePage = () => {
   const [theme, setTheme] = useState('light');
   const [activeViewId, setActiveViewId] = useState(null);
   const [loaded, setLoaded] = useState(false);
+
+  // Higher quality images for a more professional look
+  const mockImages = {
+    audit: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
+    agentview: "https://images.unsplash.com/photo-1522071820081-009f0129c71c?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
+    sla: "https://images.unsplash.com/photo-1470790376778-a9fbc86d70e2?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80"
+  };
+
+  const views = [
+    { 
+      id: 1, 
+      name: "Activity Logs", 
+      path: "/view-1", 
+      image: mockImages.audit, 
+      description: "Track the application movement through the diffrent stages",
+      icon: "📊"
+    },
+    { 
+      id: 2, 
+      name: "Agent Tracking", 
+      path: "/view-2", 
+      image: mockImages.agentview, 
+      description: "Monitor the agent performance",
+      icon: "👥"
+    },
+    { 
+      id: 3, 
+      name: "SLA Monitoring", 
+      hoverName: "SLA Time Monitoring", 
+      path: "/view-3", 
+      image: mockImages.sla, 
+      description: "Monitor the time taken for funnels/stages",
+      icon: "⏱️"
+    }
+  ];
 
   useEffect(() => {
     setLoaded(true);
@@ -54,14 +57,14 @@ const HomePage = () => {
       canvas.style.top = '0';
       canvas.style.left = '0';
       canvas.style.width = '100%';
-      canvas.style.height = '100%';
+      canvas.style.height = '100';
       canvas.style.pointerEvents = 'none';
       canvas.style.zIndex = '1';
       document.body.appendChild(canvas);
 
       const ctx = canvas.getContext('2d');
       const particles = [];
-      const particleCount = 20;
+      const particleCount = 30; // More particles for richer visual effect
 
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
@@ -70,10 +73,10 @@ const HomePage = () => {
         particles.push({
           x: Math.random() * canvas.width,
           y: Math.random() * canvas.height,
-          radius: Math.random() * 2 + 0.5,
-          color: theme === 'light' ? 'rgba(59, 130, 246, 0.15)' : 'rgba(209, 213, 219, 0.1)',
-          speedX: Math.random() * 0.3 - 0.15,
-          speedY: Math.random() * 0.3 - 0.15
+          radius: Math.random() * 2.5 + 0.5, // Slightly larger particles
+          color: theme === 'light' ? 'rgba(24, 144, 255, 0.12)' : 'rgba(209, 213, 219, 0.08)',
+          speedX: Math.random() * 0.25 - 0.125,
+          speedY: Math.random() * 0.25 - 0.125
         });
       }
 
@@ -114,192 +117,277 @@ const HomePage = () => {
   };
 
   return (
-    <div className={`w-screen h-screen overflow-hidden ${
-      theme === 'light' 
-        ? 'bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-100' 
-        : 'bg-gray-900'
-    }`}>
-      {/* Theme toggle */}
-      <motion.button 
-        className={`fixed top-6 right-6 p-2 rounded-md z-20 shadow-md ${theme === 'light' ? 'bg-white text-gray-800' : 'bg-gray-800 text-gray-100'}`}
-        onClick={toggleTheme}
-        whileTap={{ scale: 0.97 }}
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.5 }}
+    <div className={`w-screen h-screen ${theme === 'light' ? 'bg-gradient-to-br from-blue-50 via-white to-indigo-50' : 'bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900'}`}>
+      {/* Header */}
+      <header 
+        style={{ 
+          background: theme === 'light' 
+            ? 'linear-gradient(to right, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.95))' 
+            : 'linear-gradient(to right, rgba(17, 24, 39, 0.95), rgba(17, 24, 39, 0.95))',
+          backdropFilter: 'blur(8px)',
+          WebkitBackdropFilter: 'blur(8px)',
+          boxShadow: theme === 'light' ? '0 2px 8px rgba(0,0,0,0.06)' : '0 2px 8px rgba(0,0,0,0.2)',
+          padding: '0 24px',
+          position: 'sticky',
+          top: 0,
+          zIndex: 10,
+          height: '68px'
+        }}
+        className="flex items-center justify-between"
       >
-        {theme === 'light' ? (
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-            <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" />
-          </svg>
-        ) : (
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-            <path fillRule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clipRule="evenodd" />
-          </svg>
-        )}
-      </motion.button>
-
-      <div className="w-full h-full flex flex-col">
-        {/* Top Navigation Bar */}
-        <motion.header 
-          className={`w-full px-6 py-4 ${theme === 'light' ? 'bg-white shadow-sm' : 'bg-gray-800 shadow-gray-900/30'}`}
-          initial={{ y: -50 }}
-          animate={{ y: 0 }}
-          transition={{ duration: 0.4, ease: "easeOut" }}
-        >
-          <div className="container mx-auto flex justify-between items-center">
-            <div className="flex items-center space-x-4">
-              <motion.div 
-                className={`font-semibold text-xl ${theme === 'light' ? 'text-blue-600' : 'text-blue-400'}`}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.2 }}
-              >
-                CARS24
-              </motion.div>
-              <div className={`h-5 border-r ${theme === 'light' ? 'border-gray-300' : 'border-gray-600'}`}></div>
-              <motion.div 
-                className={`text-xl font-medium ${theme === 'light' ? 'text-gray-800' : 'text-white'}`}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.3 }}
-              >
-                 Dashboard
-              </motion.div>
-            </div>
-            <div className="hidden md:flex items-center space-x-4">
-              <motion.span 
-                className={`text-sm ${theme === 'light' ? 'text-gray-500' : 'text-gray-400'}`}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.4 }}
-              >
-                Task Management Module
-              </motion.span>
-            </div>
+        <div className="flex items-center">
+          <div className={`text-xl font-semibold ${theme === 'light' ? 'text-blue-600' : 'text-blue-400'}`}>
+            CARS24
           </div>
-        </motion.header>
-
-        {/* Main Content */}
-        <div className={`flex-1 p-6 md:p-8 overflow-hidden ${
-          theme === 'light' 
-            ? 'bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-100' 
-            : 'bg-gray-900'
-        }`}>
-          <div className="container mx-auto">
-            {/* Section Title */}
-            <motion.div 
-              className="mb-10 text-center"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
+          <div 
+            className="mx-4"
+            style={{ 
+              height: '24px', 
+              width: '1px', 
+              background: theme === 'light' ? '#e5e7eb' : '#374151'
+            }}
+          ></div>
+          <div className={`text-xl font-medium ${theme === 'light' ? 'text-gray-800' : 'text-gray-100'}`}>
+            Dashboard
+          </div>
+          
+          {/* Breadcrumbs */}
+          <div className="ml-8 hidden md:flex items-center">
+            <span className={theme === 'light' ? 'text-gray-500' : 'text-gray-400'}>Home</span>
+            <svg className="mx-2 w-4 h-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+              <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd"></path>
+            </svg>
+            <span className={theme === 'light' ? 'text-gray-700 font-medium' : 'text-gray-200 font-medium'}></span>
+          </div>
+        </div>
+        
+        <div className="flex items-center space-x-5">
+          <span 
+            className={theme === 'light' ? 'text-gray-500' : 'text-gray-400'}
+            style={{ fontSize: '14px' }}
+          >
+            Task Management Module
+          </span>
+          
+          {/* Theme Toggle */}
+          <button 
+            className={`flex items-center justify-center rounded-full w-10 h-6 ${theme === 'dark' ? 'bg-blue-500' : 'bg-gray-300'}`}
+            onClick={toggleTheme}
+          >
+            <div 
+              className={`w-5 h-5 rounded-full transform duration-200 flex items-center justify-center ${theme === 'dark' ? 'translate-x-2 bg-white text-blue-500' : 'translate-x--2 bg-white text-amber-500'}`}
             >
-              <h1 className={`text-3xl font-semibold mb-2 ${theme === 'light' ? 'text-gray-900' : 'text-white'}`}>
+              {theme === 'dark' ? '🌙' : '☀️'}
+            </div>
+          </button>
+        </div>
+      </header>
+
+      {/* Page Content - Full Screen */}
+      <main className="p-4 md:p-6 relative z-2 w-full">
+        <div className="w-full max-w-none">
+          {/* Dashboard Header */}
+          <div className="mb-10 px-2">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
+              <div>
+                <h1 
+                  className={theme === 'light' ? 'text-gray-900' : 'text-white'}
+                  style={{ 
+                    fontSize: '30px',
+                    fontWeight: 600,
+                    marginBottom: '8px',
+                    letterSpacing: '-0.01em'
+                  }}
+                >
+                  
+                </h1>
+                <p 
+                  className={theme === 'light' ? 'text-gray-600' : 'text-gray-300'}
+                  style={{ maxWidth: '700px' }}
+                >
+                 
+                </p>
+              </div>
+            </div>
+            
+            {/* Module Section Subheader */}
+            <div className="text-center mb-8">
+              <h2 
+                className={theme === 'light' ? 'text-gray-800' : 'text-gray-100'}
+                style={{ 
+                  fontSize: '24px',
+                  fontWeight: 600,
+                  marginBottom: '8px'
+                }}
+              >
                 Module Selection
-              </h1>
-              <p className={`max-w-2xl mx-auto text-center ${theme === 'light' ? 'text-gray-600' : 'text-gray-400'}`}>
+              </h2>
+              <p 
+                className={theme === 'light' ? 'text-gray-600' : 'text-gray-400'}
+                style={{ maxWidth: '700px', margin: '0 auto' }}
+              >
                 Select one of the following modules to access specialized monitoring and management abilities.
               </p>
-            </motion.div>
+            </div>
+          </div>
 
-            {/* Cards Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
-              {views.map((view, index) => (
-                <motion.div 
-                  key={view.id}
-                  initial={{ opacity: 0, y: 30 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: 0.1 + index * 0.1 }}
-                  className="h-full"
-                >
-                  <Link 
-                    to={view.path}
-                    className="block h-full"
-                    onMouseEnter={() => setActiveViewId(view.id)}
-                    onMouseLeave={() => setActiveViewId(null)}
+          {/* Cards Grid - Full Width */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 px-2">
+            {views.map((view, index) => (
+              <div 
+                key={view.id}
+                className="h-full"
+                style={{ 
+                  opacity: 0,
+                  animation: `fadeIn 0.5s ease-out ${0.1 + index * 0.1}s forwards`
+                }}
+                onMouseEnter={() => setActiveViewId(view.id)}
+                onMouseLeave={() => setActiveViewId(null)}
+              >
+                <a href={view.path} className="block h-full no-underline">
+                  <div 
+                    className={`rounded-xl overflow-hidden h-full transition-all duration-300 ${theme === 'light' ? 'bg-white border border-gray-100' : 'bg-gray-800 border border-gray-700'}`}
+                    style={{ 
+                      boxShadow: theme === 'light' ? '0 4px 12px rgba(0, 0, 0, 0.05)' : '0 4px 12px rgba(0, 0, 0, 0.2)'
+                    }}
                   >
-                    <motion.div 
-                      className={`group relative h-full rounded-lg overflow-hidden ${theme === 'light' ? 'bg-white' : 'bg-gray-800'} shadow-md transition-shadow duration-300 hover:shadow-lg`}
-                      whileHover={{ y: -5 }}
-                      transition={{ duration: 0.3 }}
-                    >
-                      {/* Card Image */}
-                      <div className="relative h-48 overflow-hidden">
-                        <motion.div
-                          className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent z-10"
-                          initial={{ opacity: 0.4 }}
-                          whileHover={{ opacity: 0.7 }}
-                          transition={{ duration: 0.3 }}
-                        />
-                        <motion.img
-                          src={view.image}
-                          alt={view.name}
-                          className="w-full h-full object-cover transition-transform duration-700"
-                          whileHover={{ scale: 1.04 }}
-                        />
-                        <div className="absolute bottom-3 left-4 z-20">
-                          <h3 className="text-white text-lg font-medium">
+                    <div className="relative h-48">
+                      {/* Image Overlay Gradient */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/40 to-transparent z-10" />
+                      
+                      {/* Status Badge */}
+                      <div className="absolute top-3 right-3 z-20">
+                        <span 
+                          className={`py-1 px-2 rounded-full text-xs font-medium ${view.id === 1 ? 'bg-blue-500 text-white' : view.id === 2 ? 'bg-purple-500 text-white' : 'bg-amber-500 text-white'}`}
+                        >
+                          {view.id === 1 ? 'Analytics' : view.id === 2 ? 'Management' : 'Monitoring'}
+                        </span>
+                      </div>
+                      
+                      <img
+                        src={view.image}
+                        alt={view.name}
+                        className="w-full h-full object-cover transition-transform duration-700"
+                      />
+                      
+                      <div className="absolute bottom-4 left-4 z-20">
+                        <span 
+                          className="text-white font-bold"
+                          style={{ fontSize: '20px', textShadow: '0 1px 3px rgba(0,0,0,0.3)' }}
+                        >
+                          {view.id === 3 && activeViewId === 3 ? view.hoverName : view.name}
+                        </span>
+                      </div>
+                    </div>
+                    
+                    <div className="p-5">
+                      <div className="flex items-start justify-between mb-3">
+                        <div>
+                          <h3 
+                            className={theme === 'light' ? 'text-gray-900' : 'text-white'}
+                            style={{ 
+                              fontSize: '18px',
+                              fontWeight: 600,
+                              marginBottom: '4px'
+                            }}
+                          >
                             {view.id === 3 && activeViewId === 3 ? view.hoverName : view.name}
                           </h3>
+                          <p 
+                            className={theme === 'light' ? 'text-gray-600' : 'text-gray-300'}
+                            style={{ fontSize: '14px' }}
+                          >
+                            {view.description}
+                          </p>
+                        </div>
+                        <div className={`flex items-center justify-center w-10 h-10 rounded-full ${view.id === 1 ? 'bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-300' : view.id === 2 ? 'bg-purple-100 text-purple-600 dark:bg-purple-900 dark:text-purple-300' : 'bg-amber-100 text-amber-600 dark:bg-amber-900 dark:text-amber-300'}`}>
+                          <span className="text-xl">{view.icon}</span>
                         </div>
                       </div>
+                      
+                      <div 
+                        className="h-px w-full my-4"
+                        style={{ background: theme === 'light' ? '#f3f4f6' : '#374151' }}  
+                      ></div>
+                      
+                      <div className="flex items-center justify-between">
+                        <span 
+                          className={theme === 'light' ? 'text-gray-500' : 'text-gray-400'}
+                          style={{ fontSize: '12px' }}
+                        >
+                          
+                        </span>
+                        <button 
+                          className={`py-2 px-4 rounded-lg font-medium text-sm ${view.id === 1 ? 'bg-blue-600 hover:bg-blue-700 text-white' : view.id === 2 ? 'bg-purple-600 hover:bg-purple-700 text-white' : 'bg-amber-600 hover:bg-amber-700 text-white'}`}
+                        >
+                          Access
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </a>
+              </div>
+            ))}
+          </div>
+        </div>
+      </main>
 
-                      {/* Card Content */}
-                      <div className="p-5">
-                        <div className="flex items-start justify-between mb-4">
-                          <div>
-                            <h3 className={`text-xl font-semibold mb-1 ${theme === 'light' ? 'text-gray-900' : 'text-white'}`}>
-                              {view.id === 3 && activeViewId === 3 ? view.hoverName : view.name}
-                            </h3>
-                            <p className={`text-sm ${theme === 'light' ? 'text-gray-600' : 'text-gray-300'}`}>
-                              {view.description}
-                            </p>
-                          </div>
-                          <span className="text-2xl">{view.icon}</span>
-                        </div>
-                        
-                        <div className={`pt-3 mt-4 border-t ${theme === 'light' ? 'border-gray-100' : 'border-gray-700'}`}>
-                          <div className="flex items-center justify-between">
-                            <span className={`text-sm ${theme === 'light' ? 'text-gray-500' : 'text-gray-400'}`}>
-                              Module {view.id}
-                            </span>
-                            <motion.div
-                              className={`px-4 py-2 text-sm font-medium ${theme === 'light' ? 'bg-blue-50 text-blue-600 group-hover:bg-blue-600 group-hover:text-white' : 'bg-blue-900/30 text-blue-400 group-hover:bg-blue-500 group-hover:text-white'} rounded-md transition-colors duration-300`}
-                              whileHover={{ scale: 1.02 }}
-                              whileTap={{ scale: 0.98 }}
-                            >
-                              Access
-                            </motion.div>
-                          </div>
-                        </div>
-                      </div>
-                    </motion.div>
-                  </Link>
-                </motion.div>
-              ))}
+      {/* Footer */}
+      <footer className={`mt-12 border-t ${theme === 'light' ? 'bg-white border-gray-200' : 'bg-gray-900 border-gray-700'}`}>
+        <div className="w-full px-6 py-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div>
+              <div className={`text-lg font-semibold mb-4 ${theme === 'light' ? 'text-gray-900' : 'text-white'}`}>
+                CARS24 CFSPL
+              </div>
+              <p className={`text-sm ${theme === 'light' ? 'text-gray-600' : 'text-gray-400'}`}>
+                Transforming the way India buys and sells cars, providing technology-driven solutions for a seamless experience.
+              </p>
+            </div>
+            
+            <div>
+              <div className={`text-sm font-semibold mb-4 ${theme === 'light' ? 'text-gray-700' : 'text-gray-300'}`}>
+                
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+
+              </div>
+            </div>
+            
+            <div className="flex flex-col items-end">
+              <div className="flex space-x-3 mb-4">
+                <span className={`px-3 py-1 rounded-full text-xs font-medium ${theme === 'light' ? 'bg-blue-100 text-blue-800' : 'bg-blue-900 text-blue-200'}`}>
+                  Version 2.1.4
+                </span>
+                <span className={`px-3 py-1 rounded-full text-xs font-medium ${theme === 'light' ? 'bg-green-100 text-green-800' : 'bg-green-900 text-green-200'}`}>
+                  
+                </span>
+              </div>
+              <p className={`text-sm ${theme === 'light' ? 'text-gray-500' : 'text-gray-400'}`}>
+                © 2025 CARS24 CFSPL. All rights reserved.
+              </p>
             </div>
           </div>
         </div>
+      </footer>
 
-        {/* Footer */}
-        <motion.footer 
-          className={`w-full py-4 px-6 ${theme === 'light' ? 'bg-white border-t border-gray-200' : 'bg-gray-800 border-t border-gray-700'}`}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.7 }}
-        >
-          <div className="container mx-auto flex flex-col md:flex-row justify-between items-center">
-            <div className={`text-sm ${theme === 'light' ? 'text-gray-500' : 'text-gray-400'}`}>
-              © 2025 CARS24 CFSPL. All rights reserved.
-            </div>
-            <div className="flex items-center mt-4 md:mt-0">
-              <span className={`text-xs px-2 py-1 rounded ${theme === 'light' ? 'bg-blue-50 text-blue-500' : 'bg-blue-900/30 text-blue-400'}`}>
-                Version 2.1.4
-              </span>
-            </div>
-          </div>
-        </motion.footer>
-      </div>
+      <style jsx>{`
+        @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(20px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        
+        a:hover img {
+          transform: scale(1.05);
+        }
+        
+        a:hover > div {
+          transform: translateY(-4px);
+          box-shadow: ${theme === 'light' 
+            ? '0 12px 24px rgba(0, 0, 0, 0.10)' 
+            : '0 12px 24px rgba(0, 0, 0, 0.35)'};
+        }
+      `}</style>
     </div>
   );
 };
