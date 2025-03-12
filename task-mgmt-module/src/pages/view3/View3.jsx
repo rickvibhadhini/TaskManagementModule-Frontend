@@ -50,12 +50,12 @@ const View3 = () => {
   const [error, setError] = useState(null);
   const tableRef = useRef(null);
 
-  // Scroll to table view
+  
   const scrollToTable = () => {
     tableRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  // Fetch data from backend
+  
   const fetchData = async (channelValue) => {
     if (!channelValue) return;
   
@@ -73,7 +73,7 @@ const View3 = () => {
     }
   };
 
-  // Convert time strings to minutes for visualization
+ 
   const convertTimeToMinutes = (timeStr) => {
     if (!timeStr) return 0;
   
@@ -92,24 +92,24 @@ const View3 = () => {
     return totalMinutes;
   };
 
-  // Get total TAT in minutes
+  
   const getTATMinutes = useMemo(() => {
-    if (!data || !data.averageTAT) return 100; // Default value if not available
+    if (!data || !data.averageTAT) return 100; 
     return convertTimeToMinutes(data.averageTAT);
   }, [data]);
 
-  // Define colors for each funnel using Ant Design colors
+  
   const funnelColors = {
-    sourcing: token.colorSuccess,     // Green
-    credit: token.colorInfo,          // Blue
-    conversion: token.colorWarning,   // Orange/Yellow
-    fulfillment: '#722ed1'            // Purple color for fulfillment
+    sourcing: token.colorSuccess,     
+    credit: token.colorInfo,          
+    conversion: token.colorWarning,   
+    fulfillment: '#722ed1'            
   };
 
-  // Define funnel order
+  
   const funnelOrder = ["sourcing", "credit", "conversion", "fulfillment"];
 
-  // Format the funnel data for the bar chart with specific order
+  
   const getFunnelChartData = useMemo(() => {
     if (!data || !data.funnels) return [];
   
@@ -121,7 +121,7 @@ const View3 = () => {
     }));
   }, [data, funnelColors]);
 
-  // Create task data organized by funnel
+  
   const getTasksByFunnel = useMemo(() => {
     if (!data || !data.funnels) return {};
     
@@ -137,12 +137,12 @@ const View3 = () => {
         const minutes = convertTimeToMinutes(taskData.timeTaken);
         const percentOfTAT = (minutes / totalTAT) * 100;
       
-        // Determine performance level based on percentage of TAT
-        let performanceLevel = "good"; // Green - Good (below 60% of TAT)
+        
+        let performanceLevel = "good"; 
         if (percentOfTAT >= 90) {
-          performanceLevel = "critical"; // Red - Critical (>=90% of TAT)
+          performanceLevel = "critical"; 
         } else if (percentOfTAT >= 60) {
-          performanceLevel = "warning"; // Yellow - Warning (60-90% of TAT)
+          performanceLevel = "warning"; 
         }
       
         tasksByFunnel[funnel].push({
@@ -156,19 +156,19 @@ const View3 = () => {
         });
       });
     
-      // Sort tasks by task number within each funnel
+      
       tasksByFunnel[funnel].sort((a, b) => a.taskNumber - b.taskNumber);
     });
   
     return tasksByFunnel;
   }, [data, getTATMinutes]);
 
-  // Prepare line chart data based on selected funnel
+  
   const getLineChartData = useMemo(() => {
     if (!data || !data.funnels) return [];
   
     if (selectedFunnel === 'all') {
-      // For 'all', create a combined view with all funnels
+      
       const result = [];
       Object.entries(getTasksByFunnel).forEach(([funnel, tasks]) => {
         if (Array.isArray(tasks)) {
@@ -187,7 +187,7 @@ const View3 = () => {
       });
       return result;
     } else if (getTasksByFunnel[selectedFunnel]) {
-      // For specific funnel, show only that funnel's tasks
+      
       return getTasksByFunnel[selectedFunnel].map(task => ({
         name: `Task ${task.taskNumber}`,
         minutes: task.minutes,
@@ -202,7 +202,7 @@ const View3 = () => {
     return [];
   }, [getTasksByFunnel, selectedFunnel]);
 
-  // Prepare table data
+  
   const getTableData = useMemo(() => {
     if (!data || !data.funnels) return [];
     
@@ -215,12 +215,12 @@ const View3 = () => {
         const minutes = convertTimeToMinutes(taskData.timeTaken);
         const percentOfTAT = (minutes / totalTAT) * 100;
       
-        // Determine performance level based on percentage of TAT
-        let performanceLevel = "good"; // Green - Good (below 60% of TAT)
+        
+        let performanceLevel = "good"; 
         if (percentOfTAT >= 90) {
-          performanceLevel = "critical"; // Red - Critical (>=90% of TAT)
+          performanceLevel = "critical";
         } else if (percentOfTAT >= 60) {
-          performanceLevel = "warning"; // Yellow - Warning (60-90% of TAT)
+          performanceLevel = "warning"; 
         }
       
         tableData.push({
@@ -240,7 +240,7 @@ const View3 = () => {
     return tableData;
   }, [data, getTATMinutes]);
 
-  // Filter table data based on selected funnel
+  
   const getFilteredTableData = useMemo(() => {
     if (!getTableData || !Array.isArray(getTableData)) return [];
     
@@ -249,7 +249,7 @@ const View3 = () => {
       : getTableData.filter(item => item.funnel === selectedFunnel);
   }, [getTableData, selectedFunnel]);
 
-  // Handle bar click to filter by funnel
+  
   const handleBarClick = (data) => {
     if (data && data.activePayload && data.activePayload.length) {
       const funnelName = data.activePayload[0].payload.name.toLowerCase();
@@ -257,7 +257,7 @@ const View3 = () => {
     }
   };
 
-  // Handle task click in line chart to show details
+  
   const handleTaskClick = (data) => {
     if (data && data.activePayload && data.activePayload.length) {
       setSelectedTask(data.activePayload[0].payload);
@@ -265,7 +265,7 @@ const View3 = () => {
     }
   };
 
-  // Custom tooltip for the bar chart
+  
   const FunnelTooltip = ({ active, payload }) => {
     if (active && payload && payload.length) {
       return (
@@ -279,7 +279,7 @@ const View3 = () => {
     return null;
   };
 
-  // Custom tooltip for the line chart
+  
   const TaskTooltip = ({ active, payload }) => {
     if (active && payload && payload.length) {
       const data = payload[0].payload;
@@ -301,16 +301,16 @@ const View3 = () => {
     return null;
   };
 
-  // Custom dot for the line chart
+  
   const CustomizedDot = (props) => {
     const { cx, cy, payload } = props;
     
-    let fillColor = "#52c41a"; // Green for good
+    let fillColor = "#52c41a"; 
     
     if (payload.performanceLevel === 'critical') {
-      fillColor = "#f5222d"; // Red for critical
+      fillColor = "#f5222d"; 
     } else if (payload.performanceLevel === 'warning') {
-      fillColor = "#faad14"; // Yellow for warning
+      fillColor = "#faad14"; 
     }
   
     return (
@@ -320,7 +320,7 @@ const View3 = () => {
     );
   };
 
-  // Table columns
+  
   const columns = [
     {
       title: 'Task Name',
@@ -332,7 +332,7 @@ const View3 = () => {
             width: 8, 
             height: 8, 
             borderRadius: '50%', 
-            backgroundColor: '#000', // Black dot
+            backgroundColor: '#000', 
             display: 'inline-block',
             marginRight: 8
           }} />
@@ -407,16 +407,16 @@ const View3 = () => {
     },
   ];
 
-  // Get performance indicator
+  
   const getStatusIcon = (level) => {
     if (level === 'critical') return <CloseCircleFilled style={{ color: '#f5222d' }} />;
     if (level === 'warning') return <WarningFilled style={{ color: '#faad14' }} />;
     return <CheckCircleFilled style={{ color: '#52c41a' }} />;
   };
 
-  // Define chart height constant for the line chart
+  
   const CHART_HEIGHT = 350;
-  // Define a taller height for the bar chart to match the line chart + status descriptions
+  
   const BAR_CHART_HEIGHT = 430;
 
   return (
@@ -634,7 +634,7 @@ const View3 = () => {
                 </Card>
               </Col>
 
-              {/* Task Metrics Table */}
+              
               <Col span={24} ref={tableRef}>
                 <Card 
                   title={
@@ -674,7 +674,7 @@ const View3 = () => {
               </Col>
             </Row>
             
-            {/* Task Detail Modal */}
+            
             <Modal
               title={selectedTask?.name || "Task Details"}
               open={showDetailModal}
@@ -716,7 +716,7 @@ const View3 = () => {
                       prefix={selectedTask.sendbacks > 2 ? <ExclamationCircleOutlined style={{ color: '#faad14' }} /> : null}
                       valueStyle={selectedTask.sendbacks > 2 ? { color: '#faad14' } : undefined}
                     />
-                    {selectedTask.sendbacks > 2 && (
+                    {selectedTask.sendbacks > 3 && (
                       <Text type="warning">High number of sendbacks</Text>
                     )}
                   </Card>

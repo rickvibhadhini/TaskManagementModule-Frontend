@@ -33,7 +33,7 @@ const HomePage = () => {
       path: "/view-2", 
       image: mockImages.agentview, 
       description: "Monitor the agent performance",
-      icon: "👤",
+      icon: "👨‍💼",
       color: "#722ed1",
       badgeText: "Management"
     },
