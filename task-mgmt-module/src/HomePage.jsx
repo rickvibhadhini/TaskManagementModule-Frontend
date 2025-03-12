@@ -6,11 +6,16 @@ const HomePage = () => {
   const [activeViewId, setActiveViewId] = useState(null);
   const [loaded, setLoaded] = useState(false);
 
-  // Higher quality images for a more professional look
+ 
   const mockImages = {
-    audit: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    agentview: "https://images.unsplash.com/photo-1522071820081-009f0129c71c?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    sla: "https://images.unsplash.com/photo-1470790376778-a9fbc86d70e2?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80"
+    
+    audit: "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=85",
+    
+    
+    agentview: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=85",
+    
+    
+    sla: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=85"
   };
 
   const views = [
@@ -19,7 +24,7 @@ const HomePage = () => {
       name: "Activity Logs", 
       path: "/view-1", 
       image: mockImages.audit, 
-      description: "Track the application movement through the diffrent stages",
+      description: "Track the application movement through the different stages",
       icon: "📊"
     },
     { 
@@ -28,7 +33,7 @@ const HomePage = () => {
       path: "/view-2", 
       image: mockImages.agentview, 
       description: "Monitor the agent performance",
-      icon: "👥"
+      icon: "👨‍💼"
     },
     { 
       id: 3, 
@@ -64,7 +69,7 @@ const HomePage = () => {
 
       const ctx = canvas.getContext('2d');
       const particles = [];
-      const particleCount = 30; // More particles for richer visual effect
+      const particleCount = 30; 
 
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
@@ -73,7 +78,7 @@ const HomePage = () => {
         particles.push({
           x: Math.random() * canvas.width,
           y: Math.random() * canvas.height,
-          radius: Math.random() * 2.5 + 0.5, // Slightly larger particles
+          radius: Math.random() * 2.5 + 0.5, 
           color: theme === 'light' ? 'rgba(24, 144, 255, 0.12)' : 'rgba(209, 213, 219, 0.08)',
           speedX: Math.random() * 0.25 - 0.125,
           speedY: Math.random() * 0.25 - 0.125
@@ -153,7 +158,7 @@ const HomePage = () => {
           
           {/* Breadcrumbs */}
           <div className="ml-8 hidden md:flex items-center">
-            <span className={theme === 'light' ? 'text-gray-500' : 'text-gray-400'}>Home</span>
+            <span className={theme === 'light' ? 'text-gray-500' : 'text-gray-400'}></span>
             <svg className="mx-2 w-4 h-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
               <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd"></path>
             </svg>
@@ -320,7 +325,7 @@ const HomePage = () => {
                         <button 
                           className={`py-2 px-4 rounded-lg font-medium text-sm ${view.id === 1 ? 'bg-blue-600 hover:bg-blue-700 text-white' : view.id === 2 ? 'bg-purple-600 hover:bg-purple-700 text-white' : 'bg-amber-600 hover:bg-amber-700 text-white'}`}
                         >
-                          Access
+                          View
                         </button>
                       </div>
                     </div>
