@@ -1,19 +1,16 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-// In a real project, you would import Ant Design components like this:
-// import { Layout, Card, Button, Typography, Divider, Badge, Tag, Switch } from 'antd';
-// For this playground, we'll simulate the imports are working
 
 const HomePage = () => {
   const [theme, setTheme] = useState('light');
   const [activeViewId, setActiveViewId] = useState(null);
   const [loaded, setLoaded] = useState(false);
 
-  // Mock images for the playground
+  // Higher quality images for a more professional look
   const mockImages = {
-    audit: "https://placehold.co/600x400/e6f7ff/0050b3?text=Activity+Logs",
-    agentview: "https://placehold.co/600x400/f6ffed/52c41a?text=Agent+Tracking",
-    sla: "https://placehold.co/600x400/fff2e8/fa541c?text=SLA+Monitoring"
+    audit: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
+    agentview: "https://images.unsplash.com/photo-1522071820081-009f0129c71c?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
+    sla: "https://images.unsplash.com/photo-1470790376778-a9fbc86d70e2?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80"
   };
 
   const views = [
@@ -22,16 +19,16 @@ const HomePage = () => {
       name: "Activity Logs", 
       path: "/view-1", 
       image: mockImages.audit, 
-      description: "View and track all task movement across various stages.",
-      icon: "📈"
+      description: "Track the application movement through the diffrent stages",
+      icon: "📊"
     },
     { 
       id: 2, 
       name: "Agent Tracking", 
       path: "/view-2", 
       image: mockImages.agentview, 
-      description: "Monitor agent performance and allocation metrics.",
-      icon: "👤"
+      description: "Monitor the agent performance",
+      icon: "👥"
     },
     { 
       id: 3, 
@@ -39,16 +36,10 @@ const HomePage = () => {
       hoverName: "SLA Time Monitoring", 
       path: "/view-3", 
       image: mockImages.sla, 
-      description: "Track service level agreements and response time metrics.",
+      description: "Monitor the time taken for funnels/stages",
       icon: "⏱️"
     }
   ];
-
-  // For demonstration purposes, we'll use these components
-  // In a real project, these would be imported from 'antd'
-  const { Layout, Card, Button, Typography, Divider, Badge, Tag, Switch } = window.antd || {};
-  const { Header, Content, Footer } = Layout || {};
-  const { Title, Text, Paragraph } = Typography || {};
 
   useEffect(() => {
     setLoaded(true);
@@ -66,14 +57,14 @@ const HomePage = () => {
       canvas.style.top = '0';
       canvas.style.left = '0';
       canvas.style.width = '100%';
-      canvas.style.height = '100%';
+      canvas.style.height = '100';
       canvas.style.pointerEvents = 'none';
       canvas.style.zIndex = '1';
       document.body.appendChild(canvas);
 
       const ctx = canvas.getContext('2d');
       const particles = [];
-      const particleCount = 20;
+      const particleCount = 30; // More particles for richer visual effect
 
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
@@ -82,10 +73,10 @@ const HomePage = () => {
         particles.push({
           x: Math.random() * canvas.width,
           y: Math.random() * canvas.height,
-          radius: Math.random() * 2 + 0.5,
-          color: theme === 'light' ? 'rgba(24, 144, 255, 0.15)' : 'rgba(209, 213, 219, 0.1)',
-          speedX: Math.random() * 0.3 - 0.15,
-          speedY: Math.random() * 0.3 - 0.15
+          radius: Math.random() * 2.5 + 0.5, // Slightly larger particles
+          color: theme === 'light' ? 'rgba(24, 144, 255, 0.12)' : 'rgba(209, 213, 219, 0.08)',
+          speedX: Math.random() * 0.25 - 0.125,
+          speedY: Math.random() * 0.25 - 0.125
         });
       }
 
@@ -127,251 +118,259 @@ const HomePage = () => {
 
   // This is how the code would look in a real project with Ant Design properly imported
   return (
-    <div className={`min-h-screen ${theme === 'light' ? 'bg-gradient-to-br from-blue-50 via-white to-blue-50' : 'bg-gray-900'}`}>
-      {/* Simulating Ant Design components for the playground */}
-      <div className="min-h-screen" style={{ background: 'transparent' }}>
-        {/* Header */}
-        <header 
-          style={{ 
-            background: theme === 'light' ? '#fff' : '#141414',
-            boxShadow: theme === 'light' ? '0 1px 3px rgba(0,0,0,0.05)' : '0 1px 3px rgba(0,0,0,0.2)',
-            padding: '0 24px',
-            position: 'sticky',
-            top: 0,
-            zIndex: 10,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            height: '64px'
-          }}
-        >
-          <div className="flex items-center">
-            <div className={`text-xl font-semibold ${theme === 'light' ? 'text-blue-600' : 'text-blue-400'}`}>
-              CARS24
-            </div>
-            <div 
-              className="ant-divider ant-divider-vertical" 
-              style={{ 
-                height: '20px', 
-                margin: '0 16px',
-                borderLeft: theme === 'light' ? '1px solid #f0f0f0' : '1px solid #303030'
-              }}
-            ></div>
-            <div className={`text-xl font-medium ${theme === 'light' ? 'text-gray-800' : 'text-white'}`}>
-              Dashboard
-            </div>
+    <div className={`w-screen h-screen ${theme === 'light' ? 'bg-gradient-to-br from-blue-50 via-white to-indigo-50' : 'bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900'}`}>
+      {/* Header */}
+      <header 
+        style={{ 
+          background: theme === 'light' 
+            ? 'linear-gradient(to right, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.95))' 
+            : 'linear-gradient(to right, rgba(17, 24, 39, 0.95), rgba(17, 24, 39, 0.95))',
+          backdropFilter: 'blur(8px)',
+          WebkitBackdropFilter: 'blur(8px)',
+          boxShadow: theme === 'light' ? '0 2px 8px rgba(0,0,0,0.06)' : '0 2px 8px rgba(0,0,0,0.2)',
+          padding: '0 24px',
+          position: 'sticky',
+          top: 0,
+          zIndex: 10,
+          height: '68px'
+        }}
+        className="flex items-center justify-between"
+      >
+        <div className="flex items-center">
+          <div className={`text-xl font-semibold ${theme === 'light' ? 'text-blue-600' : 'text-blue-400'}`}>
+            CARS24
+          </div>
+          <div 
+            className="mx-4"
+            style={{ 
+              height: '24px', 
+              width: '1px', 
+              background: theme === 'light' ? '#e5e7eb' : '#374151'
+            }}
+          ></div>
+          <div className={`text-xl font-medium ${theme === 'light' ? 'text-gray-800' : 'text-gray-100'}`}>
+            Dashboard
           </div>
           
-          <div className="flex items-center space-x-4">
-            <span 
-              className="ant-typography ant-typography-secondary" 
-              style={{ marginRight: '16px', color: theme === 'light' ? 'rgba(0, 0, 0, 0.45)' : 'rgba(255, 255, 255, 0.45)' }}
-            >
-              Task Management Module
-            </span>
-            <button 
-              className={`ant-switch ${theme === 'dark' ? 'ant-switch-checked' : ''}`} 
-              onClick={toggleTheme}
-              style={{
-                backgroundColor: theme === 'dark' ? '#1890ff' : 'rgba(0, 0, 0, 0.25)',
-                minWidth: '44px',
-                height: '22px',
-                borderRadius: '100px'
-              }}
-            >
-              <span className="ant-switch-inner" style={{ color: '#fff' }}>
-                {theme === 'dark' ? '🌙' : '☀️'}
-              </span>
-            </button>
+          {/* Breadcrumbs */}
+          <div className="ml-8 hidden md:flex items-center">
+            <span className={theme === 'light' ? 'text-gray-500' : 'text-gray-400'}>Home</span>
+            <svg className="mx-2 w-4 h-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+              <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd"></path>
+            </svg>
+            <span className={theme === 'light' ? 'text-gray-700 font-medium' : 'text-gray-200 font-medium'}></span>
           </div>
-        </header>
+        </div>
+        
+        <div className="flex items-center space-x-5">
+          <span 
+            className={theme === 'light' ? 'text-gray-500' : 'text-gray-400'}
+            style={{ fontSize: '14px' }}
+          >
+            Task Management Module
+          </span>
+          
+          {/* Theme Toggle */}
+          <button 
+            className={`flex items-center justify-center rounded-full w-10 h-6 ${theme === 'dark' ? 'bg-blue-500' : 'bg-gray-300'}`}
+            onClick={toggleTheme}
+          >
+            <div 
+              className={`w-5 h-5 rounded-full transform duration-200 flex items-center justify-center ${theme === 'dark' ? 'translate-x-2 bg-white text-blue-500' : 'translate-x--2 bg-white text-amber-500'}`}
+            >
+              {theme === 'dark' ? '🌙' : '☀️'}
+            </div>
+          </button>
+        </div>
+      </header>
 
-        {/* Main Content */}
-        <main className="p-6 md:p-8">
-          <div className="container mx-auto">
-            {/* Section Title */}
-            <div className="text-center mb-12">
+      {/* Page Content - Full Screen */}
+      <main className="p-4 md:p-6 relative z-2 w-full">
+        <div className="w-full max-w-none">
+          {/* Dashboard Header */}
+          <div className="mb-10 px-2">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
+              <div>
+                <h1 
+                  className={theme === 'light' ? 'text-gray-900' : 'text-white'}
+                  style={{ 
+                    fontSize: '30px',
+                    fontWeight: 600,
+                    marginBottom: '8px',
+                    letterSpacing: '-0.01em'
+                  }}
+                >
+                  
+                </h1>
+                <p 
+                  className={theme === 'light' ? 'text-gray-600' : 'text-gray-300'}
+                  style={{ maxWidth: '700px' }}
+                >
+                 
+                </p>
+              </div>
+            </div>
+            
+            {/* Module Section Subheader */}
+            <div className="text-center mb-8">
               <h2 
-                className="ant-typography" 
+                className={theme === 'light' ? 'text-gray-800' : 'text-gray-100'}
                 style={{ 
-                  color: theme === 'light' ? '#1f1f1f' : '#fff', 
-                  marginBottom: '8px',
-                  fontSize: '30px',
-                  fontWeight: 600
+                  fontSize: '24px',
+                  fontWeight: 600,
+                  marginBottom: '8px'
                 }}
               >
                 Module Selection
               </h2>
               <p 
-                className="ant-typography" 
-                style={{ 
-                  maxWidth: '700px', 
-                  margin: '0 auto',
-                  color: theme === 'light' ? 'rgba(0, 0, 0, 0.65)' : 'rgba(255, 255, 255, 0.65)'
-                }}
+                className={theme === 'light' ? 'text-gray-600' : 'text-gray-400'}
+                style={{ maxWidth: '700px', margin: '0 auto' }}
               >
                 Select one of the following modules to access specialized monitoring and management abilities.
               </p>
             </div>
+          </div>
 
-            {/* Cards Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
-              {views.map((view, index) => (
-                <div 
-                  key={view.id}
-                  className="h-full"
-                  style={{ 
-                    opacity: 0,
-                    animation: `fadeIn 0.5s ease-out ${0.1 + index * 0.1}s forwards`
-                  }}
-                  onMouseEnter={() => setActiveViewId(view.id)}
-                  onMouseLeave={() => setActiveViewId(null)}
-                >
-                  <a href={view.path} className="block h-full no-underline">
-                    <div 
-                      className="ant-card ant-card-hoverable" 
-                      style={{ 
-                        height: '100%',
-                        background: theme === 'light' ? '#fff' : '#141414',
-                        borderRadius: '8px',
-                        overflow: 'hidden',
-                        border: theme === 'light' ? '1px solid #f0f0f0' : '1px solid #303030',
-                        transition: 'all 0.3s ease'
-                      }}
-                    >
-                      <div className="relative h-48">
-                        <div 
-                          className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent z-10"
-                          style={{ transition: 'opacity 0.3s ease' }}
-                        />
-                        <img
-                          src={view.image}
-                          alt={view.name}
-                          className="w-full h-full object-cover"
-                          style={{ transition: 'transform 0.7s ease' }}
-                        />
-                        <div className="absolute bottom-3 left-4 z-20">
-                          <span 
-                            className="ant-typography ant-typography-strong" 
-                            style={{ color: '#fff', fontSize: '18px' }}
-                          >
-                            {view.id === 3 && activeViewId === 3 ? view.hoverName : view.name}
-                          </span>
-                        </div>
+          {/* Cards Grid - Full Width */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 px-2">
+            {views.map((view, index) => (
+              <div 
+                key={view.id}
+                className="h-full"
+                style={{ 
+                  opacity: 0,
+                  animation: `fadeIn 0.5s ease-out ${0.1 + index * 0.1}s forwards`
+                }}
+                onMouseEnter={() => setActiveViewId(view.id)}
+                onMouseLeave={() => setActiveViewId(null)}
+              >
+                <a href={view.path} className="block h-full no-underline">
+                  <div 
+                    className={`rounded-xl overflow-hidden h-full transition-all duration-300 ${theme === 'light' ? 'bg-white border border-gray-100' : 'bg-gray-800 border border-gray-700'}`}
+                    style={{ 
+                      boxShadow: theme === 'light' ? '0 4px 12px rgba(0, 0, 0, 0.05)' : '0 4px 12px rgba(0, 0, 0, 0.2)'
+                    }}
+                  >
+                    <div className="relative h-48">
+                      {/* Image Overlay Gradient */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/40 to-transparent z-10" />
+                      
+                      {/* Status Badge */}
+                      <div className="absolute top-3 right-3 z-20">
+                        <span 
+                          className={`py-1 px-2 rounded-full text-xs font-medium ${view.id === 1 ? 'bg-blue-500 text-white' : view.id === 2 ? 'bg-purple-500 text-white' : 'bg-amber-500 text-white'}`}
+                        >
+                          {view.id === 1 ? 'Analytics' : view.id === 2 ? 'Management' : 'Monitoring'}
+                        </span>
                       </div>
-                      <div style={{ padding: 0 }}>
-                        <div className="p-5">
-                          <div className="flex items-start justify-between mb-4">
-                            <div>
-                              <h4 
-                                className="ant-typography" 
-                                style={{ 
-                                  marginBottom: '8px',
-                                  color: theme === 'light' ? '#1f1f1f' : '#fff',
-                                  fontSize: '20px',
-                                  fontWeight: 600
-                                }}
-                              >
-                                {view.id === 3 && activeViewId === 3 ? view.hoverName : view.name}
-                              </h4>
-                              <p 
-                                className="ant-typography" 
-                                style={{ 
-                                  fontSize: '14px',
-                                  color: theme === 'light' ? 'rgba(0, 0, 0, 0.65)' : 'rgba(255, 255, 255, 0.65)',
-                                  marginBottom: '0'
-                                }}
-                              >
-                                {view.description}
-                              </p>
-                            </div>
-                            <span className="text-2xl">{view.icon}</span>
-                          </div>
-                          
-                          <div 
-                            className="ant-divider" 
-                            style={{ 
-                              margin: '16px 0',
-                              borderTop: theme === 'light' ? '1px solid #f0f0f0' : '1px solid #303030'
-                            }}
-                          ></div>
-                          
-                          <div className="flex items-center justify-between">
-                            <span className="ant-badge">
-                              <span 
-                                className="ant-badge-count" 
-                                style={{ 
-                                  backgroundColor: 'transparent',
-                                  color: theme === 'light' ? 'rgba(0, 0, 0, 0.45)' : 'rgba(255, 255, 255, 0.45)',
-                                  boxShadow: 'none',
-                                  fontSize: '12px',
-                                  padding: '0'
-                                }}
-                              >
-                                Module {view.id}
-                              </span>
-                            </span>
-                            <button 
-                              className="ant-btn ant-btn-primary" 
-                              style={{ 
-                                background: theme === 'light' ? '#1890ff' : '#177ddc',
-                                borderColor: theme === 'light' ? '#1890ff' : '#177ddc',
-                                borderRadius: '4px',
-                                color: '#fff',
-                                padding: '4px 15px',
-                                height: '32px',
-                                fontSize: '14px'
-                              }}
-                            >
-                              Access
-                            </button>
-                          </div>
-                        </div>
+                      
+                      <img
+                        src={view.image}
+                        alt={view.name}
+                        className="w-full h-full object-cover transition-transform duration-700"
+                      />
+                      
+                      <div className="absolute bottom-4 left-4 z-20">
+                        <span 
+                          className="text-white font-bold"
+                          style={{ fontSize: '20px', textShadow: '0 1px 3px rgba(0,0,0,0.3)' }}
+                        >
+                          {view.id === 3 && activeViewId === 3 ? view.hoverName : view.name}
+                        </span>
                       </div>
                     </div>
-                  </a>
-                </div>
-              ))}
-            </div>
+                    
+                    <div className="p-5">
+                      <div className="flex items-start justify-between mb-3">
+                        <div>
+                          <h3 
+                            className={theme === 'light' ? 'text-gray-900' : 'text-white'}
+                            style={{ 
+                              fontSize: '18px',
+                              fontWeight: 600,
+                              marginBottom: '4px'
+                            }}
+                          >
+                            {view.id === 3 && activeViewId === 3 ? view.hoverName : view.name}
+                          </h3>
+                          <p 
+                            className={theme === 'light' ? 'text-gray-600' : 'text-gray-300'}
+                            style={{ fontSize: '14px' }}
+                          >
+                            {view.description}
+                          </p>
+                        </div>
+                        <div className={`flex items-center justify-center w-10 h-10 rounded-full ${view.id === 1 ? 'bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-300' : view.id === 2 ? 'bg-purple-100 text-purple-600 dark:bg-purple-900 dark:text-purple-300' : 'bg-amber-100 text-amber-600 dark:bg-amber-900 dark:text-amber-300'}`}>
+                          <span className="text-xl">{view.icon}</span>
+                        </div>
+                      </div>
+                      
+                      <div 
+                        className="h-px w-full my-4"
+                        style={{ background: theme === 'light' ? '#f3f4f6' : '#374151' }}  
+                      ></div>
+                      
+                      <div className="flex items-center justify-between">
+                        <span 
+                          className={theme === 'light' ? 'text-gray-500' : 'text-gray-400'}
+                          style={{ fontSize: '12px' }}
+                        >
+                          
+                        </span>
+                        <button 
+                          className={`py-2 px-4 rounded-lg font-medium text-sm ${view.id === 1 ? 'bg-blue-600 hover:bg-blue-700 text-white' : view.id === 2 ? 'bg-purple-600 hover:bg-purple-700 text-white' : 'bg-amber-600 hover:bg-amber-700 text-white'}`}
+                        >
+                          Access
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </a>
+              </div>
+            ))}
           </div>
-        </main>
+        </div>
+      </main>
 
-        {/* Footer */}
-        <footer 
-          style={{ 
-            background: theme === 'light' ? '#fff' : '#141414',
-            borderTop: theme === 'light' ? '1px solid #f0f0f0' : '1px solid #303030',
-            padding: '16px 24px'
-          }}
-        >
-          <div className="container mx-auto flex flex-col md:flex-row justify-between items-center">
-            <span 
-              className="ant-typography ant-typography-secondary" 
-              style={{ 
-                fontSize: '14px',
-                color: theme === 'light' ? 'rgba(0, 0, 0, 0.45)' : 'rgba(255, 255, 255, 0.45)'
-              }}
-            >
-              © 2025 CARS24 CFSPL. All rights reserved.
-            </span>
-            <div className="mt-4 md:mt-0">
-              <span 
-                className="ant-tag ant-tag-blue" 
-                style={{ 
-                  fontSize: '12px',
-                  padding: '0 8px',
-                  borderRadius: '4px',
-                  color: theme === 'light' ? '#1890ff' : '#177ddc',
-                  backgroundColor: theme === 'light' ? '#e6f7ff' : 'rgba(24, 144, 255, 0.1)',
-                  borderColor: theme === 'light' ? '#91d5ff' : '#177ddc'
-                }}
-              >
-                Version 2.1.4
-              </span>
+      {/* Footer */}
+      <footer className={`mt-12 border-t ${theme === 'light' ? 'bg-white border-gray-200' : 'bg-gray-900 border-gray-700'}`}>
+        <div className="w-full px-6 py-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div>
+              <div className={`text-lg font-semibold mb-4 ${theme === 'light' ? 'text-gray-900' : 'text-white'}`}>
+                CARS24 CFSPL
+              </div>
+              <p className={`text-sm ${theme === 'light' ? 'text-gray-600' : 'text-gray-400'}`}>
+                Transforming the way India buys and sells cars, providing technology-driven solutions for a seamless experience.
+              </p>
+            </div>
+            
+            <div>
+              <div className={`text-sm font-semibold mb-4 ${theme === 'light' ? 'text-gray-700' : 'text-gray-300'}`}>
+                
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+
+              </div>
+            </div>
+            
+            <div className="flex flex-col items-end">
+              <div className="flex space-x-3 mb-4">
+                <span className={`px-3 py-1 rounded-full text-xs font-medium ${theme === 'light' ? 'bg-blue-100 text-blue-800' : 'bg-blue-900 text-blue-200'}`}>
+                  Version 2.1.4
+                </span>
+                <span className={`px-3 py-1 rounded-full text-xs font-medium ${theme === 'light' ? 'bg-green-100 text-green-800' : 'bg-green-900 text-green-200'}`}>
+                  
+                </span>
+              </div>
+              <p className={`text-sm ${theme === 'light' ? 'text-gray-500' : 'text-gray-400'}`}>
+                © 2025 CARS24 CFSPL. All rights reserved.
+              </p>
             </div>
           </div>
-        </footer>
-      </div>
+        </div>
+      </footer>
 
       <style jsx>{`
         @keyframes fadeIn {
@@ -379,16 +378,16 @@ const HomePage = () => {
           to { opacity: 1; transform: translateY(0); }
         }
         
-        .ant-card-hoverable:hover img {
-          transform: scale(1.04);
+        a:hover img {
+          transform: scale(1.05);
         }
         
-        .ant-card-hoverable:hover {
-          transform: translateY(-5px);
+        a:hover > div {
+          transform: translateY(-4px);
           box-shadow: ${theme === 'light' 
-            ? '0 10px 20px rgba(0, 0, 0, 0.1)' 
-            : '0 10px 20px rgba(0, 0, 0, 0.3)'};
-        }
+            ? '0 12px 24px rgba(0, 0, 0, 0.10)' 
+            : '0 12px 24px rgba(0, 0, 0, 0.35)'};
+        
       `}</style>
     </div>
   );

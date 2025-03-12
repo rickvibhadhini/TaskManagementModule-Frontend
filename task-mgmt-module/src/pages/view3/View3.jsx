@@ -16,7 +16,9 @@ import {
   Tag, 
   Statistic,
   Alert,
-  Tooltip as AntTooltip
+  Tooltip as AntTooltip,
+  Select,
+  theme
 } from 'antd';
 import { 
   ClockCircleOutlined, 
@@ -30,7 +32,7 @@ import {
   InfoCircleOutlined,
   DownOutlined
 } from '@ant-design/icons';
-import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } from 'recharts';
 import axios from 'axios';
 
 const { Header, Content } = Layout;
@@ -38,6 +40,7 @@ const { Title, Text } = Typography;
 const { Search } = Input;
 
 const View3 = () => {
+  const { token } = theme.useToken();
   const [selectedFunnel, setSelectedFunnel] = useState('all');
   const [selectedTask, setSelectedTask] = useState(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
@@ -95,12 +98,12 @@ const View3 = () => {
     return convertTimeToMinutes(data.averageTAT);
   }, [data]);
 
-  // Define colors for each funnel
+  // Define colors for each funnel using Ant Design colors
   const funnelColors = {
-    sourcing: "#4ade80", // Green
-    credit: "#3b82f6",   // Blue
-    conversion: "#f97316", // Orange
-    fulfillment: "#8b5cf6" // Purple
+    sourcing: token.colorSuccess,     // Green
+    credit: token.colorInfo,          // Blue
+    conversion: token.colorWarning,   // Orange/Yellow
+    fulfillment: '#722ed1'            // Purple color for fulfillment
   };
 
   // Define funnel order
@@ -116,7 +119,7 @@ const View3 = () => {
       displayTime: data.funnels[funnel].timeTaken,
       color: funnelColors[funnel]
     }));
-  }, [data]);
+  }, [data, funnelColors]);
 
   // Create task data organized by funnel
   const getTasksByFunnel = useMemo(() => {
@@ -329,7 +332,7 @@ const View3 = () => {
             width: 8, 
             height: 8, 
             borderRadius: '50%', 
-            backgroundColor: funnelColors[record.funnel],
+            backgroundColor: '#000', // Black dot
             display: 'inline-block',
             marginRight: 8
           }} />
@@ -411,60 +414,67 @@ const View3 = () => {
     return <CheckCircleFilled style={{ color: '#52c41a' }} />;
   };
 
+  // Define chart height constant for the line chart
+  const CHART_HEIGHT = 350;
+  // Define a taller height for the bar chart to match the line chart + status descriptions
+  const BAR_CHART_HEIGHT = 430;
+
   return (
-    <Layout style={{ height: '100vh' }}>
-      <Header style={{ background: '#fff', padding: '0 24px', boxShadow: '0 1px 4px rgba(0,21,41,.08)' }}>
-        <Row justify="space-between" align="middle">
-          <Col>
-            <Title level={3} style={{ margin: '16px 0' }}>SLA Monitoring Dashboard</Title>
-          </Col>
-          <Col>
-            <Space size="large">
-              {data && (
-                <Button 
-                  type="primary" 
-                  icon={<TableOutlined />} 
-                  onClick={scrollToTable}
-                >
-                  View Table
-                </Button>
-              )}
-              
-              <Form layout="inline" onFinish={() => fetchData(channel)}>
-                <Form.Item>
-                  <Search
-                    placeholder="Enter channel"
-                    value={channel}
-                    onChange={(e) => setChannel(e.target.value)}
-                    onSearch={() => fetchData(channel)}
-                    enterButton="Load Data"
-                    loading={loading}
-                  />
-                </Form.Item>
-              </Form>
-              
-              {data && (
-                <Card size="small" style={{ background: '#f0f5ff', borderColor: '#d6e4ff' }}>
-                  <Space>
-                    <ClockCircleOutlined style={{ color: '#1890ff' }} />
-                    <Text strong>Total Average Turnaround Time:</Text>
-                    <Text strong style={{ color: '#1890ff' }}>{data.averageTAT}</Text>
-                  </Space>
-                </Card>
-              )}
+    <Layout style={{ height: '100vh', width : '100vw' }}>
+     <Header style={{ background: '#fff', padding: '0 24px', boxShadow: '0 1px 4px rgba(0,21,41,.08)' }}>
+  <Row justify="space-between" align="middle">
+    <Col>
+      <Title level={3} style={{ margin: '16px 0' }}>SLA Monitoring Dashboard</Title>
+    </Col>
+    <Col>
+      <Space size="large">
+        <Form layout="inline" onFinish={() => fetchData(channel)}>
+          <Form.Item>
+            <Space>
+              <Select
+                placeholder="Select channel"
+                value={channel}
+                onChange={(value) => setChannel(value)}
+                style={{ width: 120 }}
+                options={[
+                  { value: 'D2C', label: 'D2C' },
+                  { value: 'C2C', label: 'C2C' },
+                  { value: 'DCF', label: 'DCF' },
+                ]}
+              />
+              <Button 
+                type="primary" 
+                onClick={() => fetchData(channel)} 
+                loading={loading}
+              >
+                Load Data
+              </Button>
             </Space>
-          </Col>
-        </Row>
+          </Form.Item>
+        </Form>
         
-        {error && (
-          <Alert
-            message={error}
-            type="error"
-            showIcon
-            style={{ marginTop: 16 }}
-          />
+        {data && (
+          <Card size="small" style={{ background: '#f0f5ff', borderColor: '#d6e4ff' }}>
+            <Space>
+              <ClockCircleOutlined style={{ color: '#1890ff' }} />
+              <Text strong>Total Average Turnaround Time:</Text>
+              <Text strong style={{ color: '#1890ff' }}>{data.averageTAT}</Text>
+            </Space>
+          </Card>
         )}
-      </Header>
+      </Space>
+    </Col>
+  </Row>
+  
+  {error && (
+    <Alert
+      message={error}
+      type="error"
+      showIcon
+      style={{ marginTop: 16 }}
+      />
+      )}
+    </Header>
       
       <Content style={{ padding: '24px', background: '#f0f2f5', overflowY: 'auto' }}>
         {!data ? (
@@ -491,17 +501,10 @@ const View3 = () => {
                     </Space>
                   }
                   hoverable
-                  extra={
-                    <Button
-                      type="text"
-                      icon={<TableOutlined />}
-                      onClick={scrollToTable}
-                    >
-                      View Table
-                    </Button>
-                  }
+                  style={{ marginBottom: 0, height: '100%' }}
+                  bodyStyle={{ height: BAR_CHART_HEIGHT }}
                 >
-                  <div style={{ height: 300 }}>
+                  <div style={{ height: '100%' }}>
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart 
                         data={getFunnelChartData} 
@@ -512,7 +515,18 @@ const View3 = () => {
                         <XAxis dataKey="name" />
                         <YAxis label={{ value: 'Minutes', angle: -90, position: 'insideLeft' }} />
                         <Tooltip content={<FunnelTooltip />} />
-                        <Legend />
+                        <Legend 
+                          formatter={(value) => {
+                            return <span>{value}</span>;
+                          }}
+                          payload={
+                            funnelOrder.map(funnel => ({
+                              value: funnel.charAt(0).toUpperCase() + funnel.slice(1),
+                              type: 'square',
+                              color: funnelColors[funnel]
+                            }))
+                          }
+                        />
                         <Bar 
                           dataKey="minutes" 
                           name="Average Time (minutes)"
@@ -520,38 +534,12 @@ const View3 = () => {
                           animationDuration={1500}
                         >
                           {getFunnelChartData.map((entry, index) => (
-                            <rect key={`rect-${index}`} fill={entry.color} />
+                            <Cell key={`cell-${index}`} fill={entry.color} />
                           ))}
                         </Bar>
                       </BarChart>
                     </ResponsiveContainer>
                   </div>
-                  
-                  <Divider />
-                  
-                  <Space wrap style={{ justifyContent: 'center' }}>
-                    {funnelOrder.map(funnel => (
-                      <Button 
-                        key={funnel}
-                        type="text"
-                        onClick={() => setSelectedFunnel(funnel)}
-                        icon={
-                          <span 
-                            style={{ 
-                              display: 'inline-block',
-                              width: 12,
-                              height: 12,
-                              borderRadius: 2,
-                              background: funnelColors[funnel],
-                              marginRight: 8
-                            }} 
-                          />
-                        }
-                      >
-                        {funnel.charAt(0).toUpperCase() + funnel.slice(1)}
-                      </Button>
-                    ))}
-                  </Space>
                 </Card>
               </Col>
 
@@ -566,40 +554,27 @@ const View3 = () => {
                   }
                   hoverable
                   extra={
-                    <Space>
-                      <Button
-                        type="text"
-                        icon={<TableOutlined />}
-                        onClick={scrollToTable}
-                      >
-                        View Table
-                      </Button>
-                      <Radio.Group 
-                        value={selectedFunnel}
-                        onChange={(e) => setSelectedFunnel(e.target.value)}
-                        optionType="button"
-                        buttonStyle="solid"
-                        size="small"
-                      >
-                        <Radio.Button value="all">All</Radio.Button>
-                        {funnelOrder.map(funnel => (
-                          <Radio.Button 
-                            key={funnel} 
-                            value={funnel}
-                            style={{ 
-                              color: selectedFunnel === funnel ? '#fff' : undefined,
-                              background: selectedFunnel === funnel ? funnelColors[funnel] : undefined,
-                              borderColor: selectedFunnel === funnel ? funnelColors[funnel] : undefined
-                            }}
-                          >
-                            {funnel.charAt(0).toUpperCase() + funnel.slice(1)}
-                          </Radio.Button>
-                        ))}
-                      </Radio.Group>
-                    </Space>
+                    <Radio.Group 
+                      value={selectedFunnel}
+                      onChange={(e) => setSelectedFunnel(e.target.value)}
+                      optionType="button"
+                      buttonStyle="solid"
+                      size="small"
+                    >
+                      <Radio.Button value="all">All</Radio.Button>
+                      {funnelOrder.map(funnel => (
+                        <Radio.Button 
+                          key={funnel} 
+                          value={funnel}
+                        >
+                          {funnel.charAt(0).toUpperCase() + funnel.slice(1)}
+                        </Radio.Button>
+                      ))}
+                    </Radio.Group>
                   }
+                  style={{ marginBottom: 0 }}
                 >
-                  <div style={{ height: 300 }}>
+                  <div style={{ height: CHART_HEIGHT }}>
                     <ResponsiveContainer width="100%" height="100%">
                       <LineChart 
                         data={getLineChartData} 
@@ -618,7 +593,7 @@ const View3 = () => {
                         <Line 
                           type="monotone" 
                           dataKey="minutes" 
-                          name="Time (minutes)"
+                          name="Task"
                           stroke="#1890ff" 
                           strokeWidth={2}
                           dot={<CustomizedDot />}
@@ -682,11 +657,6 @@ const View3 = () => {
                         <Radio.Button 
                           key={funnel} 
                           value={funnel}
-                          style={{ 
-                            color: selectedFunnel === funnel ? '#fff' : undefined,
-                            background: selectedFunnel === funnel ? funnelColors[funnel] : undefined,
-                            borderColor: selectedFunnel === funnel ? funnelColors[funnel] : undefined
-                          }}
                         >
                           {funnel.charAt(0).toUpperCase() + funnel.slice(1)}
                         </Radio.Button>
@@ -772,7 +742,7 @@ const View3 = () => {
                           width: 16, 
                           height: 16, 
                           borderRadius: '50%', 
-                          backgroundColor: funnelColors[selectedTask.funnel], 
+                          backgroundColor: funnelColors[selectedTask.funnel] || '#000',
                           display: 'inline-block',
                           marginRight: 8
                         }} />
