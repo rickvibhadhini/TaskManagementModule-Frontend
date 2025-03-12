@@ -421,58 +421,55 @@ const View3 = () => {
   return (
     <Layout style={{ height: '100vh', width: '100vw' }}>
       <Header style={{ background: '#fff', padding: '0 24px', boxShadow: '0 1px 4px rgba(0,21,41,.08)' }}>
-        <Row justify="space-between" align="middle">
-          <Col>
-            <Title level={3} style={{ margin: '16px 0' }}>SLA Monitoring Dashboard</Title>
-          </Col>
-          <Col>
-            <Space size="large">
-              <Space>
-
-                
-
-                <Select
-                  placeholder="Select channel"
-                  value={channel}
-                  onChange={(value) => setChannel(value)}
-                  style={{ width: 120 }}
-                  options={[
-                    { value: 'D2C', label: 'D2C' },
-                    { value: 'C2C', label: 'C2C' },
-                    { value: 'DCF', label: 'DCF' },
-                  ]}
-                />
-                <Button 
-                  type="primary" 
-                  onClick={() => fetchData(channel)} 
-                  loading={loading}
-                >
-                  Load Data
-                </Button>
-              </Space>
-              
-              {data && (
-                <Card size="small" style={{ background: '#f0f5ff', borderColor: '#d6e4ff' }}>
-                  <Space>
-                    <ClockCircleOutlined style={{ color: '#1890ff' }} />
-                    <Text strong>Total Average Turnaround Time:</Text>
-                    <Text strong style={{ color: '#1890ff' }}>{data.averageTAT}</Text>
-                  </Space>
-                </Card>
-              )}
-            </Space>
-          </Col>
-        </Row>
-        
-        {error && (
-          <Alert
-            message={error}
-            type="error"
-            showIcon
-            style={{ marginTop: 16 }}
+  <Row justify="space-between" align="middle">
+    <Col>
+      <Title level={3} style={{ margin: '16px 0' }}>SLA Monitoring Dashboard</Title>
+    </Col>
+    <Col>
+      <Space size="large">
+        <Space>
+          <Select
+            placeholder="Select channel"
+            value={channel}
+            onChange={(value) => setChannel(value)}
+            style={{ width: 120, display: 'inline-block' }} // Added display: 'inline-block'
+            options={[
+              { value: 'D2C', label: 'D2C' },
+              { value: 'C2C', label: 'C2C' },
+              { value: 'DCF', label: 'DCF' },
+            ]}
           />
+          <Button 
+            type="primary" 
+            onClick={() => fetchData(channel)} 
+            loading={loading}
+          >
+            Load Data
+          </Button>
+        </Space>
+        
+        {data && (
+          <Card size="small" style={{ background: '#f0f5ff', borderColor: '#d6e4ff' }}>
+            <Space>
+              <ClockCircleOutlined style={{ color: '#1890ff' }} />
+              <Text strong>Total Average Turnaround Time:</Text>
+              <Text strong style={{ color: '#1890ff' }}>{data.averageTAT}</Text>
+            </Space>
+          </Card>
         )}
-      </Header>
+      </Space>
+    </Col>
+  </Row>
+  
+  {error && (
+    <Alert
+      message={error}
+      type="error"
+      showIcon
+      style={{ marginTop: 16 }}
+    />
+  )}
+</Header>
       
       <Content style={{ padding: '24px', background: '#f0f2f5', overflowY: 'auto' }}>
         {!data ? (
