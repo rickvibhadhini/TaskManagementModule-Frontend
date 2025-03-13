@@ -156,8 +156,4 @@ const ModuleCard = ({ view, index }) => {
   );
 };
 
-<<<<<<< HEAD
 export default ModuleCard;
-=======
-export default ModuleCard;
->>>>>>> d16b356694f3de0b540b42ba3b926b381e77995e
