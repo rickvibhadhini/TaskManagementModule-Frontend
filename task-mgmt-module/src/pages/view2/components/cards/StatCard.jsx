@@ -1,21 +1,21 @@
 import React from 'react';
 import { Card, Statistic, Badge } from 'antd';
+import { AuditOutlined } from '@ant-design/icons';
 
-// Helper component to avoid error with missing Progress component
-const Progress = ({ percent, status, showInfo }) => {
+const Progress = ({ percent, status }) => {
   const getBackgroundColor = () => {
     if (status === 'success') return '#52c41a';
     if (status === 'normal') return '#1890ff';
     return '#f5222d';
   };
-  
+
   return (
-    <div className="w-full bg-gray-200 rounded-full h-2.5">
+    <div className="w-full bg-gray-200 rounded-full h-2.5 overflow-hidden">
       <div 
-        className="h-2.5 rounded-full" 
+        className="h-2.5 rounded-full transition-all duration-300" 
         style={{ 
-          width: `${percent}%`, 
-          backgroundColor: getBackgroundColor()
+          width: `${Math.min(100, Math.max(0, percent))}%`,
+          backgroundColor: getBackgroundColor(),
         }}
       ></div>
     </div>
@@ -27,20 +27,21 @@ const StatCard = ({ title, value, prefix, suffix, valueStyle, showProgress, prog
     <Card className="h-full shadow-sm hover:shadow-md transition-shadow">
       <Statistic
         title={title}
-        value={value}
+        value={value ?? 0}
         prefix={prefix}
         suffix={suffix}
         valueStyle={valueStyle}
       />
+      
       {showProgress && (
-        <div className="mt-2">
+        <div className="mt-3 w-full">
           <Progress 
-            percent={progressPercent} 
+            percent={Math.min(100, Math.max(0, progressPercent ?? 0))}
             status={progressStatus} 
-            showInfo={false}
           />
         </div>
       )}
+
       {badgeText && (
         <div className="mt-2">
           <Badge status="processing" text={badgeText} />
