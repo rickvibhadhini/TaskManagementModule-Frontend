@@ -2,9 +2,7 @@ import React, { useState, useMemo, useRef } from 'react';
 import { 
   Layout, 
   Typography, 
-  Input, 
   Button, 
-  Form, 
   Card, 
   Space, 
   Table, 
@@ -13,7 +11,7 @@ import {
   Col, 
   Divider, 
   Radio, 
-  Tag, 
+  Tag,
   Statistic,
   Alert,
   Tooltip as AntTooltip,
@@ -29,7 +27,7 @@ import {
   CheckCircleFilled,
   WarningFilled,
   CloseCircleFilled,
-  InfoCircleOutlined,
+  UpOutlined,
   DownOutlined
 } from '@ant-design/icons';
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } from 'recharts';
@@ -37,7 +35,6 @@ import axios from 'axios';
 
 const { Header, Content } = Layout;
 const { Title, Text } = Typography;
-const { Search } = Input;
 
 const View3 = () => {
   const { token } = theme.useToken();
@@ -48,32 +45,45 @@ const View3 = () => {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [showTable, setShowTable] = useState(false);
   const tableRef = useRef(null);
 
-  
-  const scrollToTable = () => {
-    tableRef.current?.scrollIntoView({ behavior: 'smooth' });
+  const toggleView = () => {
+    setShowTable(!showTable);
+    if (!showTable) {
+      // When switching to table view, scroll to table
+      setTimeout(() => {
+        tableRef.current?.scrollIntoView({ behavior: 'smooth' });
+      }, 100);
+    }
   };
-
   
   const fetchData = async (channelValue) => {
     if (!channelValue) return;
   
     setLoading(true);
     setError(null);
+    // Reset states when fetching new data
+    setData(null);
+    setSelectedFunnel('all');
+    setShowTable(false);
+    setSelectedTask(null);
   
     try {
       const response = await axios.get(`http://localhost:8081/SLAMonitoring/time/${channelValue}`);
-      setData(response.data);
+      if (!response.data || !response.data.funnels || Object.keys(response.data.funnels).length === 0) {
+        setError(`No data available for channel ${channelValue}`);
+      } else {
+        setData(response.data);
+      }
     } catch (err) {
       console.error('Error fetching data:', err);
-      setError('Failed to fetch data. Please try again.');
+      setError(`Failed to fetch data for channel ${channelValue}. Please try again.`);
     } finally {
       setLoading(false);
     }
   };
 
- 
   const convertTimeToMinutes = (timeStr) => {
     if (!timeStr) return 0;
   
@@ -92,13 +102,11 @@ const View3 = () => {
     return totalMinutes;
   };
 
-  
   const getTATMinutes = useMemo(() => {
     if (!data || !data.averageTAT) return 100; 
     return convertTimeToMinutes(data.averageTAT);
   }, [data]);
 
-  
   const funnelColors = {
     sourcing: token.colorSuccess,     
     credit: token.colorInfo,          
@@ -106,10 +114,8 @@ const View3 = () => {
     fulfillment: '#722ed1'            
   };
 
-  
   const funnelOrder = ["sourcing", "credit", "conversion", "fulfillment"];
 
-  
   const getFunnelChartData = useMemo(() => {
     if (!data || !data.funnels) return [];
   
@@ -121,7 +127,6 @@ const View3 = () => {
     }));
   }, [data, funnelColors]);
 
-  
   const getTasksByFunnel = useMemo(() => {
     if (!data || !data.funnels) return {};
     
@@ -137,7 +142,6 @@ const View3 = () => {
         const minutes = convertTimeToMinutes(taskData.timeTaken);
         const percentOfTAT = (minutes / totalTAT) * 100;
       
-        
         let performanceLevel = "good"; 
         if (percentOfTAT >= 90) {
           performanceLevel = "critical"; 
@@ -156,19 +160,16 @@ const View3 = () => {
         });
       });
     
-      
       tasksByFunnel[funnel].sort((a, b) => a.taskNumber - b.taskNumber);
     });
   
     return tasksByFunnel;
   }, [data, getTATMinutes]);
 
-  
   const getLineChartData = useMemo(() => {
     if (!data || !data.funnels) return [];
   
     if (selectedFunnel === 'all') {
-      
       const result = [];
       Object.entries(getTasksByFunnel).forEach(([funnel, tasks]) => {
         if (Array.isArray(tasks)) {
@@ -187,7 +188,6 @@ const View3 = () => {
       });
       return result;
     } else if (getTasksByFunnel[selectedFunnel]) {
-      
       return getTasksByFunnel[selectedFunnel].map(task => ({
         name: `Task ${task.taskNumber}`,
         minutes: task.minutes,
@@ -202,7 +202,6 @@ const View3 = () => {
     return [];
   }, [getTasksByFunnel, selectedFunnel]);
 
-  
   const getTableData = useMemo(() => {
     if (!data || !data.funnels) return [];
     
@@ -215,7 +214,6 @@ const View3 = () => {
         const minutes = convertTimeToMinutes(taskData.timeTaken);
         const percentOfTAT = (minutes / totalTAT) * 100;
       
-        
         let performanceLevel = "good"; 
         if (percentOfTAT >= 90) {
           performanceLevel = "critical";
@@ -240,7 +238,6 @@ const View3 = () => {
     return tableData;
   }, [data, getTATMinutes]);
 
-  
   const getFilteredTableData = useMemo(() => {
     if (!getTableData || !Array.isArray(getTableData)) return [];
     
@@ -249,7 +246,6 @@ const View3 = () => {
       : getTableData.filter(item => item.funnel === selectedFunnel);
   }, [getTableData, selectedFunnel]);
 
-  
   const handleBarClick = (data) => {
     if (data && data.activePayload && data.activePayload.length) {
       const funnelName = data.activePayload[0].payload.name.toLowerCase();
@@ -257,7 +253,6 @@ const View3 = () => {
     }
   };
 
-  
   const handleTaskClick = (data) => {
     if (data && data.activePayload && data.activePayload.length) {
       setSelectedTask(data.activePayload[0].payload);
@@ -265,7 +260,6 @@ const View3 = () => {
     }
   };
 
-  
   const FunnelTooltip = ({ active, payload }) => {
     if (active && payload && payload.length) {
       return (
@@ -279,7 +273,6 @@ const View3 = () => {
     return null;
   };
 
-  
   const TaskTooltip = ({ active, payload }) => {
     if (active && payload && payload.length) {
       const data = payload[0].payload;
@@ -301,7 +294,6 @@ const View3 = () => {
     return null;
   };
 
-  
   const CustomizedDot = (props) => {
     const { cx, cy, payload } = props;
     
@@ -320,7 +312,6 @@ const View3 = () => {
     );
   };
 
-  
   const columns = [
     {
       title: 'Task Name',
@@ -332,7 +323,7 @@ const View3 = () => {
             width: 8, 
             height: 8, 
             borderRadius: '50%', 
-            backgroundColor: '#000', 
+            backgroundColor: funnelColors[record.funnel] || '#000', 
             display: 'inline-block',
             marginRight: 8
           }} />
@@ -407,51 +398,55 @@ const View3 = () => {
     },
   ];
 
-  
   const getStatusIcon = (level) => {
     if (level === 'critical') return <CloseCircleFilled style={{ color: '#f5222d' }} />;
     if (level === 'warning') return <WarningFilled style={{ color: '#faad14' }} />;
     return <CheckCircleFilled style={{ color: '#52c41a' }} />;
   };
 
-  
+  const getButtonColor = (funnel) => {
+    if (funnel === 'all') return '#1890ff'; // Default blue for "all"
+    return funnelColors[funnel] || '#1890ff';
+  };
+
   const CHART_HEIGHT = 350;
-  
   const BAR_CHART_HEIGHT = 430;
 
+  // Get the current funnel color for the toggle button
+  const getToggleButtonColor = () => {
+    if (selectedFunnel === 'all') return '#1890ff';
+    return funnelColors[selectedFunnel];
+  };
+
   return (
-    <Layout style={{ height: '100vh', width : '100vw' }}>
-     <Header style={{ background: '#fff', padding: '0 24px', boxShadow: '0 1px 4px rgba(0,21,41,.08)' }}>
+    <Layout style={{ height: '100vh', width: '100vw' }}>
+      <Header style={{ background: '#fff', padding: '0 24px', boxShadow: '0 1px 4px rgba(0,21,41,.08)' }}>
   <Row justify="space-between" align="middle">
     <Col>
       <Title level={3} style={{ margin: '16px 0' }}>SLA Monitoring Dashboard</Title>
     </Col>
     <Col>
       <Space size="large">
-        <Form layout="inline" onFinish={() => fetchData(channel)}>
-          <Form.Item>
-            <Space>
-              <Select
-                placeholder="Select channel"
-                value={channel}
-                onChange={(value) => setChannel(value)}
-                style={{ width: 120 }}
-                options={[
-                  { value: 'D2C', label: 'D2C' },
-                  { value: 'C2C', label: 'C2C' },
-                  { value: 'DCF', label: 'DCF' },
-                ]}
-              />
-              <Button 
-                type="primary" 
-                onClick={() => fetchData(channel)} 
-                loading={loading}
-              >
-                Load Data
-              </Button>
-            </Space>
-          </Form.Item>
-        </Form>
+        <Space>
+          <Select
+            placeholder="Select channel"
+            value={channel}
+            onChange={(value) => setChannel(value)}
+            style={{ width: 120, display: 'inline-block' }} // Added display: 'inline-block'
+            options={[
+              { value: 'D2C', label: 'D2C' },
+              { value: 'C2C', label: 'C2C' },
+              { value: 'DCF', label: 'DCF' },
+            ]}
+          />
+          <Button 
+            type="primary" 
+            onClick={() => fetchData(channel)} 
+            loading={loading}
+          >
+            Load Data
+          </Button>
+        </Space>
         
         {data && (
           <Card size="small" style={{ background: '#f0f5ff', borderColor: '#d6e4ff' }}>
@@ -472,9 +467,9 @@ const View3 = () => {
       type="error"
       showIcon
       style={{ marginTop: 16 }}
-      />
-      )}
-    </Header>
+    />
+  )}
+</Header>
       
       <Content style={{ padding: '24px', background: '#f0f2f5', overflowY: 'auto' }}>
         {!data ? (
@@ -490,191 +485,243 @@ const View3 = () => {
           </Card>
         ) : (
           <Space direction="vertical" size="middle" style={{ width: '100%' }}>
-            <Row gutter={[16, 16]}>
-              {/* Funnel Time Chart */}
-              <Col xs={24} lg={12}>
-                <Card 
-                  title={
-                    <Space>
-                      <BarChartOutlined />
-                      <span>Average Time Per Funnel</span>
-                    </Space>
-                  }
-                  hoverable
-                  style={{ marginBottom: 0, height: '100%' }}
-                  bodyStyle={{ height: BAR_CHART_HEIGHT }}
-                >
-                  <div style={{ height: '100%' }}>
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart 
-                        data={getFunnelChartData} 
-                        margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-                        onClick={handleBarClick}
-                        style={{ cursor: 'pointer' }}
-                      >
-                        <XAxis dataKey="name" />
-                        <YAxis label={{ value: 'Minutes', angle: -90, position: 'insideLeft' }} />
-                        <Tooltip content={<FunnelTooltip />} />
-                        <Legend 
-                          formatter={(value) => {
-                            return <span>{value}</span>;
-                          }}
-                          payload={
-                            funnelOrder.map(funnel => ({
-                              value: funnel.charAt(0).toUpperCase() + funnel.slice(1),
-                              type: 'square',
-                              color: funnelColors[funnel]
-                            }))
-                          }
-                        />
-                        <Bar 
-                          dataKey="minutes" 
-                          name="Average Time (minutes)"
-                          radius={[4, 4, 0, 0]}
-                          animationDuration={1500}
-                        >
-                          {getFunnelChartData.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={entry.color} />
-                          ))}
-                        </Bar>
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
-                </Card>
-              </Col>
-
-              {/* Task Sequence Line Graph */}
-              <Col xs={24} lg={12}>
-                <Card 
-                  title={
-                    <Space>
-                      <LineChartOutlined />
-                      <span>Task Sequence Timeline</span>
-                    </Space>
-                  }
-                  hoverable
-                  extra={
-                    <Radio.Group 
-                      value={selectedFunnel}
-                      onChange={(e) => setSelectedFunnel(e.target.value)}
-                      optionType="button"
-                      buttonStyle="solid"
-                      size="small"
-                    >
-                      <Radio.Button value="all">All</Radio.Button>
-                      {funnelOrder.map(funnel => (
-                        <Radio.Button 
-                          key={funnel} 
-                          value={funnel}
-                        >
-                          {funnel.charAt(0).toUpperCase() + funnel.slice(1)}
-                        </Radio.Button>
-                      ))}
-                    </Radio.Group>
-                  }
-                  style={{ marginBottom: 0 }}
-                >
-                  <div style={{ height: CHART_HEIGHT }}>
-                    <ResponsiveContainer width="100%" height="100%">
-                      <LineChart 
-                        data={getLineChartData} 
-                        margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-                        onClick={handleTaskClick}
-                        style={{ cursor: 'pointer' }}
-                      >
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="name" />
-                        <YAxis 
-                          label={{ value: 'Minutes', angle: -90, position: 'insideLeft' }} 
-                          domain={[0, Math.max(getTATMinutes * 1.2, ...getLineChartData.map(item => item.minutes))]}
-                        />
-                        <Tooltip content={<TaskTooltip />} />
-                        <Legend />
-                        <Line 
-                          type="monotone" 
-                          dataKey="minutes" 
-                          name="Task"
-                          stroke="#1890ff" 
-                          strokeWidth={2}
-                          dot={<CustomizedDot />}
-                          activeDot={{ r: 8 }}
-                          isAnimationActive={true}
-                          animationDuration={1500}
-                        />
-                      </LineChart>
-                    </ResponsiveContainer>
-                  </div>
-                  
-                  <Divider />
-                  
-                  <Row align="middle" justify="space-between">
-                    <Col>
-                      <Space wrap>
-                        <AntTooltip title="Less than 60% of Total TAT">
-                          <Tag color="success" icon={<CheckCircleFilled />}>Good (&lt;60% of TAT)</Tag>
-                        </AntTooltip>
-                        <AntTooltip title="Between 60% and 90% of Total TAT">
-                          <Tag color="warning" icon={<WarningFilled />}>Warning (60-90% of TAT)</Tag>
-                        </AntTooltip>
-                        <AntTooltip title="More than 90% of Total TAT">
-                          <Tag color="error" icon={<CloseCircleFilled />}>Critical (&gt;90% of TAT)</Tag>
-                        </AntTooltip>
+            {/* Charts View */}
+            {!showTable && (
+              <Row gutter={[16, 16]}>
+                {/* Funnel Time Chart */}
+                <Col xs={24} lg={12}>
+                  <Card 
+                    title={
+                      <Space>
+                        <BarChartOutlined />
+                        <span>Average Time Per Funnel</span>
                       </Space>
-                    </Col>
-                    <Col>
-                      <Button 
-                        type="primary" 
-                        icon={<DownOutlined />} 
-                        onClick={scrollToTable}
-                      >
-                        View Table
-                      </Button>
-                    </Col>
-                  </Row>
-                </Card>
-              </Col>
-
-              
-              <Col span={24} ref={tableRef}>
-                <Card 
-                  title={
-                    <Space>
-                      <TableOutlined />
-                      <span>Task Metrics</span>
-                    </Space>
-                  }
-                  hoverable
-                  extra={
-                    <Radio.Group 
-                      value={selectedFunnel}
-                      onChange={(e) => setSelectedFunnel(e.target.value)}
-                      optionType="button"
-                      buttonStyle="solid"
-                      size="small"
-                    >
-                      <Radio.Button value="all">All</Radio.Button>
-                      {funnelOrder.map(funnel => (
-                        <Radio.Button 
-                          key={funnel} 
-                          value={funnel}
+                    }
+                    hoverable
+                    style={{ marginBottom: 0, height: '100%' }}
+                    bodyStyle={{ height: BAR_CHART_HEIGHT }}
+                  >
+                    <div style={{ height: '100%' }}>
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart 
+                          data={getFunnelChartData} 
+                          margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                          onClick={handleBarClick}
+                          style={{ cursor: 'pointer' }}
                         >
-                          {funnel.charAt(0).toUpperCase() + funnel.slice(1)}
-                        </Radio.Button>
-                      ))}
-                    </Radio.Group>
-                  }
-                >
-                  <Table 
-                    columns={columns} 
-                    dataSource={getFilteredTableData} 
-                    pagination={{ pageSize: 10 }}
-                    scroll={{ y: 'calc(100vh - 500px)' }}
-                  />
-                </Card>
-              </Col>
-            </Row>
+                          <XAxis dataKey="name" />
+                          <YAxis label={{ value: 'Minutes', angle: -90, position: 'insideLeft' }} />
+                          <Tooltip content={<FunnelTooltip />} />
+                          <Legend 
+                            formatter={(value) => {
+                              return <span>{value}</span>;
+                            }}
+                            payload={
+                              funnelOrder.map(funnel => ({
+                                value: funnel.charAt(0).toUpperCase() + funnel.slice(1),
+                                type: 'square',
+                                color: funnelColors[funnel]
+                              }))
+                            }
+                          />
+                          <Bar 
+                            dataKey="minutes" 
+                            name="Average Time (minutes)"
+                            radius={[4, 4, 0, 0]}
+                            animationDuration={1500}
+                          >
+                            {getFunnelChartData.map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={entry.color} />
+                            ))}
+                          </Bar>
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </Card>
+                </Col>
+
+                {/* Task Sequence Line Graph */}
+                <Col xs={24} lg={12}>
+                  <Card 
+                    title={
+                      <Space>
+                        <LineChartOutlined />
+                        <span>Task Sequence Timeline</span>
+                      </Space>
+                    }
+                    hoverable
+                    extra={
+                      <Radio.Group 
+  value={selectedFunnel}
+  onChange={(e) => setSelectedFunnel(e.target.value)}
+  optionType="button"
+  buttonStyle="outline"  // Changed from 'solid' to 'outline'
+  size="small"
+>
+  <Radio.Button 
+    value="all" 
+    style={{ 
+      backgroundColor: selectedFunnel === 'all' ? '#1890ff' : undefined,
+      borderColor: selectedFunnel === 'all' ? '#1890ff' : undefined,
+      color: selectedFunnel === 'all' ? '#ffffff' : undefined
+    }}
+  >
+    All
+  </Radio.Button>
+  {funnelOrder.map(funnel => (
+    <Radio.Button 
+      key={funnel} 
+      value={funnel}
+      style={{ 
+        backgroundColor: selectedFunnel === funnel ? funnelColors[funnel] : undefined,
+        borderColor: selectedFunnel === funnel ? funnelColors[funnel] : undefined,
+        color: selectedFunnel === funnel ? '#ffffff' : undefined
+      }}
+    >
+      {funnel.charAt(0).toUpperCase() + funnel.slice(1)}
+    </Radio.Button>
+  ))}
+</Radio.Group>
+                    }
+                    style={{ marginBottom: 0 }}
+                  >
+                    <div style={{ height: CHART_HEIGHT }}>
+                      <ResponsiveContainer width="100%" height="100%">
+                        <LineChart 
+                          data={getLineChartData} 
+                          margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                          onClick={handleTaskClick}
+                          style={{ cursor: 'pointer' }}
+                        >
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis dataKey="name" />
+                          <YAxis 
+                            label={{ value: 'Minutes', angle: -90, position: 'insideLeft' }} 
+                            domain={[0, Math.max(getTATMinutes * 1.2, ...getLineChartData.map(item => item.minutes))]}
+                          />
+                          <Tooltip content={<TaskTooltip />} />
+                          <Legend />
+                          <Line 
+                            type="monotone" 
+                            dataKey="minutes" 
+                            name="Task"
+                            stroke="#1890ff" 
+                            strokeWidth={2}
+                            dot={<CustomizedDot />}
+                            activeDot={{ r: 8 }}
+                            isAnimationActive={true}
+                            animationDuration={1500}
+                          />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    </div>
+                    
+                    <Divider />
+                    
+                    <Row align="middle" justify="space-between">
+                      <Col>
+                        <Space wrap>
+                          <AntTooltip title="Less than 60% of Total TAT">
+                            <Tag color="success" icon={<CheckCircleFilled />}>Good (&lt;60% of TAT)</Tag>
+                          </AntTooltip>
+                          <AntTooltip title="Between 60% and 90% of Total TAT">
+                            <Tag color="warning" icon={<WarningFilled />}>Warning (60-90% of TAT)</Tag>
+                          </AntTooltip>
+                          <AntTooltip title="More than 90% of Total TAT">
+                            <Tag color="error" icon={<CloseCircleFilled />}>Critical (&gt;90% of TAT)</Tag>
+                          </AntTooltip>
+                        </Space>
+                      </Col>
+                      <Col>
+                      <Button 
+  type="primary" 
+  icon={<TableOutlined />} 
+  onClick={toggleView}
+  style={{ 
+    backgroundColor: getButtonColor(selectedFunnel),
+    borderColor: getButtonColor(selectedFunnel)
+  }}
+>
+  View Table
+</Button>
+                      </Col>
+                    </Row>
+                  </Card>
+                </Col>
+              </Row>
+            )}
+
+            {/* Table View */}
+            {/* Table View */}
+{showTable && (
+  <div ref={tableRef}>
+    <Card 
+      title={
+        <Space>
+          <TableOutlined />
+          <span>Task Metrics</span>
+        </Space>
+      }
+      hoverable
+      extra={
+        <Space>
+          <Radio.Group 
+            value={selectedFunnel}
+            onChange={(e) => setSelectedFunnel(e.target.value)}
+            optionType="button"
+            buttonStyle="outline"  // Changed from 'solid' to 'outline'
+            size="small"
+          >
+            <Radio.Button 
+              value="all" 
+              style={{ 
+                backgroundColor: selectedFunnel === 'all' ? '#1890ff' : undefined,
+                borderColor: selectedFunnel === 'all' ? '#1890ff' : undefined,
+                color: selectedFunnel === 'all' ? '#ffffff' : undefined
+              }}
+            >
+              All
+            </Radio.Button>
+            {funnelOrder.map(funnel => (
+              <Radio.Button 
+                key={funnel} 
+                value={funnel}
+                style={{ 
+                  backgroundColor: selectedFunnel === funnel ? funnelColors[funnel] : undefined,
+                  borderColor: selectedFunnel === funnel ? funnelColors[funnel] : undefined,
+                  color: selectedFunnel === funnel ? '#ffffff' : undefined
+                }}
+              >
+                {funnel.charAt(0).toUpperCase() + funnel.slice(1)}
+              </Radio.Button>
+            ))}
+          </Radio.Group>
+          
+          <Button 
+            type="primary" 
+            icon={<LineChartOutlined />} 
+            onClick={toggleView}
+            style={{ 
+              backgroundColor: getButtonColor(selectedFunnel),
+              borderColor: getButtonColor(selectedFunnel)
+            }}
+          >
+            View Charts
+          </Button>
+        </Space>
+      }
+    >
+      <Table 
+        columns={columns} 
+        dataSource={getFilteredTableData} 
+        pagination={{ pageSize: 10 }}
+        scroll={{ y: 'calc(100vh - 300px)' }}
+      />
+    </Card>
+  </div>
+)}
             
-            
+            {/* Task Detail Modal */}
             <Modal
               title={selectedTask?.name || "Task Details"}
               open={showDetailModal}

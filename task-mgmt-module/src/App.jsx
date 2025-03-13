@@ -3,7 +3,7 @@ import "./App.css";
  // Import HomePage
 import View1 from "./pages/view1/View1"; // Ensure the path is correct
 import View2 from "./pages/view2/View2";
-import View3 from "./pages/view3/View3";
+import SLA from "./pages/SLA/SLA";
 import HomePage from "./HomePage";
 function App() {
   return (
@@ -12,7 +12,7 @@ function App() {
           <Route path="/" element={<HomePage />} />
           <Route path="/view-1" element={<View1 />} />
           <Route path="/view-2" element={<View2 />} />
-          <Route path="/view-3" element={<View3 />} />
+          <Route path="/SLA" element={<SLA />} />
         </Routes>
       
     </BrowserRouter>
