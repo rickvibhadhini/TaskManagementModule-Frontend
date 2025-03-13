@@ -25,18 +25,18 @@ const DashboardCharts = ({
     if (!timeStr) return 0;
   
     const parts = timeStr.split(' ');
-    let totalMinutes = 0;
-  
-    for (let i = 0; i < parts.length; i += 2) {
-      const value = parseFloat(parts[i]);
-      const unit = parts[i + 1] || '';
     
-      if (unit.startsWith('hrs')) totalMinutes += value * 60;
-      else if (unit.startsWith('min')) totalMinutes += value;
-      else if (unit.startsWith('sec')) totalMinutes += value / 60;
-    }
-  
-    return totalMinutes;
+    return Array.from({ length: Math.floor(parts.length / 2) })
+      .map((_, index) => index * 2)
+      .reduce((totalMinutes, i) => {
+        const value = parseFloat(parts[i]);
+        const unit = (i + 1 < parts.length) ? parts[i + 1] : '';
+        
+        if (unit.startsWith('hrs')) return totalMinutes + (value * 60);
+        else if (unit.startsWith('min')) return totalMinutes + value;
+        else if (unit.startsWith('sec')) return totalMinutes + (value / 60);
+        else return totalMinutes;
+      }, 0);
   };
 
   const getTATMinutes = useMemo(() => {
