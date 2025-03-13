@@ -1,0 +1,1 @@
+export {default as cars24Logo} from './cars24_logo.png';
