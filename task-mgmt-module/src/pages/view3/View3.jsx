@@ -80,25 +80,26 @@ const View3 = () => {
           </Col>
           <Col>
             <Space size="large">
-              <Space>
-                <Select
-                  placeholder="Select channel"
-                  value={channel}
-                  onChange={(value) => setChannel(value)}
-                  style={{ width: 120, display: 'inline-block' }}
-                  options={[
-                    { value: 'D2C', label: 'D2C' },
-                    { value: 'C2C', label: 'C2C' },
-                    { value: 'DCF', label: 'DCF' },
-                  ]}
-                />
-                <Button 
-                  type="primary" 
-                  onClick={() => fetchData(channel)} 
-                  loading={loading}
-                >
-                  Load Data
-                </Button>
+            <Space>
+              <Select
+                placeholder="Select channel"
+                value={channel || undefined}
+                onChange={(value) => setChannel(value)}
+                style={{ width: 120, display: 'inline-block' }}
+                options={[
+                  { value: 'D2C', label: 'D2C' },
+                  { value: 'C2C', label: 'C2C' },
+                  { value: 'DCF', label: 'DCF' },
+                ]}
+                allowClear
+              />
+              <Button
+                type="primary"
+                onClick={() => fetchData(channel)}
+                loading={loading}
+              >
+                Load Data
+              </Button>
               </Space>
               
               {data && (
