@@ -6,7 +6,7 @@ import { ActivityLogPic, AgentPic, SlaPic } from "./assets/index";
 const { Header, Content, Footer } = Layout;
 const { Title, Text, Paragraph } = Typography;
 
-// Styles for the animations
+
 const GlobalStyles = () => {
   const { themeValues } = useTheme();
   
@@ -41,16 +41,12 @@ const GlobalStyles = () => {
   );
 };
 
-// Main component content
+
 const HomePageContent = () => {
   const { theme, toggleTheme, themeValues } = useTheme();
   const [loaded, setLoaded] = useState(false);
 
-  // const mockImages = {
-  //   // audit: "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=85",
-  //   // agentview: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=85",
-  //   // sla: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=85"
-  // };
+
 
   const views = [
     { 
@@ -259,7 +255,7 @@ const HomePageContent = () => {
   );
 };
 
-// Wrapped with ThemeProvider
+
 const HomePage = () => {
   return (
     <ThemeProvider>

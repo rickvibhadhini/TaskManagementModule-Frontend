@@ -201,7 +201,7 @@ const DashboardCharts = ({
 
   return (
     <Row gutter={[16, 16]}>
-      {/* Funnel Time Chart */}
+      
       <Col xs={24} lg={12}>
         <Card 
           title={
@@ -253,7 +253,7 @@ const DashboardCharts = ({
         </Card>
       </Col>
 
-      {/* Task Sequence Line Graph */}
+      
       <Col xs={24} lg={12}>
         <Card 
           title={
