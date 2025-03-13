@@ -117,4 +117,8 @@ export const useTheme = () => {
     throw new Error('useTheme must be used within a ThemeProvider');
   }
   return context;
+<<<<<<< HEAD
 };
+=======
+};
+>>>>>>> d16b356694f3de0b540b42ba3b926b381e77995e
