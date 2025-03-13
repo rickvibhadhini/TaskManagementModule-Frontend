@@ -1,10 +1,11 @@
 import React, { useState, useRef } from 'react';
 import { Layout, Typography, Button, Card, Space, Alert, Select, Row, Col, theme } from 'antd';
 import { ClockCircleOutlined, BarChartOutlined } from '@ant-design/icons';
-import DashboardCharts from './components/DashboardCharts';
-import DashboardTable from './components/DashboardTable';
-import TaskDetailModal from './components/TaskDetailModal';
+import {DashboardCharts,DashboardTable,TaskDetailModal } from './components/index';
+import {SLA_ENDPOINTS} from '../../api/SlaEndpoint';
+import { funnelColors, funnelOrder, getButtonColor } from './components/Constant';
 import axios from 'axios';
+
 
 const { Header, Content } = Layout;
 const { Title, Text } = Typography;
@@ -21,14 +22,6 @@ const View3 = () => {
   const [showTable, setShowTable] = useState(false);
   const tableRef = useRef(null);
 
-  const funnelColors = {
-    sourcing: token.colorSuccess,     
-    credit: token.colorInfo,          
-    conversion: token.colorWarning,   
-    fulfillment: '#722ed1'            
-  };
-
-  const funnelOrder = ["sourcing", "credit", "conversion", "fulfillment"];
 
   const toggleView = () => {
     setShowTable(!showTable);
@@ -45,14 +38,13 @@ const View3 = () => {
   
     setLoading(true);
     setError(null);
-    // Reset states when fetching new data
     setData(null);
     setSelectedFunnel('all');
     setShowTable(false);
     setSelectedTask(null);
   
     try {
-      const response = await axios.get(`http://localhost:8081/SLAMonitoring/time/${channelValue}`);
+      const response = await axios.get(SLA_ENDPOINTS.getTimeByChannel(channelValue));
       if (!response.data || !response.data.funnels || Object.keys(response.data.funnels).length === 0) {
         setError(`No data available for channel ${channelValue}`);
       } else {
@@ -66,10 +58,7 @@ const View3 = () => {
     }
   };
 
-  const getButtonColor = (funnel) => {
-    if (funnel === 'all') return '#1890ff'; // Default blue for "all"
-    return funnelColors[funnel] || '#1890ff';
-  };
+ 
 
   return (
     <Layout style={{ height: '100vh', width: '100vw' }}>
