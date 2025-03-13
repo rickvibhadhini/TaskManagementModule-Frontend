@@ -26,7 +26,7 @@ const SLA = () => {
   const toggleView = () => {
     setShowTable(!showTable);
     if (!showTable && tableRef.current) {
-      // When switching to table view, scroll to table
+     
       setTimeout(() => {
         tableRef.current?.scrollIntoView({ behavior: 'smooth' });
       }, 100);
@@ -155,7 +155,7 @@ const SLA = () => {
               />
             )}
 
-            {/* Task Detail Modal is now a separate imported component */}
+          
             <TaskDetailModal
               selectedTask={selectedTask}
               showDetailModal={showDetailModal}
