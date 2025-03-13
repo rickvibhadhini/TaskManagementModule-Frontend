@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Layout, Typography, Row, Col, Divider, Switch, Space, Badge } from "antd";
 import { ThemeProvider, useTheme } from "./ThemeContext";
 import ModuleCard from "./ModuleCard";
-
+import { ActivityLogPic, AgentPic, SlaPic } from "./assets/index";
 const { Header, Content, Footer } = Layout;
 const { Title, Text, Paragraph } = Typography;
 
@@ -46,18 +46,18 @@ const HomePageContent = () => {
   const { theme, toggleTheme, themeValues } = useTheme();
   const [loaded, setLoaded] = useState(false);
 
-  const mockImages = {
-    audit: "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=85",
-    agentview: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=85",
-    sla: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=85"
-  };
+  // const mockImages = {
+  //   // audit: "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=85",
+  //   // agentview: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=85",
+  //   // sla: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=85"
+  // };
 
   const views = [
     { 
       id: 1, 
       name: "Activity Logs", 
       path: "/view-1", 
-      image: mockImages.audit, 
+      image: ActivityLogPic, 
       description: "Track the application movement through the different stages",
       icon: "📊",
       color: "#1890ff",
@@ -67,7 +67,7 @@ const HomePageContent = () => {
       id: 2, 
       name: "Agent Tracking", 
       path: "/view-2", 
-      image: mockImages.agentview, 
+      image: AgentPic, 
       description: "Monitor the agent performance",
       icon: "👨‍💼",
       color: "#722ed1",
@@ -77,8 +77,8 @@ const HomePageContent = () => {
       id: 3, 
       name: "SLA Monitoring", 
       hoverName: "SLA Time Monitoring", 
-      path: "/view-3", 
-      image: mockImages.sla, 
+      path: "/SLA", 
+      image: SlaPic, 
       description: "Monitor the time taken for funnels/stages",
       icon: "⏱️",
       color: "#faad14",

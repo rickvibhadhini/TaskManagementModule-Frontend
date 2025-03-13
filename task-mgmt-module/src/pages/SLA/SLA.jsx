@@ -10,7 +10,7 @@ import axios from 'axios';
 const { Header, Content } = Layout;
 const { Title, Text } = Typography;
 
-const View3 = () => {
+const SLA = () => {
   const { token } = theme.useToken();
   const [selectedFunnel, setSelectedFunnel] = useState('all');
   const [selectedTask, setSelectedTask] = useState(null);
@@ -169,4 +169,4 @@ const View3 = () => {
   );
 };
 
-export default View3;
+export default SLA;
