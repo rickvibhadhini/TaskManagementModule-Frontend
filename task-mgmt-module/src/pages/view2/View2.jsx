@@ -10,6 +10,7 @@ import {
 } from '@ant-design/icons'; 
 
 import axios from 'axios';
+import ACTOR_METRICS_ENDPOINT from '../../api/ActorMetricsEndpoint';
 
 import {DashboardHeader, AgentInfoCard, StatCard, MetricCard, ChartCard, PendingTasksTable, DashboardFooter} from './components/index';
 import { data } from 'react-router-dom';
@@ -69,7 +70,8 @@ const AgentMetricsDashboard = () => {
 
   const fetchMetrics = async () => {
     try {
-      const response = await axios.get(`http://localhost:8081/actorMetrics/${actorId}/${timeFrame}`);
+      const url = ACTOR_METRICS_ENDPOINT.actorMetrics(actorId, timeFrame);
+      const response = await axios.get(url);
       setMetrics(response.data); 
       console.log(response.data);
     } catch (error) {
@@ -249,11 +251,16 @@ const AgentMetricsDashboard = () => {
           </Row>
         </div>
         
-        {/* Pending Tasks Table */}
-        <PendingTasksTable 
-          tasks={metrics.tasks_assigned || []} 
-          columns={columns}
-        />
+
+      <PendingTasksTable 
+        tasks={metrics.tasks_assigned?.map((task, index) => ({
+          key: index, 
+          taskName: task.task_name.replace(/_/g, ' '), 
+          applicationId: task.application_id,
+        })) || []} 
+        columns={columns}
+      />
+
 
       </Content>
       

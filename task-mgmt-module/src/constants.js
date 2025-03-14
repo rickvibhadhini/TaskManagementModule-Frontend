@@ -1,1 +1,1 @@
-FETCH_ACTOR_METRICS = "http://localhost:8081/actorMetrics"; 
+export const API_BASE_URL = "http://localhost:8081"; 
