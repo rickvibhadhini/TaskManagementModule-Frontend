@@ -65,8 +65,6 @@ const DashboardCharts = ({
       tasksByFunnel[funnel] = [];
     
       Object.entries(funnelData.tasks).forEach(([taskId, taskData]) => {
-        const taskNum = taskId.split('_')[1].replace('task', '');
-        const taskNumber = parseInt(taskNum, 10);
         const minutes = convertTimeToMinutes(taskData.timeTaken);
         const percentOfTAT = (minutes / totalTAT) * 100;
       
@@ -79,7 +77,7 @@ const DashboardCharts = ({
       
         tasksByFunnel[funnel].push({
           taskId,
-          taskNumber,
+          // No need to extract task number anymore
           time: taskData.timeTaken,
           minutes,
           percentOfTAT,
@@ -88,7 +86,8 @@ const DashboardCharts = ({
         });
       });
     
-      tasksByFunnel[funnel].sort((a, b) => a.taskNumber - b.taskNumber);
+      // Sort by taskId if needed
+      tasksByFunnel[funnel].sort((a, b) => a.taskId.localeCompare(b.taskId));
     });
   
     return tasksByFunnel;
@@ -103,7 +102,7 @@ const DashboardCharts = ({
         if (Array.isArray(tasks)) {
           tasks.forEach(task => {
             result.push({
-              name: `${funnel.charAt(0).toUpperCase() + funnel.slice(1)} Task ${task.taskNumber}`,
+              name: task.taskId, // Use the full taskId
               minutes: task.minutes,
               percentOfTAT: task.percentOfTAT,
               sendbacks: task.sendbacks,
@@ -117,7 +116,7 @@ const DashboardCharts = ({
       return result;
     } else if (getTasksByFunnel[selectedFunnel]) {
       return getTasksByFunnel[selectedFunnel].map(task => ({
-        name: `Task ${task.taskNumber}`,
+        name: task.taskId, // Use the full taskId
         minutes: task.minutes,
         percentOfTAT: task.percentOfTAT,
         sendbacks: task.sendbacks,
@@ -307,7 +306,14 @@ const DashboardCharts = ({
                 style={{ cursor: 'pointer' }}
               >
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
+                <XAxis 
+                  dataKey="name" 
+                  angle={-45}
+                  textAnchor="end"
+                  height={100}
+                  interval={0}
+                  tick={{fontSize: 10}}
+                />
                 <YAxis 
                   label={{ value: 'Minutes', angle: -90, position: 'insideLeft' }} 
                   domain={[0, Math.max(getTATMinutes * 1.2, ...getLineChartData.map(item => item.minutes))]}

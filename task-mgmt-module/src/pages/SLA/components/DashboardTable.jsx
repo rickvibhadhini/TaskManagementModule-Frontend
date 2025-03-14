@@ -1,13 +1,6 @@
 import React, { useMemo, useRef } from 'react';
 import { Card, Space, Radio, Table, Tag, Button } from 'antd';
-import { 
-  TableOutlined, 
-  LineChartOutlined, 
-  ExclamationCircleOutlined, 
-  CheckCircleFilled, 
-  WarningFilled, 
-  CloseCircleFilled 
-} from '@ant-design/icons';
+import { TableOutlined, LineChartOutlined,   ExclamationCircleOutlined, CheckCircleFilled, WarningFilled, CloseCircleFilled } from '@ant-design/icons';
 
 const DashboardTable = ({ 
   data, 
@@ -53,7 +46,6 @@ const DashboardTable = ({
   
     Object.entries(data.funnels).forEach(([funnel, funnelData]) => {
       Object.entries(funnelData.tasks).forEach(([taskId, taskData]) => {
-        const taskNumPart = taskId.split('_')[1];
         const minutes = convertTimeToMinutes(taskData.timeTaken);
         const percentOfTAT = (minutes / totalTAT) * 100;
       
@@ -68,7 +60,8 @@ const DashboardTable = ({
           key: taskId,
           taskId,
           funnel,
-          displayName: `${funnel.charAt(0).toUpperCase() + funnel.slice(1)} ${taskNumPart.charAt(0).toUpperCase() + taskNumPart.slice(1)}`,
+          // Display the full taskId instead of transforming it
+          displayName: taskId,
           time: taskData.timeTaken,
           minutes,
           percentOfTAT,
@@ -163,7 +156,7 @@ const DashboardTable = ({
           onClick={() => {
             setSelectedTask({
               ...record,
-              name: record.displayName,
+              name: record.displayName,  // Now using the full taskId
               displayTime: record.time,
             });
             setShowDetailModal(true);
