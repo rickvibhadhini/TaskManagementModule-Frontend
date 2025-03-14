@@ -1,13 +1,6 @@
 import React, { useMemo, useRef } from 'react';
 import { Card, Space, Radio, Table, Tag, Button } from 'antd';
-import { 
-  TableOutlined, 
-  LineChartOutlined, 
-  ExclamationCircleOutlined, 
-  CheckCircleFilled, 
-  WarningFilled, 
-  CloseCircleFilled 
-} from '@ant-design/icons';
+import { TableOutlined, LineChartOutlined, ExclamationCircleOutlined, CheckCircleFilled, WarningFilled, CloseCircleFilled } from '@ant-design/icons';
 
 const DashboardTable = ({ 
   data, 
@@ -22,6 +15,7 @@ const DashboardTable = ({
 }) => {
   const tableRef = useRef(null);
 
+  // Updated conversion function to support days as well as hours, minutes, and seconds.
   const convertTimeToMinutes = (timeStr) => {
     if (!timeStr) return 0;
   
@@ -31,8 +25,9 @@ const DashboardTable = ({
     for (let i = 0; i < parts.length; i += 2) {
       const value = parseFloat(parts[i]);
       const unit = parts[i + 1] || '';
-    
-      if (unit.startsWith('hrs')) totalMinutes += value * 60;
+      
+      if (unit.startsWith('day')) totalMinutes += value * 24 * 60;   // Converts days to minutes.
+      else if (unit.startsWith('hrs')) totalMinutes += value * 60;
       else if (unit.startsWith('min')) totalMinutes += value;
       else if (unit.startsWith('sec')) totalMinutes += value / 60;
     }
@@ -53,7 +48,6 @@ const DashboardTable = ({
   
     Object.entries(data.funnels).forEach(([funnel, funnelData]) => {
       Object.entries(funnelData.tasks).forEach(([taskId, taskData]) => {
-        const taskNumPart = taskId.split('_')[1];
         const minutes = convertTimeToMinutes(taskData.timeTaken);
         const percentOfTAT = (minutes / totalTAT) * 100;
       
@@ -68,7 +62,7 @@ const DashboardTable = ({
           key: taskId,
           taskId,
           funnel,
-          displayName: `${funnel.charAt(0).toUpperCase() + funnel.slice(1)} ${taskNumPart.charAt(0).toUpperCase() + taskNumPart.slice(1)}`,
+          displayName: taskId, // Display the full taskId instead of transforming it
           time: taskData.timeTaken,
           minutes,
           percentOfTAT,
@@ -163,7 +157,7 @@ const DashboardTable = ({
           onClick={() => {
             setSelectedTask({
               ...record,
-              name: record.displayName,
+              name: record.displayName,  // Now using the full taskId
               displayTime: record.time,
             });
             setShowDetailModal(true);
