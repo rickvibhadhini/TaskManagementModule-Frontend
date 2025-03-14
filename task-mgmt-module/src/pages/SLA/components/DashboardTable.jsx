@@ -1,6 +1,6 @@
 import React, { useMemo, useRef } from 'react';
 import { Card, Space, Radio, Table, Tag, Button } from 'antd';
-import { TableOutlined, LineChartOutlined,   ExclamationCircleOutlined, CheckCircleFilled, WarningFilled, CloseCircleFilled } from '@ant-design/icons';
+import { TableOutlined, LineChartOutlined, ExclamationCircleOutlined, CheckCircleFilled, WarningFilled, CloseCircleFilled } from '@ant-design/icons';
 
 const DashboardTable = ({ 
   data, 
@@ -15,6 +15,7 @@ const DashboardTable = ({
 }) => {
   const tableRef = useRef(null);
 
+  // Updated conversion function to support days as well as hours, minutes, and seconds.
   const convertTimeToMinutes = (timeStr) => {
     if (!timeStr) return 0;
   
@@ -24,8 +25,9 @@ const DashboardTable = ({
     for (let i = 0; i < parts.length; i += 2) {
       const value = parseFloat(parts[i]);
       const unit = parts[i + 1] || '';
-    
-      if (unit.startsWith('hrs')) totalMinutes += value * 60;
+      
+      if (unit.startsWith('day')) totalMinutes += value * 24 * 60;   // Converts days to minutes.
+      else if (unit.startsWith('hrs')) totalMinutes += value * 60;
       else if (unit.startsWith('min')) totalMinutes += value;
       else if (unit.startsWith('sec')) totalMinutes += value / 60;
     }
@@ -60,8 +62,7 @@ const DashboardTable = ({
           key: taskId,
           taskId,
           funnel,
-          // Display the full taskId instead of transforming it
-          displayName: taskId,
+          displayName: taskId, // Display the full taskId instead of transforming it
           time: taskData.timeTaken,
           minutes,
           percentOfTAT,

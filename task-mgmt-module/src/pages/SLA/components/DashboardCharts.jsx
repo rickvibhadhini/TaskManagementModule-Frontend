@@ -21,6 +21,7 @@ const DashboardCharts = ({
   toggleView,
   getButtonColor
 }) => {
+  // Updated conversion function to support days as well as hours, minutes, and seconds.
   const convertTimeToMinutes = (timeStr) => {
     if (!timeStr) return 0;
   
@@ -32,7 +33,8 @@ const DashboardCharts = ({
         const value = parseFloat(parts[i]);
         const unit = (i + 1 < parts.length) ? parts[i + 1] : '';
         
-        if (unit.startsWith('hrs')) return totalMinutes + (value * 60);
+        if (unit.startsWith('day')) return totalMinutes + (value * 1440);
+        else if (unit.startsWith('hrs')) return totalMinutes + (value * 60);
         else if (unit.startsWith('min')) return totalMinutes + value;
         else if (unit.startsWith('sec')) return totalMinutes + (value / 60);
         else return totalMinutes;
@@ -77,7 +79,6 @@ const DashboardCharts = ({
       
         tasksByFunnel[funnel].push({
           taskId,
-          // No need to extract task number anymore
           time: taskData.timeTaken,
           minutes,
           percentOfTAT,
@@ -86,7 +87,7 @@ const DashboardCharts = ({
         });
       });
     
-      // Sort by taskId if needed
+      
       tasksByFunnel[funnel].sort((a, b) => a.taskId.localeCompare(b.taskId));
     });
   
