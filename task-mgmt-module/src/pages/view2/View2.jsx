@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Layout, Row, Col } from 'antd';
 import { 
   CheckCircleOutlined, 
@@ -7,53 +7,19 @@ import {
   FieldTimeOutlined,
   RetweetOutlined,
   AuditOutlined
-} from '@ant-design/icons';
+} from '@ant-design/icons'; 
+
+import axios from 'axios';
 
 import {DashboardHeader, AgentInfoCard, StatCard, MetricCard, ChartCard, PendingTasksTable, DashboardFooter} from './components/index';
+import { data } from 'react-router-dom';
 
 const { Content } = Layout;
 
 const AgentMetricsDashboard = () => {
-  // State
+
   const [timeFrame, setTimeFrame] = useState('30');
-  const [agentId, setAgentId] = useState('AGT-12345');
-  
-  // Mock data
-  const mockTaskCompletionData = 287;
-  const mockEfficiencyScore = 85;
-  const mockErrorRate = 3.2;
-  
-  const mockFastestTask = { id: 'TSK-78943', duration: '1m 23s' };
-  const mockSlowestTask = { id: 'TSK-23567', duration: '14m 32s' };
-  
-  const mockMostRetriedTask = { id: 'TSK-45678', retries: 6 };
-  const mockLeastRetriedTask = { id: 'TSK-65432', retries: 0 };
-  
-  const mockTaskTimeData = [
-    { task: 'Document Verification', agent: 4.2, threshold: 5.0 },
-    { task: 'Customer Onboarding', agent: 7.8, threshold: 8.5 },
-    { task: 'Contract Review', agent: 12.3, threshold: 10.1 },
-    { task: 'Quality Check', agent: 3.1, threshold: 4.0 },
-    { task: 'Payment Processing', agent: 2.5, threshold: 2.8 },
-    { task: 'Complaint Resolution', agent: 9.7, threshold: 8.0 },
-  ];
-  
-  const mockRetriesData = [
-    { task: 'Document Verification', agent: 1.2, threshold: 2.0 },
-    { task: 'Customer Onboarding', agent: 0.8, threshold: 1.5 },
-    { task: 'Contract Review', agent: 2.3, threshold: 1.1 },
-    { task: 'Quality Check', agent: 0.5, threshold: 1.0 },
-    { task: 'Payment Processing', agent: 0.2, threshold: 0.8 },
-    { task: 'Complaint Resolution', agent: 1.7, threshold: 1.0 },
-  ];
-  
-  const mockPendingTasks = [
-    { key: '1', taskName: 'Document Verification', applicationId: 'APP-78943' },
-    { key: '2', taskName: 'Customer Onboarding', applicationId: 'APP-65432' },
-    { key: '3', taskName: 'Contract Review', applicationId: 'APP-98765' },
-    { key: '4', taskName: 'Quality Check', applicationId: 'APP-23456' },
-    { key: '5', taskName: 'Payment Processing', applicationId: 'APP-34567' },
-  ];
+  const [actorId, setActorId] = useState('');
   
   const columns = [
     {
@@ -73,7 +39,7 @@ const AgentMetricsDashboard = () => {
   };
 
   const handleAgentIdChange = (e) => {
-    setAgentId(e.target.value);
+    setActorId(e.target.value);
   };
   
   const getEfficiencyColor = (score) => {
@@ -88,58 +54,105 @@ const AgentMetricsDashboard = () => {
     return '#f5222d';
   };
 
-  // Task Duration Metric Items
+  const lineChartDataKeys = [
+    { dataKey: 'agent', name: 'Actor Performance', activeDot: true },
+    { dataKey: 'threshold', name: 'All actors', dashed: true }
+  ]; 
+
+  const barChartDataKeys = [
+    { dataKey: 'agent', name: 'Actor Performance' },
+    { dataKey: 'threshold', name: 'All actors' }
+  ];  
+
+  const [metrics, setMetrics] = useState({});
+  const [loading, setLoading] = useState(true);
+
+  const fetchMetrics = async () => {
+    try {
+      const response = await axios.get(`http://localhost:8081/actorMetrics/${actorId}/${timeFrame}`);
+      setMetrics(response.data); 
+      console.log(response.data);
+    } catch (error) {
+      message.error("Failed to fetch data from server.");
+      console.error("API Error:", error);
+    } finally {
+      setLoading(false);
+    }
+  }; 
+
+  useEffect(() => {
+    fetchMetrics();
+  }, [actorId, timeFrame]); 
+
+  const processedTaskTimeData = metrics.average_task_time_across_applications
+  ? Object.keys(metrics.average_task_time_across_applications).map(task => ({
+      task: task.replace(/_/g, ' '),
+      agent: (metrics.average_task_time_across_applications?.[task] || 0) / 60000,
+      threshold: metrics.threshold_average_task_time?.[task] / 60000
+    }))
+  : [];
+
+  const processedRetriesData = Object.keys(metrics.average_retries || {}).map(task => ({
+    task: task.replace(/_/g, ' '), 
+    agent: metrics.average_retries[task], 
+    threshold: metrics.average_retries_threshold?.[task] || 0 
+  }));
+
   const durationMetricItems = [
     {
       title: 'Fastest Task',
       icon: <ClockCircleOutlined className="text-green-500 text-2xl mr-2" />,
-      id: mockFastestTask.id,
-      value: mockFastestTask.duration,
+      id: metrics.fastest_and_slowest_task?.fastest_task?.task_id 
+        ? metrics.fastest_and_slowest_task.fastest_task.task_id.replace(/_/g, ' ') 
+        : 'N/A',
+      value: metrics.fastest_and_slowest_task?.fastest_task?.duration
+        ? `${(metrics.fastest_and_slowest_task.fastest_task.duration) / 60000} min`
+        : '0 min',
       bgColorClass: 'bg-blue-50'
     },
     {
       title: 'Slowest Task',
       icon: <FieldTimeOutlined className="text-red-500 text-2xl mr-2" />,
-      id: mockSlowestTask.id,
-      value: mockSlowestTask.duration,
+      id: metrics.fastest_and_slowest_task?.slowest_task?.task_id 
+        ? metrics.fastest_and_slowest_task.slowest_task.task_id.replace(/_/g, ' ') 
+        : 'N/A',
+      value: metrics.fastest_and_slowest_task?.slowest_task?.duration
+        ? `${(metrics.fastest_and_slowest_task.slowest_task.duration) / 60000} min`
+        : '0 min',
       bgColorClass: 'bg-blue-50'
     }
   ];
 
-  // Task Retry Metric Items
   const retryMetricItems = [
     {
       title: 'Most Retried Task',
       icon: <RetweetOutlined className="text-red-500 text-2xl mr-2" />,
-      id: mockMostRetriedTask.id,
-      value: `${mockMostRetriedTask.retries} retries`,
+      id: metrics.most_and_least_retried_task?.most_retried_task?.task_id 
+        ? metrics.most_and_least_retried_task.most_retried_task.task_id.replace(/_/g, ' ') 
+        : 'N/A',
+      value: metrics.most_and_least_retried_task?.most_retried_task?.visited 
+        ? `${metrics.most_and_least_retried_task.most_retried_task.visited} retries`
+        : '0 retries',
       bgColorClass: 'bg-orange-50'
     },
     {
       title: 'Least Retried Task',
       icon: <CheckCircleOutlined className="text-green-500 text-2xl mr-2" />,
-      id: mockLeastRetriedTask.id,
-      value: `${mockLeastRetriedTask.retries} retries`,
+      id: metrics.most_and_least_retried_task?.least_retried_task?.task_id 
+        ? metrics.most_and_least_retried_task.least_retried_task.task_id.replace(/_/g, ' ') 
+        : 'N/A',
+      value: metrics.most_and_least_retried_task?.least_retried_task?.visited 
+        ? `${metrics.most_and_least_retried_task.least_retried_task.visited} retries`
+        : '0 retries',
       bgColorClass: 'bg-orange-50'
     }
-  ];
-
-  // Chart data keys
-  const lineChartDataKeys = [
-    { dataKey: 'agent', name: 'Agent Performance', activeDot: true },
-    { dataKey: 'threshold', name: 'Team Threshold', dashed: true }
-  ];
-
-  const barChartDataKeys = [
-    { dataKey: 'agent', name: 'Agent Performance' },
-    { dataKey: 'threshold', name: 'Team Threshold' }
   ];
 
   return (
     <Layout className="min-h-screen" style={{backgroundColor: 'white'}}>
       {/* Header Component */}
       <DashboardHeader 
-        agentId={agentId}
+        agentId={actorId}
         handleAgentIdChange={handleAgentIdChange}
         timeFrame={timeFrame}
         handleTimeFrameChange={handleTimeFrameChange}
@@ -147,7 +160,7 @@ const AgentMetricsDashboard = () => {
       
       <Content className="p-6" style={{ backgroundColor: 'white', width: '100%', padding: '24px 48px' }}>
         {/* Agent Info Card Component */}
-        <AgentInfoCard agentId={agentId} timeFrame={timeFrame} />
+        <AgentInfoCard agentId={actorId} timeFrame={timeFrame} />
         
         {/* Stats Cards */}
         <div className="mb-8">
@@ -155,35 +168,40 @@ const AgentMetricsDashboard = () => {
             <Col span={8}>
               <StatCard
                 title="Total Tasks Completed"
-                value={mockTaskCompletionData}
+                value={metrics.total_tasks_completed}
                 prefix={<CheckCircleOutlined className="text-blue-500" />}
                 valueStyle={{ color: '#1890ff' }}
-                badgeText="Last updated: Today at 10:23 AM"
+//                 badgeText="Last updated: Today at 10:23 AM"
               />
             </Col>
             <Col span={8}>
               <StatCard
                 title="Task Efficiency Score"
-                value={mockEfficiencyScore}
+                value={metrics.task_efficiency_score}
                 suffix="/100"
                 prefix={<AuditOutlined className="text-green-500" />}
-                valueStyle={{ color: getEfficiencyColor(mockEfficiencyScore) }}
+                valueStyle={{ color: getEfficiencyColor(metrics.task_efficiency_score) }}
                 showProgress={true}
-                progressPercent={mockEfficiencyScore}
-                progressStatus={mockEfficiencyScore >= 80 ? "success" : mockEfficiencyScore >= 60 ? "normal" : "exception"}
+                progressPercent={metrics.task_efficiency_score}
+                progressStatus={metrics.task_efficiency_score >= 80 ? "success" : metrics.task_efficiency_score >= 60 ? "normal" : "exception"}
               />
             </Col>
             <Col span={8}>
-              <StatCard
-                title="Error Rate Per Task"
-                value={mockErrorRate}
-                suffix="%"
-                prefix={<WarningOutlined className="text-orange-500" />}
-                valueStyle={{ color: getErrorRateColor(mockErrorRate) }}
-                showProgress={true}
-                progressPercent={(10 - mockErrorRate) * 10}
-                progressStatus={mockErrorRate <= 3 ? "success" : mockErrorRate <= 7 ? "normal" : "exception"}
-              />
+            <StatCard
+              title="Error Rate Per Task"
+              value={metrics.agent_error_rate ?? 0}
+              suffix="%"
+              prefix={<WarningOutlined className="text-orange-500" />}
+              valueStyle={{ color: getErrorRateColor(metrics.agent_error_rate) }}
+              showProgress={true}
+              progressPercent={Math.max(0, Math.min(100, metrics.agent_error_rate))} // Fixed scaling
+              progressStatus={
+                metrics.agent_error_rate <= 3 ? "success" : 
+                metrics.agent_error_rate <= 7 ? "normal" : 
+                "exception"
+              }
+            />
+
             </Col>
           </Row>
         </div>
@@ -192,10 +210,11 @@ const AgentMetricsDashboard = () => {
         <div className="mb-6">
           <Row gutter={16}>
             <Col span={12}>
-              <MetricCard 
-                title="Task Duration Metrics"
-                items={durationMetricItems}
-              />
+            <MetricCard 
+              title="Task Duration Metrics"
+              items={durationMetricItems}
+            />
+
             </Col>
             <Col span={12}>
               <MetricCard 
@@ -213,7 +232,7 @@ const AgentMetricsDashboard = () => {
               <ChartCard 
                 title="Average Task Time (minutes)"
                 chartType="line"
-                data={mockTaskTimeData}
+                data={processedTaskTimeData}
                 dataKeys={lineChartDataKeys}
                 colors={['#1890ff', '#ff7875']}
               />
@@ -222,7 +241,7 @@ const AgentMetricsDashboard = () => {
               <ChartCard 
                 title="Average Retries Per Task"
                 chartType="bar"
-                data={mockRetriesData}
+                data={processedRetriesData}
                 dataKeys={barChartDataKeys}
                 colors={['#1890ff', '#ff7875']}
               />
@@ -232,9 +251,10 @@ const AgentMetricsDashboard = () => {
         
         {/* Pending Tasks Table */}
         <PendingTasksTable 
-          tasks={mockPendingTasks}
+          tasks={metrics.tasks_assigned || []} 
           columns={columns}
         />
+
       </Content>
       
       {/* Footer Component */}
