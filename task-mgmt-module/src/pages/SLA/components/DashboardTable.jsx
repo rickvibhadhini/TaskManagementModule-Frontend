@@ -15,23 +15,19 @@ const DashboardTable = ({
 }) => {
   const tableRef = useRef(null);
 
-  // Updated conversion function to support days as well as hours, minutes, and seconds.
+  // Conversion function handles days, hrs, min, sec.
   const convertTimeToMinutes = (timeStr) => {
     if (!timeStr) return 0;
-  
     const parts = timeStr.split(' ');
     let totalMinutes = 0;
-  
     for (let i = 0; i < parts.length; i += 2) {
       const value = parseFloat(parts[i]);
       const unit = parts[i + 1] || '';
-      
-      if (unit.startsWith('day')) totalMinutes += value * 24 * 60;   // Converts days to minutes.
+      if (unit.startsWith('day')) totalMinutes += value * 1440;
       else if (unit.startsWith('hrs')) totalMinutes += value * 60;
       else if (unit.startsWith('min')) totalMinutes += value;
       else if (unit.startsWith('sec')) totalMinutes += value / 60;
     }
-  
     return totalMinutes;
   };
 
@@ -40,29 +36,29 @@ const DashboardTable = ({
     return convertTimeToMinutes(data.averageTAT);
   }, [data]);
 
+  // Only process funnels included in funnelOrder.
   const getTableData = useMemo(() => {
     if (!data || !data.funnels) return [];
-    
     const totalTAT = getTATMinutes;
     const tableData = [];
-  
     Object.entries(data.funnels).forEach(([funnel, funnelData]) => {
-      Object.entries(funnelData.tasks).forEach(([taskId, taskData]) => {
+      if (!funnelOrder.includes(funnel)) return;
+      if (!funnelData) return;
+      const tasks = funnelData.tasks || {};
+      Object.entries(tasks).forEach(([taskId, taskData]) => {
         const minutes = convertTimeToMinutes(taskData.timeTaken);
         const percentOfTAT = (minutes / totalTAT) * 100;
-      
         let performanceLevel = "good"; 
         if (percentOfTAT >= 90) {
           performanceLevel = "critical";
         } else if (percentOfTAT >= 60) {
           performanceLevel = "warning"; 
         }
-      
         tableData.push({
           key: taskId,
           taskId,
           funnel,
-          displayName: taskId, // Display the full taskId instead of transforming it
+          displayName: taskId,
           time: taskData.timeTaken,
           minutes,
           percentOfTAT,
@@ -71,13 +67,11 @@ const DashboardTable = ({
         });
       });
     });
-  
     return tableData;
-  }, [data, getTATMinutes]);
+  }, [data, getTATMinutes, funnelOrder]);
 
   const getFilteredTableData = useMemo(() => {
     if (!getTableData || !Array.isArray(getTableData)) return [];
-    
     return selectedFunnel === 'all' 
       ? getTableData 
       : getTableData.filter(item => item.funnel === selectedFunnel);
@@ -132,7 +126,6 @@ const DashboardTable = ({
       render: (status) => {
         let color = 'success';
         let icon = <CheckCircleFilled />;
-        
         if (status === 'critical') {
           color = 'error';
           icon = <CloseCircleFilled />;
@@ -140,7 +133,6 @@ const DashboardTable = ({
           color = 'warning';
           icon = <WarningFilled />;
         }
-        
         return (
           <Tag icon={icon} color={color}>
             {status.charAt(0).toUpperCase() + status.slice(1)}
@@ -157,7 +149,7 @@ const DashboardTable = ({
           onClick={() => {
             setSelectedTask({
               ...record,
-              name: record.displayName,  // Now using the full taskId
+              name: record.displayName,
               displayTime: record.time,
             });
             setShowDetailModal(true);
