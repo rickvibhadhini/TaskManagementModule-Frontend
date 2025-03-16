@@ -3,17 +3,17 @@ import TaskTimeline from './TaskTimeline.jsx';
 import FunnelSummary from './FunnelSummary.jsx';
 import { processDataForChart, funnelColors, statusColors } from '../../utils/Ganntutils.js';
 
-const timeScales = [
-  { label: 'Per Hour', value: 60 * 60 * 1000 }, // milliseconds
-  { label: 'Per Minute', value: 60 * 1000 },
-  { label: 'Every 30 Minutes', value: 30 * 60 * 1000 },
-];
+// const timeScales = [
+//   { label: 'Per Hour', value: 60 * 60 * 1000 }, // milliseconds
+//   { label: 'Per Minute', value: 60 * 1000 },
+//   { label: 'Every 30 Minutes', value: 30 * 60 * 1000 },
+// ];
 
 const GanttChart = ({ data }) => {
   const [tasks, setTasks] = useState([]);
   const [funnels, setFunnels] = useState([]);
   const [timeRange, setTimeRange] = useState({ start: null, end: null });
-  const [selectedScale, setSelectedScale] = useState(timeScales[0].value);
+  //const [selectedScale, setSelectedScale] = useState(timeScales[0].value);
 
   useEffect(() => {
     if (!data || !data.funnelGroups) return;
@@ -43,7 +43,7 @@ const GanttChart = ({ data }) => {
     <div className="w-full bg-white rounded-lg shadow-lg p-6">
       <h2 className="text-xl font-bold mb-4">Task Workflow Timeline</h2>
       
-      {/* Time Scale Selector */}
+      {/* Time Scale Selector
       <div className="mb-4">
         <label className="mr-2">Select Time Scale:</label>
         <select 
@@ -56,7 +56,7 @@ const GanttChart = ({ data }) => {
             </option>
           ))}
         </select>
-      </div>
+      </div> */}
       
       {/* Status legend */}
       <div className="mb-4">
@@ -95,7 +95,7 @@ const GanttChart = ({ data }) => {
         funnels={funnels}
         tasksByFunnel={tasksByFunnel}
         timeRange={timeRange}
-        selectedScale={selectedScale}
+        //selectedScale={selectedScale}
       />
       
       {/* Funnel Summary Component */}
