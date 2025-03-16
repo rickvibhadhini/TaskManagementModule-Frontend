@@ -78,9 +78,9 @@ function View1() {
   const fetchFunnelData = async () => {
     setLoading(true);
     try {
-      // const url = `http://localhost:8080/applicationLog/${applicationId}`;
-      // const response = await axios.get(url);
-      const transformedData = transformApiData(mocklogdata);                            // replaced for mock data
+      const url = `http://localhost:8080/applicationLog/${applicationId}`;
+      const response = await axios.get(url);
+      const transformedData = transformApiData(response.data.data);                            // replaced for mock data
     
       setFunnelData(transformedData);
     
