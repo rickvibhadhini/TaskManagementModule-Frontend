@@ -14,7 +14,7 @@ const DashboardCharts = ({
   toggleView,
   getButtonColor
 }) => {
-  // Conversion function handles days, hrs, min, sec.
+ 
   const convertTimeToMinutes = (timeStr) => {
     if (!timeStr) return 0;
     const parts = timeStr.split(' ');
@@ -75,7 +75,7 @@ const DashboardCharts = ({
           performanceLevel
         });
       });
-      // Sort tasks alphabetically by taskId.
+      
       tasksByFunnel[funnel].sort((a, b) => a.taskId.localeCompare(b.taskId));
     });
     return tasksByFunnel;
@@ -114,6 +114,19 @@ const DashboardCharts = ({
     }
     return [];
   }, [getTasksByFunnel, selectedFunnel]);
+
+  
+  const tickInterval = useMemo(() => {
+    return getLineChartData.length > 10 ? Math.ceil(getLineChartData.length / 10) : 0;
+  }, [getLineChartData]);
+
+  
+  const maxTaskMinutes = useMemo(() => {
+    if (getLineChartData.length > 0) {
+      return Math.max(...getLineChartData.map(item => item.minutes));
+    }
+    return 100;
+  }, [getLineChartData]);
 
   const handleBarClick = (data) => {
     if (data && data.activePayload && data.activePayload.length) {
@@ -286,12 +299,12 @@ const DashboardCharts = ({
                   angle={-45}
                   textAnchor="end"
                   height={100}
-                  interval={0}
+                  interval={tickInterval}
                   tick={{ fontSize: 10 }}
                 />
                 <YAxis
                   label={{ value: 'Minutes', angle: -90, position: 'insideLeft' }}
-                  domain={[0, Math.max(getTATMinutes * 1.2, ...getLineChartData.map(item => item.minutes))]}
+                  domain={[0, maxTaskMinutes]}
                 />
                 <Tooltip content={<TaskTooltip />} />
                 <Legend />
