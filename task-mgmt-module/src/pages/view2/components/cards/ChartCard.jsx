@@ -20,13 +20,13 @@ const ChartCard = ({ title, chartType, data, dataKeys, colors, height = 300 }) =
       return (
         <LineChart
           data={data}
-          margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+          margin={{ top: 5, right: 30, left: 20, bottom: 80 }}
         >
           <CartesianGrid strokeDasharray="3 3" />
-          <XAxis dataKey="task" />
+          <XAxis dataKey="task" interval={0} angle={-45} textAnchor="end"/>
           <YAxis />
           <Tooltip />
-          <Legend />
+          <Legend align="center" verticalAlign="top" />
           {dataKeys.map((key, index) => (
             <Line 
               key={key.dataKey}
@@ -46,13 +46,13 @@ const ChartCard = ({ title, chartType, data, dataKeys, colors, height = 300 }) =
       return (
         <BarChart
           data={data}
-          margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+          margin={{ top: 5, right: 30, left: 20, bottom: 80 }}
         >
           <CartesianGrid strokeDasharray="3 3" />
-          <XAxis dataKey="task" />
+          <XAxis dataKey="task" interval={0} angle={-45} textAnchor="end"/>
           <YAxis />
           <Tooltip />
-          <Legend />
+          <Legend  align="center" verticalAlign="top" />
           {dataKeys.map((key, index) => (
             <Bar 
               key={key.dataKey}
