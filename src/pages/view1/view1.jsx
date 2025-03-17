@@ -80,7 +80,7 @@ function View1() {
     try {
       const url = `http://localhost:8080/applicationLog/${applicationId}`;
       const response = await axios.get(url);
-      const transformedData = transformApiData(response.data.data);                            // replaced for mock data
+      const transformedData = transformApiData(response.data.data);                            // replaced for using mock data
     
       setFunnelData(transformedData);
     
