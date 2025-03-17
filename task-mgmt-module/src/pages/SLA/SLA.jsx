@@ -1,14 +1,15 @@
 import React, { useState, useRef } from 'react';
-import { Layout, Typography, Button, Card, Space, Alert, Select, Row, Col, theme } from 'antd';
-import { ClockCircleOutlined, BarChartOutlined } from '@ant-design/icons';
-import {DashboardCharts,DashboardTable,TaskDetailModal } from './components/index';
-import {SLA_ENDPOINTS} from '../../api/SlaEndpoint';
+import { Layout, Typography, Card, Space, Alert, theme } from 'antd';
+import { BarChartOutlined } from '@ant-design/icons';
+import { DashboardCharts, DashboardTable, TaskDetailModal } from './components/index';
+import { SLA_ENDPOINTS } from '../../api/SlaEndpoint';
 import { funnelColors, funnelOrder, getButtonColor } from './components/Constant';
+import DashboardFooter from './Layout/Footer.jsx';
+import DashboardHeader from './Layout/Header.jsx';
 import axios from 'axios';
 
-
-const { Header, Content } = Layout;
-const { Title, Text } = Typography;
+const { Content } = Layout;
+const { Title } = Typography;
 
 const SLA = () => {
   const { token } = theme.useToken();
@@ -22,27 +23,25 @@ const SLA = () => {
   const [showTable, setShowTable] = useState(false);
   const tableRef = useRef(null);
 
-
   const toggleView = () => {
     setShowTable(!showTable);
     if (!showTable && tableRef.current) {
-     
       setTimeout(() => {
         tableRef.current?.scrollIntoView({ behavior: 'smooth' });
       }, 100);
     }
   };
-  
+
   const fetchData = async (channelValue) => {
     if (!channelValue) return;
-  
+
     setLoading(true);
     setError(null);
     setData(null);
     setSelectedFunnel('all');
     setShowTable(false);
     setSelectedTask(null);
-  
+
     try {
       const response = await axios.get(SLA_ENDPOINTS.getTimeByChannel(channelValue));
       if (!response.data || !response.data.funnels || Object.keys(response.data.funnels).length === 0) {
@@ -58,71 +57,29 @@ const SLA = () => {
     }
   };
 
- 
-
   return (
     <Layout style={{ height: '100vh', width: '100vw' }}>
-      <Header style={{ background: '#fff', padding: '0 24px', boxShadow: '0 1px 4px rgba(0,21,41,.08)' }}>
-        <Row justify="space-between" align="middle">
-          <Col>
-            <Title level={3} style={{ margin: '16px 0' }}>SLA Monitoring Dashboard</Title>
-          </Col>
-          <Col>
-            <Space size="large">
-            <Space>
-              <Select
-                placeholder="Select channel"
-                value={channel || undefined}
-                onChange={(value) => setChannel(value)}
-                style={{ width: 120, display: 'inline-block' }}
-                options={[
-                  { value: 'D2C', label: 'D2C' },
-                  { value: 'C2C', label: 'C2C' },
-                  { value: 'DCF', label: 'DCF' },
-                ]}
-                allowClear
-              />
-              <Button
-                type="primary"
-                onClick={() => fetchData(channel)}
-                loading={loading}
-              >
-                Load Data
-              </Button>
-              </Space>
-              
-              {data && (
-                <Card size="small" style={{ background: '#f0f5ff', borderColor: '#d6e4ff' }}>
-                  <Space>
-                    <ClockCircleOutlined style={{ color: '#1890ff' }} />
-                    <Text strong>Total Average Turnaround Time:</Text>
-                    <Text strong style={{ color: '#1890ff' }}>{data.averageTAT}</Text>
-                  </Space>
-                </Card>
-              )}
-            </Space>
-          </Col>
-        </Row>
-        
-        {error && (
-          <Alert
-            message={error}
-            type="error"
-            showIcon
-            style={{ marginTop: 16 }}
-          />
-        )}
-      </Header>
-      
+      <DashboardHeader
+        channel={channel}
+        onChannelChange={(value) => setChannel(value)}
+        onLoadData={() => fetchData(channel)}
+        data={data}
+        error={error}
+        loading={loading}
+      />
       <Content style={{ padding: '24px', background: '#f0f2f5', overflowY: 'auto' }}>
         {!data ? (
           <Card style={{ textAlign: 'center', marginTop: 48 }}>
             <Space direction="vertical" size="large" style={{ width: '100%' }}>
               <Title level={4}>Welcome to SLA Monitoring Dashboard</Title>
-              <Text type="secondary">Enter a channel in the input field above to load SLA monitoring data.</Text>
+              <Typography.Text type="secondary">
+                Enter a channel in the input field above to load SLA monitoring data.
+              </Typography.Text>
               <div style={{ padding: 32, background: '#f9f9f9', borderRadius: 8 }}>
                 <BarChartOutlined style={{ fontSize: 64, color: '#d9d9d9' }} />
-                <div style={{ marginTop: 16, color: '#8c8c8c' }}>Data visualization will appear here</div>
+                <div style={{ marginTop: 16, color: '#8c8c8c' }}>
+                  Data visualization will appear here
+                </div>
               </div>
             </Space>
           </Card>
@@ -155,7 +112,6 @@ const SLA = () => {
               />
             )}
 
-          
             <TaskDetailModal
               selectedTask={selectedTask}
               showDetailModal={showDetailModal}
@@ -165,6 +121,7 @@ const SLA = () => {
           </Space>
         )}
       </Content>
+      <DashboardFooter />
     </Layout>
   );
 };
