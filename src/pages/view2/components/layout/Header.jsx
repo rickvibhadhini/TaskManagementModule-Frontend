@@ -17,13 +17,13 @@ const DashboardHeader = ({ agentId, handleAgentIdChange, timeFrame, handleTimeFr
   }
 
   return (
-    <Header className="flex items-center justify-between" style={{ backgroundColor: 'white', padding: '0 48px', width: '100%', height: '64px' }}>
+    <Header className="flex items-center justify-between" style={{ backgroundColor: '#001529', padding: '0 48px', width: '100%', height: '64px' }}>
       <div className="flex items-center space-x-6">
         {/* CARS24 Logo */}
         <div className="mr-6 flex items-center">
         <img src={cars24Logo} onClick={handleClick} alt="Cars24 Logo" width="120" height="auto"/>
         </div>
-        <Title level={3} style={{ margin: 0, color: 'black' }}>Agent Metrics Dashboard</Title>
+        <Title level={3} style={{ margin: 0, color: 'white' }}>Agent Metrics Dashboard</Title>
       </div>
       <div className="flex items-center space-x-4">
         <Input 
