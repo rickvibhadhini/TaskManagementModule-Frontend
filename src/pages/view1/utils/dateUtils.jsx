@@ -10,3 +10,5 @@ export function formatDuration(durationMs) {
     return `${(durationMs / 3600000).toFixed(2)} hours`;
   }
 }
+
+

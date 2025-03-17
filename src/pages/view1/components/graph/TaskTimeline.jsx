@@ -57,6 +57,9 @@ const TaskTimeline = ({ funnels, tasksByFunnel, timeRange }) => {
     <div className="flex" style={{ borderTop: '1px solid #e5e7eb' }}>
       {/* Left sidebar for task names */}
       <div className="w-48 flex-shrink-0 border-r border-gray-200">
+        {/* Empty row to align with time axis header */}
+        <div className="h-10 bg-gray-50 border-b border-gray-200"></div>
+        
         {funnels.map((funnel, funnelIdx) => {
           const funnelTasks = tasksByFunnel[funnel] || [];
           return (
@@ -135,9 +138,10 @@ const TaskTimeline = ({ funnels, tasksByFunnel, timeRange }) => {
 
             return (
               <div key={funnelIdx} className="relative">
-                {/* REMOVED THIS DIV - it was causing the offset */}
-                {/* <div className="h-10 border-b border-gray-200"></div> */}
+                {/* Funnel header - just an empty space with border */}
+                <div className="h-10 border-b border-gray-200"></div>
 
+                {/* Task rows */}
                 {funnelTasks.map((task, idx) => {
                   // Sort segments by start time for connector lines
                   const sortedSegments = [...task.segments].sort((a, b) => a.startTime - b.startTime);
@@ -196,7 +200,7 @@ const TaskTimeline = ({ funnels, tasksByFunnel, timeRange }) => {
                               onMouseLeave={handleTaskMouseLeave}
                             >
                               <div
-                                className="h-2 rounded"
+                                className="h-2 rounded w-full"
                                 style={{ backgroundColor: funnelColor }}
                               ></div>
 
