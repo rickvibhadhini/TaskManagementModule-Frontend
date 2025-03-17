@@ -49,14 +49,14 @@ function View1() {
     const interval = setInterval(() => {
       console.log("Polling triggered at:", new Date().toLocaleTimeString());
       fetchFunnelData();
-    }, 10000*6*5); // Poll every 10 seconds
+    }, 100000); // Poll every 100 seconds
   
     setPollingInterval(interval);
   };
 
   useEffect(() => {
     if (applicationId) {
-      startPolling();  
+      startPolling();      
     } else {
       stopPolling(); 
     }
@@ -78,9 +78,9 @@ function View1() {
   const fetchFunnelData = async () => {
     setLoading(true);
     try {
-      // const url = `http://localhost:8080/applicationLog/${applicationId}`;
-      // const response = await axios.get(url);
-      const transformedData = transformApiData(mocklogdata);                            // replaced for mock data
+      const url = `http://localhost:8080/applicationLog/${applicationId}`;
+      const response = await axios.get(url);
+      const transformedData = transformApiData(response.data.data);                            // replaced for using mock data
     
       setFunnelData(transformedData);
     
@@ -344,7 +344,7 @@ function View1() {
         />
       );
     } else {
-      return <Dashboard />;
+      return <Dashboard applicationId={applicationId}/>;
     }
   };
 
