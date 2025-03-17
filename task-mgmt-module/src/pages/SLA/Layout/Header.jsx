@@ -1,7 +1,7 @@
 import React from 'react';
 import { Layout, Typography, Button, Card, Space, Alert, Select, Row, Col } from 'antd';
 import { ClockCircleOutlined } from '@ant-design/icons';
-
+import { cars24Logo } from "../../../assets/index";
 const { Header } = Layout;
 const { Title, Text } = Typography;
 
@@ -9,6 +9,10 @@ const DashboardHeader = ({ channel, onChannelChange, onLoadData, data, error, lo
   return (
     <Header style={{ background: '#fff', padding: '0 24px', boxShadow: '0 1px 4px rgba(0,21,41,.08)' }}>
       <Row justify="space-between" align="middle">
+      <Col>
+          <img src={cars24Logo} alt="Cars24 Logo" style={{ margin: '16px 0', height: '40px' }} />
+        </Col>
+
         <Col>
           <Title level={3} style={{ margin: '16px 0' }}>SLA Monitoring Dashboard</Title>
         </Col>
