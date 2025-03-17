@@ -49,14 +49,14 @@ function View1() {
     const interval = setInterval(() => {
       console.log("Polling triggered at:", new Date().toLocaleTimeString());
       fetchFunnelData();
-    }, 10000); // Poll every 10 seconds
+    }, 100000); // Poll every 100 seconds
   
     setPollingInterval(interval);
   };
 
   useEffect(() => {
     if (applicationId) {
-      startPolling();  
+      startPolling();      
     } else {
       stopPolling(); 
     }
@@ -344,7 +344,7 @@ function View1() {
         />
       );
     } else {
-      return <Dashboard />;
+      return <Dashboard applicationId={applicationId}/>;
     }
   };
 

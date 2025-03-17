@@ -16,10 +16,10 @@ const GanttChart = ({ data }) => {
   const [selectedScale, setSelectedScale] = useState(timeScales[0].value);
 
   useEffect(() => {
-    if (!data || !data.funnelGroups) return;
+    if (!data || !data.funnelGroupResponses) return;
 
     // Process data for the chart
-    const { processedTasks, uniqueFunnels, timeRange } = processDataForChart(data.funnelGroups);
+    const { processedTasks, uniqueFunnels, timeRange } = processDataForChart(data.funnelGroupResponses);
     setTasks(processedTasks);
     setFunnels(uniqueFunnels);
     setTimeRange(timeRange);
