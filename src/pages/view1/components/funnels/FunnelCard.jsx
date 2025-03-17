@@ -1,4 +1,4 @@
-import React from 'react';
+  import React from 'react';
 import TaskGroup from './TaskGroup';
 
 function FunnelCard({ funnel, isExpanded, toggleFunnel, isLatestTask, isSendback, isBlue }) {
