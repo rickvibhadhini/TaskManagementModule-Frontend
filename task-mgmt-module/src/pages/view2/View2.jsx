@@ -108,7 +108,7 @@ const AgentMetricsDashboard = () => {
         ? metrics.fastest_and_slowest_task.fastest_task.task_id.replace(/_/g, ' ') 
         : 'N/A',
       value: metrics.fastest_and_slowest_task?.fastest_task?.duration
-        ? `${(metrics.fastest_and_slowest_task.fastest_task.duration) / 60000} min`
+        ? `${(metrics.fastest_and_slowest_task.fastest_task.duration / 60000).toFixed(3)} min`
         : '0 min',
       bgColorClass: 'bg-blue-50'
     },
@@ -119,7 +119,7 @@ const AgentMetricsDashboard = () => {
         ? metrics.fastest_and_slowest_task.slowest_task.task_id.replace(/_/g, ' ') 
         : 'N/A',
       value: metrics.fastest_and_slowest_task?.slowest_task?.duration
-        ? `${(metrics.fastest_and_slowest_task.slowest_task.duration) / 60000} min`
+        ? `${((metrics.fastest_and_slowest_task.slowest_task.duration) / 60000).toFixed(3)} min`
         : '0 min',
       bgColorClass: 'bg-blue-50'
     }
@@ -132,7 +132,7 @@ const AgentMetricsDashboard = () => {
       id: metrics.most_and_least_retried_task?.most_retried_task?.task_id 
         ? metrics.most_and_least_retried_task.most_retried_task.task_id.replace(/_/g, ' ') 
         : 'N/A',
-      value: metrics.most_and_least_retried_task?.most_retried_task?.visited 
+      value: (metrics.most_and_least_retried_task?.most_retried_task?.visited )-1
         ? `${metrics.most_and_least_retried_task.most_retried_task.visited} retries`
         : '0 retries',
       bgColorClass: 'bg-orange-50'
@@ -143,7 +143,7 @@ const AgentMetricsDashboard = () => {
       id: metrics.most_and_least_retried_task?.least_retried_task?.task_id 
         ? metrics.most_and_least_retried_task.least_retried_task.task_id.replace(/_/g, ' ') 
         : 'N/A',
-      value: metrics.most_and_least_retried_task?.least_retried_task?.visited 
+      value: (metrics.most_and_least_retried_task?.least_retried_task?.visited )-1
         ? `${metrics.most_and_least_retried_task.least_retried_task.visited} retries`
         : '0 retries',
       bgColorClass: 'bg-orange-50'
