@@ -49,7 +49,7 @@ function View1() {
     const interval = setInterval(() => {
       console.log("Polling triggered at:", new Date().toLocaleTimeString());
       fetchFunnelData();
-    }, 10000); // Poll every 10 seconds
+    }, 10000*6*5); // Poll every 10 seconds
   
     setPollingInterval(interval);
   };
