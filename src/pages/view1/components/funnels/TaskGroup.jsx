@@ -63,9 +63,17 @@ function TaskGroup({ tasks, isSendback }) {
                 </span>
                 <span className="font-medium">Sendback History</span>
               </div>
-              {/* <div className="text-sm text-gray-600 mt-1">
-                {sortedTasks.length} sendback tasks
-              </div> */}
+              <div className="text-sm text-gray-600 mt-2">
+        <div>
+          <span className="font-medium">Source Stage: </span>
+          {sortedTasks[0]?.sourceLoanStage || 'N/A'}
+        </div>
+        <div>
+          <span className="font-medium">Source Module: </span>
+          {sortedTasks[0]?.sourceSubModule || 'N/A'}
+        </div>
+      </div>
+              
             </div>
             
             <div className="flex-1 flex justify-end">

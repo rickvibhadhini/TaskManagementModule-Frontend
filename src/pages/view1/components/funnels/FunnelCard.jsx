@@ -1,8 +1,11 @@
-  import React from 'react';
+
+
+import React from 'react';
 import TaskGroup from './TaskGroup';
+import { formatDuration, getStatusColor } from '../../utils/formatters';
 
 function FunnelCard({ funnel, isExpanded, toggleFunnel, isLatestTask, isSendback, isBlue }) {
-  // Determine the status color
+  // Determine the status color for the badge
   let statusColor = 'bg-gray-100 text-gray-800'; // Default
   
   if (funnel.status === 'completed') {
@@ -20,67 +23,89 @@ function FunnelCard({ funnel, isExpanded, toggleFunnel, isLatestTask, isSendback
   if (isLatestTask) {
     headerBgColor = 'bg-yellow-50';
   } else if (isSendback) {
-    headerBgColor = 'bg-red-50';
+    headerBgColor = 'bg-pink-50';
   }
 
-  // Extract targetTaskId from the first task if this is a sendback funnel
-  const targetTaskId = isSendback && funnel.tasks && funnel.tasks.length > 0 
-    ? funnel.tasks[0].targetTaskId 
-    : null;
-    const sourceLoanStage = isSendback && funnel.tasks && funnel.tasks.length > 0 
-  ? funnel.tasks[0].sourceLoanStage 
-  : null;
-
-const sourceSubModule = isSendback && funnel.tasks && funnel.tasks.length > 0 
-  ? funnel.tasks[0].sourceSubModule 
-  : null;
+  // Extract sendback-related information
+  const firstTask = funnel.tasks?.[0] || {};
+  const {
+    targetTaskId,
+    sourceLoanStage,
+    sourceSubModule
+  } = firstTask;
 
   return (
     <div className={`rounded-lg shadow overflow-hidden ${isBlue ? 'border border-blue-200' : ''}`}>
-      <div 
-        className={`px-4 py-5 sm:px-6 flex flex-col cursor-pointer ${headerBgColor}`}
-        onClick={toggleFunnel}
-      >
-        <div className="flex justify-between items-center">
-          <div className="flex items-center space-x-3">
-            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusColor}`}>
-              {isLatestTask ? 'Latest' : isSendback ? 'Sendback' : funnel.status}
-            </span>
-            <div>
+      <div className={`px-4 py-5 sm:px-6 ${headerBgColor}`}>
+        {/* Header section */}
+        <div className="flex justify-between items-start">
+          {/* Left side - Source information */}
+          <div className="flex-1">
+            <div className="flex items-center space-x-3 mb-2">
+              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusColor}`}>
+                {isLatestTask ? 'Latest' : isSendback ? 'Sendback' : funnel.status}
+              </span>
               <span className="text-lg font-medium text-gray-900">{funnel.name}</span>
-              {/* Always show funnel duration if it exists, regardless of value */}
-              {funnel.funnelDuration !== undefined && (
-                <span className="ml-2 text-sm text-gray-500">
-                  ({formatDuration(funnel.funnelDuration)})
-                </span>
-              )}
             </div>
-            {!isLatestTask && !isSendback && (
-              <span className="text-sm text-gray-500">{funnel.progress}</span>
+            
+            {isSendback && (
+              <div className="text-sm text-gray-600 space-y-1">
+                <div>
+                  <span className="font-medium">Source Stage: </span>
+                  {sourceLoanStage || 'N/A'}
+                </div>
+                <div>
+                  <span className="font-medium">Source Module: </span>
+                  {sourceSubModule || 'N/A'}
+                </div>
+              </div>
             )}
           </div>
-          <div className="flex items-center">
-            <svg 
-              className={`h-5 w-5 text-gray-500 transform transition-transform ${isExpanded ? 'rotate-180' : ''}`} 
-              xmlns="http://www.w3.org/2000/svg" 
-              viewBox="0 0 20 20" 
-              fill="currentColor"
-            >
-              <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
-            </svg>
+
+          {/* Right side - Target and Duration information */}
+          <div className="flex-1 text-right">
+            {isSendback && (
+              <div className="text-sm text-gray-600 mb-2">
+                <span className="font-medium">Target Task: </span>
+                {targetTaskId || 'N/A'}
+              </div>
+            )}
+            
+            {funnel.funnelDuration !== undefined && (
+              <div className="text-sm text-gray-500">
+                <span className="font-medium">Duration: </span>
+                {formatDuration(funnel.funnelDuration)}
+              </div>
+            )}
+
+            {!isLatestTask && !isSendback && funnel.progress && (
+              <div className="text-sm text-gray-500">
+                {funnel.progress}
+              </div>
+            )}
           </div>
         </div>
-        
-        {/* Display targetTaskId, sourceLoanStage, and sourceSubModule for sendback cards */}
-        {isSendback && (
-          <div className="mt-2 text-sm text-gray-700 space-y-1">
-            <div><span className="font-medium">Target Task ID:</span> {targetTaskId || 'Unknown'}</div>
-            <div><span className="font-medium">Source Loan Stage:</span> {sourceLoanStage || 'Unknown'}</div>
-            <div><span className="font-medium">Source Sub Module:</span> {sourceSubModule || 'Unknown'}</div>
-          </div>
-        )}
+
+        {/* Expand/Collapse button */}
+        <div 
+          className="cursor-pointer flex items-center justify-end mt-2"
+          onClick={toggleFunnel}
+        >
+          <span className="text-sm text-blue-600">
+            {isExpanded ? 'Hide Details' : 'Show Details'}
+          </span>
+          <svg 
+            className={`h-5 w-5 ml-1 transform transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+            xmlns="http://www.w3.org/2000/svg" 
+            viewBox="0 0 20 20" 
+            fill="currentColor"
+          >
+            <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+          </svg>
+        </div>
       </div>
       
+      {/* Expanded content */}
       {isExpanded && (
         <div className="px-4 py-5 sm:px-6 border-t border-gray-200 bg-white">
           <TaskGroup tasks={funnel.tasks} isSendback={isSendback} />
@@ -90,29 +115,5 @@ const sourceSubModule = isSendback && funnel.tasks && funnel.tasks.length > 0
   );
 }
 
-// Helper function to format duration
-function formatDuration(seconds) {
-  if (seconds === undefined || seconds === null || seconds === 0) {
-    return '0 sec';
-  }
-  
-  if (seconds < 60) {
-    return `${seconds} sec`;
-  }
-  
-  if (seconds < 3600) {
-    const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = seconds % 60;
-    return remainingSeconds > 0 
-      ? `${minutes} min ${remainingSeconds} sec` 
-      : `${minutes} min`;
-  }
-  
-  const hours = Math.floor(seconds / 3600);
-  const remainingMinutes = Math.floor((seconds % 3600) / 60);
-  return remainingMinutes > 0 
-    ? `${hours} hr ${remainingMinutes} min` 
-    : `${hours} hr`;
-}
-
 export default FunnelCard;
+

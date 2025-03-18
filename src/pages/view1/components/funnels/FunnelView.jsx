@@ -82,15 +82,16 @@ function FunnelView({ funnelData, expandedFunnels, toggleFunnel }) {
         <div>
           <h3 className="text-lg font-medium text-gray-900 mb-2">Sendback Tasks</h3>
           <div className="space-y-4">
-            {sendbackFunnels.map(funnel => (
-              <FunnelCard
-                key={funnel.id}
-                funnel={funnel}
-                isExpanded={expandedFunnels[funnel.id] || false}
-                toggleFunnel={() => toggleFunnel(funnel.id)}
-                isSendback={true}
-              />
-            ))}
+     
+{sendbackFunnels.map(funnel => (
+  <FunnelCard
+    key={funnel.id}
+    funnel={funnel}
+    isExpanded={expandedFunnels[funnel.id] || false}
+    toggleFunnel={() => toggleFunnel(funnel.id)}
+    isSendback={true}
+  />
+))}
           </div>
         </div>
       )}
