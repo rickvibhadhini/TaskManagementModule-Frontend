@@ -10,7 +10,7 @@ function App() {
     <BrowserRouter>
         <Routes>
           <Route path="/" element={<HomePage />} />
-          <Route path="/view-1" element={<View1 />} />
+          <Route path="/ActivityLog" element={<View1 />} />
           <Route path="/view-2" element={<View2 />} />
           <Route path="/SLA" element={<SLA />} />
         </Routes>

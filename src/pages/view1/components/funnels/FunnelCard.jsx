@@ -1,4 +1,4 @@
-import React from 'react';
+  import React from 'react';
 import TaskGroup from './TaskGroup';
 
 function FunnelCard({ funnel, isExpanded, toggleFunnel, isLatestTask, isSendback, isBlue }) {
@@ -27,6 +27,13 @@ function FunnelCard({ funnel, isExpanded, toggleFunnel, isLatestTask, isSendback
   const targetTaskId = isSendback && funnel.tasks && funnel.tasks.length > 0 
     ? funnel.tasks[0].targetTaskId 
     : null;
+    const sourceLoanStage = isSendback && funnel.tasks && funnel.tasks.length > 0 
+  ? funnel.tasks[0].sourceLoanStage 
+  : null;
+
+const sourceSubModule = isSendback && funnel.tasks && funnel.tasks.length > 0 
+  ? funnel.tasks[0].sourceSubModule 
+  : null;
 
   return (
     <div className={`rounded-lg shadow overflow-hidden ${isBlue ? 'border border-blue-200' : ''}`}>
@@ -64,10 +71,12 @@ function FunnelCard({ funnel, isExpanded, toggleFunnel, isLatestTask, isSendback
           </div>
         </div>
         
-        {/* Display targetTaskId for sendback cards */}
+        {/* Display targetTaskId, sourceLoanStage, and sourceSubModule for sendback cards */}
         {isSendback && (
-          <div className="mt-2 text-sm text-gray-700">
-            <span className="font-medium">Target Task ID:</span> {targetTaskId || 'Unknown'}
+          <div className="mt-2 text-sm text-gray-700 space-y-1">
+            <div><span className="font-medium">Target Task ID:</span> {targetTaskId || 'Unknown'}</div>
+            <div><span className="font-medium">Source Loan Stage:</span> {sourceLoanStage || 'Unknown'}</div>
+            <div><span className="font-medium">Source Sub Module:</span> {sourceSubModule || 'Unknown'}</div>
           </div>
         )}
       </div>

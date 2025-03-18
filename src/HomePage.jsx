@@ -52,7 +52,7 @@ const HomePageContent = () => {
     { 
       id: 1, 
       name: "Activity Logs", 
-      path: "/view-1", 
+      path: "/ActivityLog", 
       image: ActivityLogPic, 
       description: "Track the application movement through the different stages",
       icon: "📊",

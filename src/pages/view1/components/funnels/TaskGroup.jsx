@@ -63,28 +63,36 @@ function TaskGroup({ tasks, isSendback }) {
                 </span>
                 <span className="font-medium">Sendback History</span>
               </div>
-              <div className="text-sm text-gray-600 mt-1">
+              {/* <div className="text-sm text-gray-600 mt-1">
                 {sortedTasks.length} sendback tasks
-              </div>
+              </div> */}
             </div>
             
             <div className="flex-1 flex justify-end">
               <div className="text-right">
                 <div className="text-sm mb-1">
-                  <span className="font-medium">Statuses: </span>
+                  <span className="font-medium">Status: </span>
                   <span className="text-gray-600">
-                    {[...new Set(sortedTasks.map(t => t.currentStatus))].join(', ')}
-                  </span>
-                </div>
+      {(() => {
+        
+        const mostRecentStatus = sendbackStatusHistory.length > 0
+          ? sendbackStatusHistory[sendbackStatusHistory.length - 1].status
+          : 'UNKNOWN';
+          
+        return mostRecentStatus;
+      })()}
+    </span>
+  </div>
+
                 <div className="text-sm text-gray-500 mb-1">
                   <span className="font-medium">Handled by: </span>
                   {[...new Set(sortedTasks.map(t => t.handledBy))].join(', ') || 'N/A'}
                 </div>
-                <div className="text-sm text-gray-500 mb-1">
+                {/* <div className="text-sm text-gray-500 mb-1">
                   <span className="font-medium">Total Duration: </span>
                   {formatDuration(sortedTasks.reduce((sum, t) => sum + (t.duration || 0), 0))}
                 </div>
-                
+                 */}
                 {/* Show Timeline button on the outer card */}
                 <div 
                   className="text-xs text-blue-600 flex items-center justify-end mt-1 cursor-pointer"
@@ -105,7 +113,7 @@ function TaskGroup({ tasks, isSendback }) {
             </div>
           </div>
           
-          {/* Timeline for all sendback tasks using your existing StatusTimeline component */}
+          {/* Timeline for all sendback tasks StatusTimeline component */}
           {expandedTasks['sendback-timeline'] && sendbackStatusHistory.length > 0 && (
             <div className="mt-4 border-t border-pink-200 pt-3">
               <StatusTimeline statusHistory={sendbackStatusHistory} />

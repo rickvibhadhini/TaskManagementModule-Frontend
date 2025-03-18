@@ -9,7 +9,7 @@ function StatusTimeline({ statusHistory }) {
 
   return (
     <div className="w-full overflow-x-auto py-3">
-      <div className="flex items-start gap-y-6 min-w-max mx-auto">
+      <div className="flex items-start gap-y-6 min-w-max mx-auto justify-center">
         {statusHistory.map((status, index) => {
           const isLast = index === statusHistory.length - 1;
           const formattedTime = new Date(status.updatedAt).toLocaleString('en-US', {
@@ -19,7 +19,7 @@ function StatusTimeline({ statusHistory }) {
             minute: 'numeric',
             hour12: true
           });
-          
+
           // Calculate duration if not the last item
           let duration = null;
           if (!isLast) {
@@ -28,7 +28,7 @@ function StatusTimeline({ statusHistory }) {
             const durationMs = nextTime - currentTime;
             duration = formatDuration(durationMs);
           }
-          
+
           return (
             <React.Fragment key={index}>
               {/* Status node */}
@@ -41,16 +41,13 @@ function StatusTimeline({ statusHistory }) {
                   <div className="text-xs text-gray-500 mt-0.5">{formattedTime}</div>
                 </div>
               </div>
-              
+
               {/* Arrow and duration */}
               {!isLast && (
                 <div className="flex flex-col items-center" style={{ width: '60px' }}>
                   <div className="flex items-center h-7">
                     <div className="w-12 h-0.5 bg-gray-300"></div>
-                    <div className="w-0 h-0 
-                                border-t-[4px] border-t-transparent 
-                                border-l-[6px] border-l-gray-300 
-                                border-b-[4px] border-b-transparent">
+                    <div className="w-0 h-0 border-t-[4px] border-t-transparent border-l-[6px] border-l-gray-300 border-b-[4px] border-b-transparent">
                     </div>
                   </div>
                   {duration && (

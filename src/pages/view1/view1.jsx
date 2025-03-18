@@ -56,7 +56,7 @@ function View1() {
 
   useEffect(() => {
     if (applicationId) {
-      startPolling();  
+      startPolling();      
     } else {
       stopPolling(); 
     }
@@ -78,9 +78,9 @@ function View1() {
   const fetchFunnelData = async () => {
     setLoading(true);
     try {
-      // const url = `http://localhost:8080/applicationLog/${applicationId}`;
-      // const response = await axios.get(url);
-      const transformedData = transformApiData(mocklogdata);                            // replaced for mock data
+      const url = `http://localhost:8081/applicationLog/${applicationId}`;
+      const response = await axios.get(url);
+      const transformedData = transformApiData(response.data.data);                            // replaced for using mock data
     
       setFunnelData(transformedData);
     
@@ -344,7 +344,7 @@ function View1() {
         />
       );
     } else {
-      return <Dashboard />;
+      return <Dashboard applicationId={applicationId}/>;
     }
   };
 
