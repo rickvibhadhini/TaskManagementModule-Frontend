@@ -21,7 +21,7 @@ const DashboardHeader = ({ agentId, handleAgentIdChange, timeFrame, handleTimeFr
       <div className="flex items-center space-x-6">
         {/* CARS24 Logo */}
         <div className="mr-6 flex items-center">
-        <img src={cars24Logo} onClick={handleClick} alt="Cars24 Logo" width="120" height="auto"/>
+        <img src={cars24Logo} alt="Cars24 Logo" onClick = {handleClick} style={{ margin: '16px 0', height: '40px', cursor: 'pointer'}} />
         </div>
         <Title level={3} style={{ margin: 0, color: 'black' }}>Agent Metrics Dashboard</Title>
       </div>
@@ -41,6 +41,7 @@ const DashboardHeader = ({ agentId, handleAgentIdChange, timeFrame, handleTimeFr
           <Option value="7">Last 7 Days</Option>
           <Option value="14">Last 14 Days</Option>
           <Option value="30">Last 30 Days</Option>
+          <Option value="90">Last 90 Days</Option>
         </Select>
       </div>
     </Header>
