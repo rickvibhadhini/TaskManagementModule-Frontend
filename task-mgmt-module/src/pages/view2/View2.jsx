@@ -21,6 +21,7 @@ const AgentMetricsDashboard = () => {
 
   const [timeFrame, setTimeFrame] = useState('30');
   const [actorId, setActorId] = useState('');
+  const [agentType, setAgentType] = useState(''); 
 
   const formatDuration = (ms) => {
     if (ms < 60000) {
@@ -82,6 +83,7 @@ const AgentMetricsDashboard = () => {
       const url = ACTOR_METRICS_ENDPOINT.actorMetrics(actorId, timeFrame);
       const response = await axios.get(url);
       setMetrics(response.data); 
+      setAgentType(response.data.actor_type);
       console.log(response.data);
     } catch (error) {
       message.error("Failed to fetch data from server.");
@@ -171,50 +173,43 @@ const AgentMetricsDashboard = () => {
       
       <Content className="p-6" style={{ backgroundColor: 'white', width: '100%', padding: '24px 48px' }}>
         {/* Agent Info Card Component */}
-        <AgentInfoCard agentId={actorId} timeFrame={timeFrame} />
+        <AgentInfoCard agentId={actorId} agentType={agentType} timeFrame={timeFrame} />
         
         {/* Stats Cards */}
         <div className="mb-8">
-          <Row gutter={24}>
-            <Col span={12}>
-              <StatCard
-                title="Total Tasks Completed"
-                value={metrics.total_tasks_completed}
-                prefix={<CheckCircleOutlined className="text-blue-500" />}
-                valueStyle={{ color: '#1890ff' }}
-//                 badgeText="Last updated: Today at 10:23 AM"
-              />
-            </Col>
-            <Col span={12}>
-              <StatCard
-                title="Task Efficiency Score"
-                value={metrics.task_efficiency_score}
-                suffix="/100"
-                prefix={<AuditOutlined className="text-green-500" />}
-                valueStyle={{ color: getEfficiencyColor(metrics.task_efficiency_score) }}
-                showProgress={true}
-                progressPercent={metrics.task_efficiency_score}
-                progressStatus={metrics.task_efficiency_score >= 80 ? "success" : metrics.task_efficiency_score >= 60 ? "normal" : "exception"}
-              />
-            </Col>
-            {/* <Col span={8}>
-            <StatCard
-              title="Error Rate Per Task"
-              value={metrics.agent_error_rate ?? 0}
-              suffix="%"
-              prefix={<WarningOutlined className="text-orange-500" />}
-              valueStyle={{ color: getErrorRateColor(metrics.agent_error_rate) }}
-              showProgress={true}
-              progressPercent={Math.max(0, Math.min(100, metrics.agent_error_rate))} // Fixed scaling
-              progressStatus={
-                metrics.agent_error_rate <= 3 ? "success" : 
-                metrics.agent_error_rate <= 7 ? "normal" : 
-                "exception"
-              }
-            />
+            <Row gutter={24}>
+      <Col span={12}>
+        <StatCard
+          title="Total Tasks Completed"
+          value={metrics.total_tasks_completed}
+          prefix={<CheckCircleOutlined className="text-blue-500" />}
+          valueStyle={{ color: '#1890ff' }}
+          // badgeText="Tasks completed by the agent"
+          info="Total number of tasks the agent has completed successfully"
+        />
+      </Col>
+      <Col span={12}>
+        <StatCard
+          title="Task Efficiency Score"
+          value={metrics.task_efficiency_score}
+          suffix="/100"
+          prefix={<AuditOutlined className="text-green-500" />}
+          valueStyle={{ color: getEfficiencyColor(metrics.task_efficiency_score) }}
+          showProgress={true}
+          progressPercent={metrics.task_efficiency_score}
+          progressStatus={
+            metrics.task_efficiency_score >= 80
+              ? "success"
+              : metrics.task_efficiency_score >= 60
+              ? "normal"
+              : "exception"
+          }
+          // badgeText="Efficiency of agent"
+          info="Efficiency score of the agent based on task performance"
+        />
+      </Col>
+    </Row>
 
-            </Col> */}
-          </Row>
         </div>
         
         {/* Metric Cards */}
@@ -273,6 +268,7 @@ const AgentMetricsDashboard = () => {
           status: task.status,
         })) || []} 
         columns={columns}
+        info="Tasks assigned to the agent (NEW, TODO, IN_PROGRESS, FAILED)"
       />
 
 

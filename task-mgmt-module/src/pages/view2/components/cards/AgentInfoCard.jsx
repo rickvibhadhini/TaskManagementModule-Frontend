@@ -3,12 +3,13 @@ import { Card, Typography } from 'antd';
 
 const { Title, Text } = Typography;
 
-const AgentInfoCard = ({ agentId, timeFrame }) => {
+const AgentInfoCard = ({ agentId, agentType, timeFrame }) => {
   return (
     <div className="mb-4">
       <Card>
         <div className="flex items-center justify-between">
           <Title level={4} style={{ margin: 0 }}>Agent ID: {agentId}</Title>
+          <Title level={4} style={{ margin: 0 }}>Agent Type: {agentType}</Title>
           <Text type="secondary">Showing data for last {timeFrame} days</Text>
         </div>
       </Card>
