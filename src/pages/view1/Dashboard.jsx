@@ -13,7 +13,7 @@ function Dashboard({ applicationId }) {
   useEffect(() => {
     const fetchTaskData = async () => {
       try {
-        const response = await fetch(`http://localhost:8080/applicationLog/graph/${applicationId}`);
+        const response = await fetch(`http://localhost:8081/applicationLog/graph/${applicationId}`);
         if (!response.ok) {
           throw new Error('Network response was not ok');
         }
