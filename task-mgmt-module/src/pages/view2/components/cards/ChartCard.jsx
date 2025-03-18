@@ -1,6 +1,6 @@
 import React from 'react';
-import { Card, Button } from 'antd';
-import { ReloadOutlined } from '@ant-design/icons';
+import { Card, Button, Tooltip } from 'antd';
+import { ReloadOutlined, InfoCircleOutlined } from '@ant-design/icons';
 import { 
   LineChart, 
   Line, 
@@ -9,12 +9,12 @@ import {
   XAxis, 
   YAxis, 
   CartesianGrid, 
-  Tooltip, 
+  Tooltip as RechartsToolTip, 
   Legend, 
   ResponsiveContainer 
 } from 'recharts';
 
-const ChartCard = ({ title, chartType, data, dataKeys, colors, height = 300 }) => {
+const ChartCard = ({ title, chartType, data, dataKeys, colors, height = 300, info}) => {
   const renderChart = () => {
     if (chartType === 'line') {
       return (
@@ -25,7 +25,7 @@ const ChartCard = ({ title, chartType, data, dataKeys, colors, height = 300 }) =
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis dataKey="task" interval={0} angle={-45} textAnchor="end"/>
           <YAxis />
-          <Tooltip />
+          <RechartsToolTip />
           <Legend align="center" verticalAlign="top" />
           {dataKeys.map((key, index) => (
             <Line 
@@ -51,7 +51,7 @@ const ChartCard = ({ title, chartType, data, dataKeys, colors, height = 300 }) =
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis dataKey="task" interval={0} angle={-45} textAnchor="end"/>
           <YAxis />
-          <Tooltip />
+          <RechartsToolTip />
           <Legend  align="center" verticalAlign="top" />
           {dataKeys.map((key, index) => (
             <Bar 
@@ -69,7 +69,16 @@ const ChartCard = ({ title, chartType, data, dataKeys, colors, height = 300 }) =
   };
 
   return (
-    <Card title={title}>
+    <Card 
+      title={
+        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+          {title}
+          <Tooltip title={info}>
+            <InfoCircleOutlined style={{ color: "#1890ff", cursor: "pointer" }} />
+          </Tooltip>
+        </div>
+      }
+    >
       <div style={{ height }}>
         <ResponsiveContainer width="100%" height="100%">
           {renderChart()}
