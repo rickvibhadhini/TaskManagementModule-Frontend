@@ -21,18 +21,33 @@ const AgentMetricsDashboard = () => {
 
   const [timeFrame, setTimeFrame] = useState('30');
   const [actorId, setActorId] = useState('');
+
+  const formatDuration = (ms) => {
+    if (ms < 60000) {
+      return `${(ms / 1000).toFixed(2)} sec`;
+    } else if (ms < 3600000) {
+      return `${(ms / 60000).toFixed(2)} min`;
+    } else {
+      return `${(ms / 3600000).toFixed(2)} hr`;
+    }
+  };
   
   const columns = [
+    {
+      title: 'Application ID',
+      dataIndex: 'applicationId',
+      key: 'applicationId',
+    },
     {
       title: 'Task Name',
       dataIndex: 'taskName',
       key: 'taskName',
     },
     {
-      title: 'Application ID',
-      dataIndex: 'applicationId',
-      key: 'applicationId',
-    },
+      title: 'Status',
+      dataIndex: 'status',
+      key: 'status',
+    }
   ];
 
   const handleTimeFrameChange = (value) => {
@@ -48,21 +63,15 @@ const AgentMetricsDashboard = () => {
     if (score >= 60) return '#faad14';
     return '#f5222d';
   };
-  
-  const getErrorRateColor = (rate) => {
-    if (rate <= 3) return '#52c41a';
-    if (rate <= 7) return '#faad14';
-    return '#f5222d';
-  };
 
   const lineChartDataKeys = [
     { dataKey: 'agent', name: 'Actor Performance', activeDot: true },
-    { dataKey: 'threshold', name: 'All actors', dashed: true }
+    { dataKey: 'threshold', name: 'Avg Actor Performance', dashed: true }
   ]; 
 
   const barChartDataKeys = [
     { dataKey: 'agent', name: 'Actor Performance' },
-    { dataKey: 'threshold', name: 'All actors' }
+    { dataKey: 'threshold', name: 'Avg Actor Performance' }
   ];  
 
   const [metrics, setMetrics] = useState({});
@@ -89,8 +98,8 @@ const AgentMetricsDashboard = () => {
   const processedTaskTimeData = metrics.average_task_time_across_applications
   ? Object.keys(metrics.average_task_time_across_applications).map(task => ({
       task: task.replace(/_/g, ' '),
-      agent: (metrics.average_task_time_across_applications?.[task] || 0) / 60000,
-      threshold: metrics.threshold_average_task_time?.[task] / 60000
+      agent: (metrics.average_task_time_across_applications?.[task] || 0),
+      threshold: (metrics.threshold_average_task_time?.[task] || 0)
     }))
   : [];
 
@@ -108,8 +117,8 @@ const AgentMetricsDashboard = () => {
         ? metrics.fastest_and_slowest_task.fastest_task.task_id.replace(/_/g, ' ') 
         : 'N/A',
       value: metrics.fastest_and_slowest_task?.fastest_task?.duration
-        ? `${(metrics.fastest_and_slowest_task.fastest_task.duration / 60000).toFixed(3)} min`
-        : '0 min',
+        ? formatDuration(metrics.fastest_and_slowest_task.fastest_task.duration)
+        : '0 sec',
       bgColorClass: 'bg-blue-50'
     },
     {
@@ -119,8 +128,8 @@ const AgentMetricsDashboard = () => {
         ? metrics.fastest_and_slowest_task.slowest_task.task_id.replace(/_/g, ' ') 
         : 'N/A',
       value: metrics.fastest_and_slowest_task?.slowest_task?.duration
-        ? `${((metrics.fastest_and_slowest_task.slowest_task.duration) / 60000).toFixed(3)} min`
-        : '0 min',
+        ? formatDuration(metrics.fastest_and_slowest_task.slowest_task.duration)
+        : '0 sec',
       bgColorClass: 'bg-blue-50'
     }
   ];
@@ -167,7 +176,7 @@ const AgentMetricsDashboard = () => {
         {/* Stats Cards */}
         <div className="mb-8">
           <Row gutter={24}>
-            <Col span={8}>
+            <Col span={12}>
               <StatCard
                 title="Total Tasks Completed"
                 value={metrics.total_tasks_completed}
@@ -176,7 +185,7 @@ const AgentMetricsDashboard = () => {
 //                 badgeText="Last updated: Today at 10:23 AM"
               />
             </Col>
-            <Col span={8}>
+            <Col span={12}>
               <StatCard
                 title="Task Efficiency Score"
                 value={metrics.task_efficiency_score}
@@ -188,7 +197,7 @@ const AgentMetricsDashboard = () => {
                 progressStatus={metrics.task_efficiency_score >= 80 ? "success" : metrics.task_efficiency_score >= 60 ? "normal" : "exception"}
               />
             </Col>
-            <Col span={8}>
+            {/* <Col span={8}>
             <StatCard
               title="Error Rate Per Task"
               value={metrics.agent_error_rate ?? 0}
@@ -204,7 +213,7 @@ const AgentMetricsDashboard = () => {
               }
             />
 
-            </Col>
+            </Col> */}
           </Row>
         </div>
         
@@ -215,6 +224,7 @@ const AgentMetricsDashboard = () => {
             <MetricCard 
               title="Task Duration Metrics"
               items={durationMetricItems}
+              info={"Task duration metrics for the fastest and slowest tasks by the agent"}
             />
 
             </Col>
@@ -222,6 +232,7 @@ const AgentMetricsDashboard = () => {
               <MetricCard 
                 title="Task Retry Metrics"
                 items={retryMetricItems}
+                info={"Task retry metrics for the most and least retried tasks by the agent"}
               />
             </Col>
           </Row>
@@ -237,6 +248,7 @@ const AgentMetricsDashboard = () => {
                 data={processedTaskTimeData}
                 dataKeys={lineChartDataKeys}
                 colors={['#1890ff', '#ff7875']}
+                info={"Average task time across all applications"}
               />
             </Col>
             <Col span={12}>
@@ -246,6 +258,7 @@ const AgentMetricsDashboard = () => {
                 data={processedRetriesData}
                 dataKeys={barChartDataKeys}
                 colors={['#1890ff', '#ff7875']}
+                info={"Average retries per task across all applications"}
               />
             </Col>
           </Row>
@@ -255,8 +268,9 @@ const AgentMetricsDashboard = () => {
       <PendingTasksTable 
         tasks={metrics.tasks_assigned?.map((task, index) => ({
           key: index, 
-          taskName: task.task_name.replace(/_/g, ' '), 
           applicationId: task.application_id,
+          taskName: task.task_name.replace(/_/g, ' '), 
+          status: task.status,
         })) || []} 
         columns={columns}
       />

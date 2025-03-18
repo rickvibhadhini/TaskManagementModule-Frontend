@@ -1,6 +1,6 @@
 import React from 'react';
-import { Card, Typography, Button } from 'antd';
-import { ReloadOutlined } from '@ant-design/icons';
+import { Card, Typography, Button, Tooltip } from 'antd';
+import { ReloadOutlined, InfoCircleOutlined } from '@ant-design/icons';
 
 const { Title, Text } = Typography;
 
@@ -18,12 +18,20 @@ const MetricItem = ({ title, icon, id, value, bgColorClass }) => (
   </div>
 );
 
-const MetricCard = ({ title, items }) => {
+const MetricCard = ({ title, items, info}) => {
   return (
     <Card 
-      title={title} 
+      title={
+        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+          {title}
+          <Tooltip title={info}>
+            <InfoCircleOutlined style={{ color: "#1890ff", cursor: "pointer" }} />
+          </Tooltip>
+        </div>
+    } 
       // extra={<Button type="text" icon={<ReloadOutlined />} />}
       className="h-full shadow-sm hover:shadow-md transition-shadow"
+      
     >
       <div className="flex flex-col space-y-6">
         <div className="flex space-x-6">
