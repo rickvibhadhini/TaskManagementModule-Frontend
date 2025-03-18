@@ -39,10 +39,12 @@ export function getStatusDotColor(status) {
       return 'bg-gray-400';     
   }
 }
-export const formatDuration = (seconds) => {
-  if (seconds === undefined || seconds === null || seconds === 0) {
+export const formatDuration = (milliseconds) => {
+  if (milliseconds === undefined || milliseconds === null || milliseconds === 0) {
     return '0 sec';
   }
+
+  const seconds = Math.floor(milliseconds / 1000);
   
   if (seconds < 60) {
     return `${seconds} sec`;
@@ -58,8 +60,10 @@ export const formatDuration = (seconds) => {
   
   const hours = Math.floor(seconds / 3600);
   const remainingMinutes = Math.floor((seconds % 3600) / 60);
-  return remainingMinutes > 0 
-    ? `${hours} hr ${remainingMinutes} min` 
-    : `${hours} hr`;
+  const remainingSeconds = seconds % 60;
+  
+  return remainingSeconds > 0 
+    ? `${hours} hr ${remainingMinutes} min ${remainingSeconds} sec` 
+    : `${hours} hr ${remainingMinutes} min`;
 };
 
