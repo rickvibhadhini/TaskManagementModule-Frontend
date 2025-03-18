@@ -1,5 +1,5 @@
-import React, { useState, useRef } from 'react';
-import { Layout, Typography, Card, Space, Alert, theme } from 'antd';
+import React, { useState, useRef, useMemo } from 'react';
+import { Layout, Typography, Card, Space, Alert } from 'antd';
 import { BarChartOutlined } from '@ant-design/icons';
 import { DashboardCharts, DashboardTable, TaskDetailModal } from './components/index';
 import { SLA_ENDPOINTS } from '../../api/SlaEndpoint';
@@ -12,7 +12,6 @@ const { Content } = Layout;
 const { Title } = Typography;
 
 const SLA = () => {
-  const { token } = theme.useToken();
   const [selectedFunnel, setSelectedFunnel] = useState('all');
   const [selectedTask, setSelectedTask] = useState(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
@@ -56,6 +55,49 @@ const SLA = () => {
       setLoading(false);
     }
   };
+
+  // Helper: conversion function for time strings (e.g. "1 hrs 30 min")
+  const convertTimeToMinutes = (timeStr) => {
+    if (!timeStr) return 0;
+    const parts = timeStr.split(' ');
+    return Array.from({ length: Math.floor(parts.length / 2) })
+      .map((_, index) => index * 2)
+      .reduce((totalMinutes, i) => {
+        const value = parseFloat(parts[i]);
+        const unit = parts[i + 1] || '';
+        if (unit.startsWith('day')) return totalMinutes + (value * 1440);
+        else if (unit.startsWith('hrs')) return totalMinutes + (value * 60);
+        else if (unit.startsWith('min')) return totalMinutes + value;
+        else if (unit.startsWith('sec')) return totalMinutes + (value / 60);
+        else return totalMinutes;
+      }, 0);
+  };
+
+  // Compute all tasks for the selected task's funnel for distribution statistics.
+  const funnelTasks = useMemo(() => {
+    if (!selectedTask || !data || !data.funnels[selectedTask.funnel]) return [];
+    const funnelData = data.funnels[selectedTask.funnel];
+    const tasksObj = funnelData.tasks || {};
+    const totalTAT = convertTimeToMinutes(data.averageTAT);
+    const tasksArray = Object.entries(tasksObj).map(([taskId, taskData]) => {
+      const minutes = convertTimeToMinutes(taskData.timeTaken);
+      const percentOfTAT = totalTAT ? (minutes / totalTAT) * 100 : 0;
+      let performanceLevel = "good";
+      if (percentOfTAT >= 90) performanceLevel = "critical";
+      else if (percentOfTAT >= 60) performanceLevel = "warning";
+      return {
+         taskId,
+         displayName: taskId,
+         time: taskData.timeTaken,
+         minutes,
+         percentOfTAT,
+         sendbacks: taskData.noOfSendbacks,
+         performanceLevel,
+         funnel: selectedTask.funnel
+      };
+    });
+    return tasksArray;
+  }, [selectedTask, data]);
 
   return (
     <Layout style={{ height: '100vh', width: '100vw' }}>
@@ -117,6 +159,7 @@ const SLA = () => {
               showDetailModal={showDetailModal}
               setShowDetailModal={setShowDetailModal}
               funnelColors={funnelColors}
+              funnelTasks={funnelTasks}
             />
           </Space>
         )}
