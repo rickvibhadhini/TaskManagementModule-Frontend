@@ -1,10 +1,11 @@
 import React from 'react';
-import { Layout, Typography, Button, Card, Space, Alert, Select, Row, Col,Tooltip } from 'antd';
-import { ClockCircleOutlined } from '@ant-design/icons';
+import { Layout, Typography, Button, Card, Space, Alert, Select, Row, Col, Tooltip, InputNumber, DatePicker } from 'antd';
+import { ClockCircleOutlined, FilterOutlined } from '@ant-design/icons';
 import { Link } from 'react-router-dom';
 import { cars24Logo } from "../../../assets/index";
 const { Header } = Layout;
 const { Title, Text } = Typography;
+const { RangePicker } = DatePicker;
 
 const DashboardHeader = ({ 
   channel, 
@@ -13,7 +14,11 @@ const DashboardHeader = ({
   data, 
   error, 
   loading,
-  
+  selectedFunnel,
+  setSelectedFunnel,
+  funnelOrder,
+  timeRange,
+  setTimeRange
 }) => {
   return (
     <Header style={{ background: '#fff', padding: '0 24px', boxShadow: '0 1px 4px rgba(0,21,41,.08)' }}>
@@ -51,11 +56,34 @@ const DashboardHeader = ({
                 ]}
                 allowClear
               />
+              
+             
+              
+              <Tooltip title="Filter by average task time (minutes)">
+                <Space size="small">
+                  <FilterOutlined />
+                  <InputNumber
+                    placeholder="Min"
+                    min={0}
+                    style={{ width: 80 }}
+                    value={timeRange?.[0]}
+                    onChange={(value) => setTimeRange([value, timeRange?.[1]])}
+                  />
+                  <span>-</span>
+                  <InputNumber
+                    placeholder="Max"
+                    min={0}
+                    style={{ width: 80 }}
+                    value={timeRange?.[1]}
+                    onChange={(value) => setTimeRange([timeRange?.[0], value])}
+                  />
+                </Space>
+              </Tooltip>
+              
               <Button type="primary" onClick={onLoadData} loading={loading}>
-                Load Data
+                Apply Filters
               </Button>
             </Space>
-
 
             {data && (
               <Card size="small" style={{ background: '#f0f5ff', borderColor: '#d6e4ff' }}>
@@ -83,4 +111,3 @@ const DashboardHeader = ({
 };
 
 export default DashboardHeader;
-

@@ -21,6 +21,7 @@ const SLA = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [showTable, setShowTable] = useState(false);
+  const [timeRange, setTimeRange] = useState([null, null]);
   const tableRef = useRef(null);
 
   const toggleView = () => {
@@ -38,7 +39,7 @@ const SLA = () => {
     setLoading(true);
     setError(null);
     setData(null);
-    setSelectedFunnel('all');
+    // Don't reset selectedFunnel here to maintain filter state
     setShowTable(false);
     setSelectedTask(null);
 
@@ -57,17 +58,19 @@ const SLA = () => {
     }
   };
 
+  // Handle filter reset
+  const resetFilters = () => {
+    setSelectedFunnel('all');
+    setTimeRange([null, null]);
+  };
+
   // Fetch default data on mount
   useEffect(() => {
     fetchData("D2C");
   }, []);
 
- 
-
   return (
     <Layout style={{ height: '100vh', width: '100vw' }}>
-      
-
       <DashboardHeader
         channel={channel}
         onChannelChange={(value) => {
@@ -78,6 +81,11 @@ const SLA = () => {
         data={data}
         error={error}
         loading={loading}
+        selectedFunnel={selectedFunnel}
+        setSelectedFunnel={setSelectedFunnel}
+        funnelOrder={funnelOrder}
+        timeRange={timeRange}
+        setTimeRange={setTimeRange}
       />
       <Content style={{ padding: '24px', background: '#f0f2f5', overflowY: 'auto' }}>
         {!data ? (
@@ -108,6 +116,7 @@ const SLA = () => {
                 setShowDetailModal={setShowDetailModal}
                 toggleView={toggleView}
                 getButtonColor={getButtonColor}
+                timeRange={timeRange}
               />
             ) : (
               <DashboardTable 
@@ -121,6 +130,7 @@ const SLA = () => {
                 toggleView={toggleView}
                 getButtonColor={getButtonColor}
                 tableRef={tableRef}
+                timeRange={timeRange}
               />
             )}
 
