@@ -12,7 +12,8 @@ const DashboardCharts = ({
   setSelectedTask, 
   setShowDetailModal,
   toggleView,
-  getButtonColor
+  getButtonColor,
+  timeRange
 }) => {
  
   const convertTimeToMinutes = (timeStr) => {
@@ -83,8 +84,9 @@ const DashboardCharts = ({
 
   const getLineChartData = useMemo(() => {
     if (!data || !data.funnels) return [];
+    let result = [];
+    
     if (selectedFunnel === 'all') {
-      const result = [];
       Object.entries(getTasksByFunnel).forEach(([funnel, tasks]) => {
         if (Array.isArray(tasks)) {
           tasks.forEach(task => {
@@ -100,9 +102,8 @@ const DashboardCharts = ({
           });
         }
       });
-      return result;
     } else if (getTasksByFunnel[selectedFunnel]) {
-      return getTasksByFunnel[selectedFunnel].map(task => ({
+      result = getTasksByFunnel[selectedFunnel].map(task => ({
         name: task.taskId,
         minutes: task.minutes,
         percentOfTAT: task.percentOfTAT,
@@ -112,8 +113,22 @@ const DashboardCharts = ({
         funnel: selectedFunnel
       }));
     }
-    return [];
-  }, [getTasksByFunnel, selectedFunnel]);
+    
+    // Apply time range filter if set
+    if (timeRange && (timeRange[0] !== null || timeRange[1] !== null)) {
+      result = result.filter(item => {
+        if (timeRange[0] !== null && item.minutes < timeRange[0]) {
+          return false;
+        }
+        if (timeRange[1] !== null && item.minutes > timeRange[1]) {
+          return false;
+        }
+        return true;
+      });
+    }
+    
+    return result;
+  }, [getTasksByFunnel, selectedFunnel, timeRange]);
 
   
   const tickInterval = useMemo(() => {
@@ -193,8 +208,24 @@ const DashboardCharts = ({
   const CHART_HEIGHT = 350;
   const BAR_CHART_HEIGHT = 430;
 
+  // Get task count after filtering
+  const taskCount = getLineChartData.length;
+
   return (
     <Row gutter={[16, 16]}>
+      <Col xs={24}>
+        {timeRange && (timeRange[0] !== null || timeRange[1] !== null) && (
+          <Card size="small" style={{ marginBottom: 16 }}>
+            <Space>
+              <strong>Active Filters:</strong>
+              {timeRange[0] !== null && <Tag color="blue">Min Time: {timeRange[0]} minutes</Tag>}
+              {timeRange[1] !== null && <Tag color="blue">Max Time: {timeRange[1]} minutes</Tag>}
+              <Tag color="green">Showing {taskCount} tasks</Tag>
+            </Space>
+          </Card>
+        )}
+      </Col>
+      
       <Col xs={24} lg={12}>
         <Card
           title={
