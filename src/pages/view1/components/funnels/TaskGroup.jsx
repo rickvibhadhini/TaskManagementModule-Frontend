@@ -2,9 +2,12 @@ import React, { useState } from 'react';
 import StatusTimeline from './StatusTimeline';
 import { getStatusDotColor, getStatusColor, formatDuration } from '../../utils/formatters';
 import { FaCheckCircle } from 'react-icons/fa'; // Importing an icon
+import Tooltip from './Tooltip'; // Import the Tooltip component
 
-function TaskGroup({ tasks, isSendback, targetTaskId }) {
+function TaskGroup({ tasks, isSendback }) {
   const [expandedTasks, setExpandedTasks] = useState({});
+  const [tooltipVisible, setTooltipVisible] = useState(false);
+  const [tooltipContent, setTooltipContent] = useState('');
 
   const toggleTaskTimeline = (taskId) => {
     setExpandedTasks(prev => ({
@@ -51,50 +54,8 @@ function TaskGroup({ tasks, isSendback, targetTaskId }) {
                 </span>
                 <span className="font-medium">Sendback History</span>
               </div>
-              <div className="text-sm text-gray-600 mt-2">
-                {/* Additional content can go here */}
-              </div>
-            </div>
-            <div className="flex-1 flex justify-end">
-              <div className="text-right">
-                <div className="text-sm mb-1">
-                  <span className="font-medium">Status: </span>
-                  <span className="text-gray-600">
-                    {(() => {
-                      const mostRecentStatus = sendbackStatusHistory.length > 0
-                        ? sendbackStatusHistory[sendbackStatusHistory.length - 1].status
-                        : 'UNKNOWN';
-                      return mostRecentStatus;
-                    })()}
-                  </span>
-                </div>
-                <div className="text-sm text-gray-500 mb-1">
-                  <span className="font-medium">Handled by: </span>
-                  {[...new Set(sortedTasks.map(t => t.handledBy))].join(', ') || 'N/A'}
-                </div>
-                <div 
-                  className="text-xs text-blue-600 flex items-center justify-end mt-1 cursor-pointer"
-                  onClick={() => toggleTaskTimeline('sendback-timeline')}
-                >
-                  {expandedTasks['sendback-timeline'] ? 'Hide Timeline' : 'Show Timeline'}
-                  <svg 
-                    xmlns="http://www.w3.org/2000/svg" 
-                    className={`h-4 w-4 ml-1 transition-transform ${expandedTasks['sendback-timeline'] ? 'rotate-180' : ''}`} 
-                    fill="none" 
-                    viewBox="0 0 24 24" 
-                    stroke="currentColor"
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
-                </div>
-              </div>
             </div>
           </div>
-          {expandedTasks['sendback-timeline'] && sendbackStatusHistory.length > 0 && (
-            <div className="mt-4 border-t border-pink-200 pt-3">
-              <StatusTimeline statusHistory={sendbackStatusHistory} />
-            </div>
-          )}
         </div>
       ) : (
         sortedTasks.map((task, index) => (
@@ -113,11 +74,22 @@ function TaskGroup({ tasks, isSendback, targetTaskId }) {
                     </span>
                   </div>
                   {task.id === "current_address_capture" && (
-                    <div className="absolute inset-0 flex items-center justify-center">
+                    <div 
+                      className="relative flex items-center"
+                      onMouseEnter={() => {
+                        setTooltipVisible(true);
+                        setTooltipContent(`Source Loan Stage: ${task.sourceLoanStage}, Source Sub Module: ${task.sourceSubModule}, Time: ${new Date(task.updatedAt).toLocaleString()}`);
+                      }}
+                      onMouseLeave={() => {
+                        setTooltipVisible(false);
+                        setTooltipContent('');
+                      }}
+                    >
                       <span className="flex items-center text-gray-800 text-sm font-semibold">
-                        <FaCheckCircle className="text-green-500 mr-1" />
+                        <FaCheckCircle className="text-red-500 mr-1" />
                         Sendback Received
                       </span>
+                      <Tooltip content={tooltipContent} visible={tooltipVisible} />
                     </div>
                   )}
                   <div className="text-sm text-gray-500 mb-1">
