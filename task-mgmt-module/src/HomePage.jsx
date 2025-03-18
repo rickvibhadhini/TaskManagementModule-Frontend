@@ -3,6 +3,7 @@ import { Layout, Typography, Row, Col, Divider, Switch, Space, Badge } from "ant
 import { ThemeProvider, useTheme } from "./ThemeContext";
 import ModuleCard from "./ModuleCard";
 import { ActivityLogPic, AgentPic, SlaPic } from "./assets/index";
+import { cars24Logo } from "./assets/index";
 const { Header, Content, Footer } = Layout;
 const { Title, Text, Paragraph } = Typography;
 
@@ -114,12 +115,9 @@ const HomePageContent = () => {
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center' }}>
-          <Text strong style={{ 
-            fontSize: '18px', 
-            color: themeValues.accentColor
-          }}>
-            CARS24
-          </Text>
+          
+            <img src={cars24Logo} alt="Cars24 Logo" style={{ margin: '16px 0', height: '40px', cursor: 'pointer'}} />
+          
           <Divider type="vertical" style={{ 
             height: '24px', 
             margin: '0 16px',
