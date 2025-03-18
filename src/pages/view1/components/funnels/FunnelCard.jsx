@@ -5,9 +5,22 @@ import TaskGroup from './TaskGroup';
 import { formatDuration, getStatusColor } from '../../utils/formatters';
 
 function FunnelCard({ funnel, isExpanded, toggleFunnel, isLatestTask, isSendback, isBlue }) {
-  // Determine the status color for the badge
-  let statusColor = 'bg-gray-100 text-gray-800'; // Default
+  // Extract sendback-related information with proper null checking
+  const firstTask = funnel?.tasks?.[0];
   
+  const sourceLoanStage = firstTask?.sourceLoanStage;
+  const sourceSubModule = firstTask?.sourceSubModule;
+  const targetTaskId = firstTask?.targetTaskId;
+
+  // Determine background colors...
+  let headerBgColor = isBlue ? 'bg-blue-50' : 'bg-white';
+  if (isLatestTask) {
+    headerBgColor = 'bg-yellow-50';
+  } else if (isSendback) {
+    headerBgColor = 'bg-pink-50';
+  }
+
+  let statusColor = 'bg-gray-100 text-gray-800';
   if (funnel.status === 'completed') {
     statusColor = 'bg-green-100 text-green-800';
   } else if (funnel.status === 'in-progress') {
@@ -18,73 +31,49 @@ function FunnelCard({ funnel, isExpanded, toggleFunnel, isLatestTask, isSendback
     statusColor = 'bg-yellow-100 text-yellow-800';
   }
 
-  // Determine background color for the card header
-  let headerBgColor = isBlue ? 'bg-blue-50' : 'bg-white';
-  if (isLatestTask) {
-    headerBgColor = 'bg-yellow-50';
-  } else if (isSendback) {
-    headerBgColor = 'bg-pink-50';
-  }
-
-  // Extract sendback-related information
-  const firstTask = funnel.tasks?.[0] || {};
-  const {
-    targetTaskId,
-    sourceLoanStage,
-    sourceSubModule
-  } = firstTask;
-
   return (
     <div className={`rounded-lg shadow overflow-hidden ${isBlue ? 'border border-blue-200' : ''}`}>
       <div className={`px-4 py-5 sm:px-6 ${headerBgColor}`}>
-        {/* Header section */}
-        <div className="flex justify-between items-start">
-          {/* Left side - Source information */}
-          <div className="flex-1">
-            <div className="flex items-center space-x-3 mb-2">
-              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusColor}`}>
-                {isLatestTask ? 'Latest' : isSendback ? 'Sendback' : funnel.status}
-              </span>
-              <span className="text-lg font-medium text-gray-900">{funnel.name}</span>
-            </div>
-            
-            {isSendback && (
-              <div className="text-sm text-gray-600 space-y-1">
-                <div>
-                  <span className="font-medium">Source Stage: </span>
-                  {sourceLoanStage || 'N/A'}
-                </div>
-                <div>
-                  <span className="font-medium">Source Module: </span>
-                  {sourceSubModule || 'N/A'}
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Right side - Target and Duration information */}
-          <div className="flex-1 text-right">
-            {isSendback && (
-              <div className="text-sm text-gray-600 mb-2">
-                <span className="font-medium">Target Task: </span>
-                {targetTaskId || 'N/A'}
-              </div>
-            )}
-            
-            {funnel.funnelDuration !== undefined && (
-              <div className="text-sm text-gray-500">
-                <span className="font-medium">Duration: </span>
-                {formatDuration(funnel.funnelDuration)}
-              </div>
-            )}
-
-            {!isLatestTask && !isSendback && funnel.progress && (
-              <div className="text-sm text-gray-500">
-                {funnel.progress}
-              </div>
-            )}
-          </div>
+        {/* Header with status badge and name */}
+        <div className="flex items-center space-x-3 mb-3">
+          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusColor}`}>
+            {isLatestTask ? 'Latest' : isSendback ? 'Sendback' : funnel.status}
+          </span>
+          <span className="text-lg font-medium text-gray-900">{funnel.name}</span>
         </div>
+
+        {/* Source and Target Information Row */}
+        {isSendback && (
+          <div className="flex justify-between items-start text-sm text-gray-600">
+            {/* Left side - Source information */}
+            <div className="space-y-1">
+              <div>
+                <span className="font-medium">Source Stage: </span>
+                <span className="text-gray-800">{sourceLoanStage || 'N/A'}</span>
+              </div>
+              <div>
+                <span className="font-medium">Source Module: </span>
+                <span className="text-gray-800">{sourceSubModule || 'N/A'}</span>
+              </div>
+            </div>
+
+            {/* Right side - Target information */}
+            <div className="text-right">
+              <div>
+                <span className="font-medium">Target Task: </span>
+                <span className="text-gray-800">{targetTaskId || 'N/A'}</span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Duration - Only show for non-sendback tasks */}
+        {!isSendback && funnel.funnelDuration !== undefined && (
+          <div className="text-sm text-gray-500 mt-1">
+            <span className="font-medium">Duration: </span>
+            {formatDuration(funnel.funnelDuration)}
+          </div>
+        )}
 
         {/* Expand/Collapse button */}
         <div 
@@ -104,7 +93,7 @@ function FunnelCard({ funnel, isExpanded, toggleFunnel, isLatestTask, isSendback
           </svg>
         </div>
       </div>
-      
+
       {/* Expanded content */}
       {isExpanded && (
         <div className="px-4 py-5 sm:px-6 border-t border-gray-200 bg-white">
@@ -116,4 +105,3 @@ function FunnelCard({ funnel, isExpanded, toggleFunnel, isLatestTask, isSendback
 }
 
 export default FunnelCard;
-
