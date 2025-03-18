@@ -1,16 +1,38 @@
 // FunnelCard.jsx
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import StatusTimeline from './StatusTimeline';
 import { getStatusColor, formatDuration } from '../../utils/formatters';
 import TaskGroup from './TaskGroup';
+import { createPortal } from 'react-dom';
 
 // SendbackCard Component
+// SendbackCard component in FunnelCard.jsx
 const SendbackCard = ({ funnel, isExpanded, toggleFunnel }) => {
+  const [tooltipVisible, setTooltipVisible] = useState(false);
+  const tooltipRef = useRef(null);
+  const triggerRef = useRef(null);
+  
   const firstTask = funnel?.tasks?.[0];
   const sourceLoanStage = firstTask?.sourceLoanStage;
   const sourceSubModule = firstTask?.sourceSubModule;
   const targetTaskId = firstTask?.targetTaskId;
-
+  
+  // Function to get the last 6 characters of a string
+  const getTruncatedId = (id) => {
+    if (!id) return '';
+    return id.slice(-6);
+  };
+  
+  // Function to extract request ID from funnel name
+  const getRequestId = () => {
+    // Assuming the funnel name is in format "Sendbacks for {request_id}"
+    const match = funnel.name.match(/Sendbacks for (.+)$/);
+    return match ? match[1] : '';
+  };
+  
+  const requestId = getRequestId();
+  const truncatedId = getTruncatedId(requestId);
+  
   // Get the most recent status from status history
   const mostRecentStatus = funnel.tasks?.flatMap(task => 
     task.statusHistory || []
@@ -28,6 +50,18 @@ const SendbackCard = ({ funnel, isExpanded, toggleFunnel }) => {
     })) || []
   ).sort((a, b) => new Date(a.updatedAt) - new Date(b.updatedAt)) || [];
 
+  // Position the tooltip when it becomes visible
+  useEffect(() => {
+    if (tooltipVisible && tooltipRef.current && triggerRef.current) {
+      const triggerRect = triggerRef.current.getBoundingClientRect();
+      const tooltipRect = tooltipRef.current.getBoundingClientRect();
+      
+      // Position tooltip above the trigger element
+      tooltipRef.current.style.top = `${triggerRect.top - tooltipRect.height - 10}px`;
+      tooltipRef.current.style.left = `${triggerRect.left - (tooltipRect.width / 2) + (triggerRect.width / 2)}px`;
+    }
+  }, [tooltipVisible]);
+
   return (
     <div className="rounded-lg shadow overflow-hidden">
       <div className="px-4 py-5 sm:px-6 bg-pink-50">
@@ -36,7 +70,17 @@ const SendbackCard = ({ funnel, isExpanded, toggleFunnel }) => {
           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
             Sendback
           </span>
-          <span className="text-lg font-medium text-gray-900">{funnel.name}</span>
+          <span className="text-lg font-medium text-gray-900">
+            Sendback received from{' '}
+            <span 
+              ref={triggerRef}
+              className="cursor-help relative"
+              onMouseEnter={() => setTooltipVisible(true)}
+              onMouseLeave={() => setTooltipVisible(false)}
+            >
+              {truncatedId}
+            </span>
+          </span>
         </div>
 
         {/* Source and Target Information Row */}
@@ -97,10 +141,26 @@ const SendbackCard = ({ funnel, isExpanded, toggleFunnel }) => {
           <StatusTimeline statusHistory={sendbackStatusHistory} />
         </div>
       )}
+      
+      {/* Portal for tooltip to avoid layout issues */}
+      {tooltipVisible && createPortal(
+        <div 
+          ref={tooltipRef}
+          className="fixed z-50 bg-white border border-gray-300 rounded shadow-lg p-3 text-sm pointer-events-none"
+          style={{
+            maxWidth: '300px',
+            minWidth: '200px',
+            transition: 'none' // Disable transitions to prevent jitter
+          }}
+        >
+          <div className="font-medium">Full Request ID:</div>
+          <div className="break-all">{requestId}</div>
+        </div>,
+        document.body
+      )}
     </div>
   );
 };
-
 // RegularFunnelCard Component
 const RegularFunnelCard = ({ funnel, isExpanded, toggleFunnel, isLatestTask, isBlue }) => {
   const headerBgColor = isLatestTask ? 'bg-yellow-50' : isBlue ? 'bg-blue-50' : 'bg-white';
