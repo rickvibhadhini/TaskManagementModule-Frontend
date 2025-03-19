@@ -1,7 +1,27 @@
 import React, { useMemo } from 'react';
 import { Card, Space, Radio, Row, Col, Divider, Tag, Button, Tooltip as AntTooltip } from 'antd';
-import { BarChartOutlined, LineChartOutlined, TableOutlined, CheckCircleFilled, WarningFilled, CloseCircleFilled } from '@ant-design/icons';
-import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } from 'recharts';
+import { 
+  BarChartOutlined, 
+  LineChartOutlined, 
+  TableOutlined, 
+  CheckCircleFilled, 
+  WarningFilled, 
+  CloseCircleFilled,
+  InfoCircleOutlined 
+} from '@ant-design/icons';
+import { 
+  BarChart, 
+  Bar, 
+  LineChart, 
+  Line, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  Legend, 
+  ResponsiveContainer, 
+  Cell 
+} from 'recharts';
 
 const DashboardCharts = ({ 
   data, 
@@ -232,6 +252,9 @@ const DashboardCharts = ({
             <Space>
               <BarChartOutlined />
               <span>Average Time Per Funnel</span>
+              <AntTooltip title="This chart shows the average processing time for each funnel stage. Click on a bar to filter the timeline by that funnel.">
+                <Button type="text" size="small" icon={<InfoCircleOutlined />} />
+              </AntTooltip>
             </Space>
           }
           hoverable
@@ -277,8 +300,13 @@ const DashboardCharts = ({
           title={
             <Space>
               <LineChartOutlined />
-              <span>Task Sequence Timeline</span>
+              <span>Task Timeline </span>
+              <AntTooltip title="This chart shows the time taken for each task in sequence. Click on any data point to view detailed task information. The color of each point represents its performance status.">
+                <Button type="text" size="small" icon={<InfoCircleOutlined />} />
+              </AntTooltip>
+            
             </Space>
+            
           }
           hoverable
           extra={
