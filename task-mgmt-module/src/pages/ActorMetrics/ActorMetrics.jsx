@@ -202,8 +202,17 @@ const AgentMetricsDashboard = () => {
       
       <Content className="p-6" style={{ backgroundColor: '#f0f5ff', width: '100%', padding: '24px 48px' }}>
         {/* Agent Info Card Component */}
-        <AgentInfoCard agentId={actorId} agentType={agentType} timeFrame={timeFrame} />
-        
+        <Row gutter={16} className="mb-8">
+          <Col span={6}>
+            <AgentInfoCard label={"Actor ID"} value={actorId} />
+          </Col>
+          <Col span={11}>
+            <AgentInfoCard label={"E-mail"} value={metrics.handled_by} />
+          </Col>
+          <Col span={7}>
+            <AgentInfoCard label={"Actor Type"} value={metrics.actor_type} />
+          </Col>
+        </Row>
         {/* Stats Cards */}
         <div className="mb-8">
             <Row gutter={24}>
@@ -220,12 +229,19 @@ const AgentMetricsDashboard = () => {
       <Col span={12}>
         <StatCard
           title="Task Efficiency Score"
-          value={Number(metrics.task_efficiency_score.toFixed(2))}
+          value={metrics.task_efficiency_score !== undefined 
+            ? Number(metrics.task_efficiency_score.toFixed(2)) 
+            : '0'}
+          
           suffix="%"
           prefix={<AuditOutlined className="text-green-500" />}
-          valueStyle={{ color: getEfficiencyColor(Number(metrics.task_efficiency_score.toFixed(2))) }}
+          valueStyle={{ color: getEfficiencyColor(metrics.task_efficiency_score !== undefined 
+            ? Number(metrics.task_efficiency_score.toFixed(2)) 
+            : '0') }}
           showProgress={true}
-          progressPercent={Number(metrics.task_efficiency_score.toFixed(2))}
+          progressPercent={metrics.task_efficiency_score !== undefined 
+            ? Number(metrics.task_efficiency_score.toFixed(2)) 
+            : '0'}
           progressStatus={
             metrics.task_efficiency_score >= 80
               ? "success"
