@@ -23,14 +23,42 @@ const AgentMetricsDashboard = () => {
   const [actorId, setActorId] = useState('');
   const [agentType, setAgentType] = useState(''); 
 
-  const formatDuration = (ms) => {
-    if (ms < 60000) {
-      return `${(ms / 1000).toFixed(2)} sec`;
-    } else if (ms < 3600000) {
-      return `${(ms / 60000).toFixed(2)} min`;
-    } else {
-      return `${(ms / 3600000).toFixed(2)} hr`;
+  // const formatDuration = (ms) => {
+  //   if (ms < 60000) {
+  //     return `${(ms / 1000).toFixed(2)} sec`;
+  //   } else if (ms < 3600000) {
+  //     return `${(ms / 60000).toFixed(2)} min`;
+  //   } else {
+  //     return `${(ms / 3600000).toFixed(2)} hr`;
+  //   }
+  // };
+
+  const formatTime = (value) => {
+    if (value === undefined || value === null) return 'N/A';
+    if (typeof value === 'string' && value.includes('d')) {
+      return value;
     }
+    const totalMinutes = value;
+    const minutesPerDay = 24 * 60;
+    
+    const days = Math.floor(totalMinutes / minutesPerDay);
+    const remainingMinutesAfterDays = totalMinutes % minutesPerDay;
+    
+    const hrs = Math.floor(remainingMinutesAfterDays / 60);
+    const minutes = Math.floor(remainingMinutesAfterDays % 60);
+    const seconds = Math.round((totalMinutes % 1) * 60);
+
+    let formattedTime = '';
+    if (days > 0) {
+      formattedTime += `${days}d `;
+    }
+    if (hrs > 0 || days > 0) {
+      formattedTime += `${hrs}h `;
+    }
+    formattedTime += `${minutes}m `;
+    formattedTime += `${seconds}s`;
+    
+    return formattedTime;
   };
   
   const columns = [
@@ -100,8 +128,8 @@ const AgentMetricsDashboard = () => {
   const processedTaskTimeData = metrics.average_task_time_across_applications
   ? Object.keys(metrics.average_task_time_across_applications).map(task => ({
       task: task.replace(/_/g, ' '),
-      agent: (metrics.average_task_time_across_applications?.[task] || 0),
-      threshold: (metrics.threshold_average_task_time?.[task] || 0)
+      agent: (metrics.average_task_time_across_applications?.[task] || 0) / 60000,
+      threshold: (metrics.threshold_average_task_time?.[task] || 0) / 60000
     }))
   : [];
 
@@ -119,7 +147,7 @@ const AgentMetricsDashboard = () => {
         ? metrics.fastest_and_slowest_task.fastest_task.task_id.replace(/_/g, ' ') 
         : 'N/A',
       value: metrics.fastest_and_slowest_task?.fastest_task?.duration
-        ? formatDuration(metrics.fastest_and_slowest_task.fastest_task.duration)
+        ? formatTime((metrics.fastest_and_slowest_task.fastest_task.duration / 60000))
         : '0 sec',
       bgColorClass: 'bg-blue-50'
     },
@@ -130,7 +158,7 @@ const AgentMetricsDashboard = () => {
         ? metrics.fastest_and_slowest_task.slowest_task.task_id.replace(/_/g, ' ') 
         : 'N/A',
       value: metrics.fastest_and_slowest_task?.slowest_task?.duration
-        ? formatDuration(metrics.fastest_and_slowest_task.slowest_task.duration)
+        ? formatTime((metrics.fastest_and_slowest_task.slowest_task.duration)/60000)
         : '0 sec',
       bgColorClass: 'bg-blue-50'
     }
@@ -166,6 +194,7 @@ const AgentMetricsDashboard = () => {
       {/* Header Component */}
       <DashboardHeader 
         agentId={actorId}
+        setAgentId={setActorId}
         handleAgentIdChange={handleAgentIdChange}
         timeFrame={timeFrame}
         handleTimeFrameChange={handleTimeFrameChange}
@@ -244,6 +273,7 @@ const AgentMetricsDashboard = () => {
                 dataKeys={lineChartDataKeys}
                 colors={['#1890ff', '#ff7875']}
                 info={"Average task time across all applications"}
+                tooltipFormatter={formatTime}
               />
             </Col>
             <Col span={12}>
