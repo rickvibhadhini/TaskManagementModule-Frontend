@@ -30,7 +30,7 @@ const MetricCard = ({ title, items, info}) => {
         </div>
     } 
       // extra={<Button type="text" icon={<ReloadOutlined />} />}
-      className="h-full shadow-sm hover:shadow-md transition-shadow"
+      className="h-full shadow-sm hover:shadow-lg transition-shadow"
       
     >
       <div className="flex flex-col space-y-6">

@@ -37,7 +37,7 @@ const ChartCard = ({ title, chartType, data, dataKeys, colors, height = 300, inf
       return (
         <LineChart
           data={data}
-          margin={{ top: 5, right: 30, left: 20, bottom: 80 }}
+          margin={{ top: 5, right: 30, left: 20, bottom: 85 }}
         >
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis dataKey="task" interval={0} angle={-45} textAnchor="end"/>
@@ -67,7 +67,7 @@ const ChartCard = ({ title, chartType, data, dataKeys, colors, height = 300, inf
       return (
         <BarChart
           data={data}
-          margin={{ top: 5, right: 30, left: 20, bottom: 80 }}
+          margin={{ top: 5, right: 30, left: 20, bottom: 85 }}
         >
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis dataKey="task" interval={0} angle={-45} textAnchor="end"/>
@@ -90,7 +90,7 @@ const ChartCard = ({ title, chartType, data, dataKeys, colors, height = 300, inf
   };
 
   return (
-    <Card 
+    <Card className="h-full shadow-sm hover:shadow-lg transition-shadow"
       title={
         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
           {title}
