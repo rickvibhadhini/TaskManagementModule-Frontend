@@ -15,8 +15,7 @@ const DashboardCharts = ({
   getButtonColor,
   timeRange
 }) => {
-
-  // Conversion helper: converts a time string (e.g., "1 hrs 30 min") to minutes.
+ 
   const convertTimeToMinutes = (timeStr) => {
     if (!timeStr) return 0;
     const parts = timeStr.split(' ');
@@ -38,14 +37,12 @@ const DashboardCharts = ({
     return convertTimeToMinutes(data.averageTAT);
   }, [data]);
 
-  // Create chart data with raw funnel identifier
   const getFunnelChartData = useMemo(() => {
     if (!data || !data.funnels) return [];
     return funnelOrder.map(funnel => {
       const funnelData = data.funnels[funnel];
       return {
         name: funnel.charAt(0).toUpperCase() + funnel.slice(1),
-        funnel, // raw identifier
         minutes: funnelData ? convertTimeToMinutes(funnelData.timeTaken) : 0,
         displayTime: funnelData ? funnelData.timeTaken : '',
         color: funnelColors[funnel]
@@ -79,6 +76,7 @@ const DashboardCharts = ({
           performanceLevel
         });
       });
+      
       tasksByFunnel[funnel].sort((a, b) => a.taskId.localeCompare(b.taskId));
     });
     return tasksByFunnel;
@@ -132,10 +130,12 @@ const DashboardCharts = ({
     return result;
   }, [getTasksByFunnel, selectedFunnel, timeRange]);
 
+  
   const tickInterval = useMemo(() => {
     return getLineChartData.length > 10 ? Math.ceil(getLineChartData.length / 10) : 0;
   }, [getLineChartData]);
 
+  
   const maxTaskMinutes = useMemo(() => {
     if (getLineChartData.length > 0) {
       return Math.max(...getLineChartData.map(item => item.minutes));
@@ -157,48 +157,19 @@ const DashboardCharts = ({
     }
   };
 
-  // Helper: compute distribution statistics (counts and average times) for tasks in a funnel.
-  const computeDistributionStats = (tasks) => {
-    if (!tasks || tasks.length === 0) return null;
-    const groups = { good: { count: 0, totalMinutes: 0 }, warning: { count: 0, totalMinutes: 0 }, critical: { count: 0, totalMinutes: 0 } };
-    tasks.forEach(task => {
-      const level = task.performanceLevel;
-      if (groups[level]) {
-        groups[level].count += 1;
-        groups[level].totalMinutes += task.minutes;
-      }
-    });
-    Object.keys(groups).forEach(key => {
-      groups[key].averageTime = groups[key].count > 0 ? groups[key].totalMinutes / groups[key].count : 0;
-    });
-    return groups;
-  };
-
-  // Updated Funnel Tooltip: includes distribution counts and average times.
   const FunnelTooltip = ({ active, payload }) => {
     if (active && payload && payload.length) {
-      const funnelId = payload[0].payload.funnel;
-      const tasks = getTasksByFunnel[funnelId] || [];
-      const distributionStats = computeDistributionStats(tasks);
       return (
         <Card size="small" style={{ border: '1px solid #f0f0f0' }}>
-          <div style={{ fontWeight: 'bold', marginBottom: 8 }}>{payload[0].payload.name}</div>
+          <div style={{ fontWeight: 'bold' }}>{payload[0].payload.name}</div>
           <div>Average time: {payload[0].payload.displayTime}</div>
-          <div style={{ color: '#1890ff', marginBottom: 8 }}>{payload[0].value.toFixed(1)} minutes</div>
-          {distributionStats && (
-            <div>
-              <div>Good: {distributionStats.good.count} tasks, Avg: {distributionStats.good.averageTime.toFixed(1)} min</div>
-              <div>Warning: {distributionStats.warning.count} tasks, Avg: {distributionStats.warning.averageTime.toFixed(1)} min</div>
-              <div>Critical: {distributionStats.critical.count} tasks, Avg: {distributionStats.critical.averageTime.toFixed(1)} min</div>
-            </div>
-          )}
+          <div style={{ color: '#1890ff' }}>{payload[0].value.toFixed(1)} minutes</div>
         </Card>
       );
     }
     return null;
   };
 
-  // TaskTooltip: displays details for a task on the line chart.
   const TaskTooltip = ({ active, payload }) => {
     if (active && payload && payload.length) {
       const data = payload[0].payload;
