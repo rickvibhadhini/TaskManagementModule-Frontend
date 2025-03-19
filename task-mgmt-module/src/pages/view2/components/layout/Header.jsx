@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useState} from 'react';
 import { Layout, Typography, Select, Input, Button } from 'antd';
 import { SearchOutlined } from '@ant-design/icons';
 import { cars24Logo } from "../../../../assets/index";
@@ -8,12 +8,18 @@ const { Header } = Layout;
 const { Title } = Typography;
 const { Option } = Select;
 
-const DashboardHeader = ({ agentId, handleAgentIdChange, timeFrame, handleTimeFrameChange }) => {
+const DashboardHeader = ({ agentId, setAgentId, handleAgentIdChange, timeFrame, handleTimeFrameChange }) => {
 
   const navigate = useNavigate(); 
 
+  const [tempAgentId, setTempAgentId] = useState('' || '');
+
   const handleClick = () => {
     navigate("/");
+  }
+
+  const handleSearch = () => {
+    setAgentId(tempAgentId)
   }
 
   return (
@@ -28,11 +34,12 @@ const DashboardHeader = ({ agentId, handleAgentIdChange, timeFrame, handleTimeFr
       <div className="flex items-center space-x-4">
         <Input 
           placeholder="Enter Agent ID" 
-          value={agentId} 
-          onChange={handleAgentIdChange} 
-          addonAfter={<Button type="primary" icon={<SearchOutlined />}>Search</Button>} 
+          value={tempAgentId} 
+          onChange={(e) => setTempAgentId(e.target.value)} //updating the local state
+          // addonAfter={<Button type="primary" icon={<SearchOutlined />}>Search</Button>} 
           style={{ width: 300 }}
         />
+        <Button type="primary" icon={<SearchOutlined />} onClick={handleSearch}>Search</Button>
         <Select 
           defaultValue={timeFrame} 
           style={{ width: 180 }} 
