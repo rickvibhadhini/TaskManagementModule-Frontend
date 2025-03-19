@@ -60,7 +60,7 @@ const HomePage = () => {
     { 
       id: 1, 
       name: "Activity Logs", 
-      path: "/view-1", 
+      path: "/activityLog", 
       image: ActivityLogPic, 
       description: "Track the application movement through the different stages",
       icon: "📊",
@@ -80,6 +80,7 @@ const HomePage = () => {
     { 
       id: 3, 
       name: "SLA Time Monitoring", 
+      hoverName: "SLA Time Monitoring", 
       path: "/SLA", 
       image: SlaPic, 
       description: "Monitor the time taken for funnels/stages",

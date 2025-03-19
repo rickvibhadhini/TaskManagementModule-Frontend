@@ -24,7 +24,7 @@ const Progress = ({ percent, status }) => {
 
 const StatCard = ({ title, value, prefix, suffix, valueStyle, showProgress, progressPercent, progressStatus, info }) => {
   return (
-    <Card className="h-full shadow-sm hover:shadow-md transition-shadow">
+    <Card className="h-full shadow-sm hover:shadow-lg transition-shadow">
       <Statistic
         title={
           <div className="flex items-center gap-1">

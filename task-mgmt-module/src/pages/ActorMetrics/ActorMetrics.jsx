@@ -200,23 +200,23 @@ const AgentMetricsDashboard = () => {
         handleTimeFrameChange={handleTimeFrameChange}
       />
       
-      <Content className="p-6" style={{ backgroundColor: 'white', width: '100%', padding: '24px 48px' }}>
+      <Content className="p-6" style={{ backgroundColor: '#f0f5ff', width: '100%', padding: '24px 48px' }}>
         {/* Agent Info Card Component */}
         <AgentInfoCard agentId={actorId} agentType={agentType} timeFrame={timeFrame} />
         
         {/* Stats Cards */}
         <div className="mb-8">
             <Row gutter={24}>
-      <Col span={12}>
-        <StatCard
-          title="Total Tasks Completed"
-          value={metrics.total_tasks_completed}
-          prefix={<CheckCircleOutlined className="text-blue-500" />}
-          valueStyle={{ color: '#1890ff' }}
-          // badgeText="Tasks completed by the agent"
-          info="Total number of tasks the agent has completed successfully"
-        />
-      </Col>
+        <Col span={12}>
+          <StatCard
+            title="Total Tasks Completed"
+            value={metrics.total_tasks_completed}
+            prefix={<CheckCircleOutlined className="text-blue-500" />}
+            valueStyle={{ color: '#1890ff' }}
+            // badgeText="Tasks completed by the agent"
+            info="Total number of tasks the agent has completed successfully"
+          />
+        </Col>
       <Col span={12}>
         <StatCard
           title="Task Efficiency Score"
