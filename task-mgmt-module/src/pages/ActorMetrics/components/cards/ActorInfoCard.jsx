@@ -5,7 +5,7 @@ const { Title, Text } = Typography;
 
 const AgentInfoCard = ({ label, value }) => {
   return (
-    <div className="mb-4">
+    <div className="mb-4 hover:shadow-lg transition-shadow">
       <Card>
         <div className="flex items-center justify-between">
           <Title level={4} style={{ margin: 0 }}>{label}: {value}</Title>

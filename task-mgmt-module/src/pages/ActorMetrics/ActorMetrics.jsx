@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Layout, Row, Col } from 'antd';
+import { Layout, Row, Col, Empty} from 'antd';
 import { 
   CheckCircleOutlined, 
   ClockCircleOutlined, 
@@ -85,6 +85,8 @@ const AgentMetricsDashboard = () => {
 
   const handleAgentIdChange = (e) => {
     setActorId(e.target.value);
+    // setError(null);
+    // setNoDataFound(false);
   };
   
   const getEfficiencyColor = (score) => {
@@ -108,6 +110,16 @@ const AgentMetricsDashboard = () => {
 
   const fetchMetrics = async () => {
     try {
+      if (!actorId.trim()) {
+        setMetrics({});
+        setLoading(false);
+        // setError(null);
+        // setNoDataFound(false);
+        return;
+      }
+
+      // setError(null);
+      // setNoDataFound(false);
       const url = ACTOR_METRICS_ENDPOINT.actorMetrics(actorId, timeFrame);
       const response = await axios.get(url);
       setMetrics(response.data); 
@@ -136,7 +148,9 @@ const AgentMetricsDashboard = () => {
   const processedRetriesData = Object.keys(metrics.average_retries || {}).map(task => ({
     task: task.replace(/_/g, ' '), 
     agent: metrics.average_retries[task], 
-    threshold: metrics.average_retries_threshold?.[task] || 0 
+    threshold: metrics.average_retries_threshold?.[task] 
+      ? Number(metrics.average_retries_threshold[task].toFixed(2)) 
+      : 0 
   }));
 
   const durationMetricItems = [
@@ -201,6 +215,20 @@ const AgentMetricsDashboard = () => {
       />
       
       <Content className="p-6" style={{ backgroundColor: '#f0f5ff', width: '100%', padding: '24px 48px' }}>
+        
+        {!actorId.trim() ? (
+            <div className="flex justify-center items-center h-96 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow">
+              <Empty
+                description={
+                  <span className="text-lg text-gray-500">
+                    Enter the agent ID to see details
+                  </span>
+                }
+              />
+            </div>
+          ) : (
+            <>
+
         {/* Agent Info Card Component */}
         <Row gutter={16} className="mb-8">
           <Col span={6}>
@@ -300,6 +328,7 @@ const AgentMetricsDashboard = () => {
                 dataKeys={barChartDataKeys}
                 colors={['#1890ff', '#ff7875']}
                 info={"Bar graph of actor's average retries across applications, with funnel average as threshold."}
+                tooltipFormatter={(value) => Number(value).toFixed(2)}
               />
             </Col>
           </Row>
@@ -316,7 +345,8 @@ const AgentMetricsDashboard = () => {
         columns={columns}
         info="Tasks allocated to the actor (NEW, TODO, IN_PROGRESS, FAILED)."
       />
-
+      </>
+      )}
 
       </Content>
       
