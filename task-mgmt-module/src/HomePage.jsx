@@ -68,10 +68,10 @@ const HomePage = () => {
     },
     { 
       id: 2, 
-      name: "Agent Tracking", 
-      path: "/view-2", 
+      name: "Actor Tracking", 
+      path: "/actorMetrics", 
       image: AgentPic, 
-      description: "Monitor the agent performance",
+      description: "Monitor the actor performance",
       icon: "👨‍💼",
       color: "#722ed1",
       badgeText: "Management"
