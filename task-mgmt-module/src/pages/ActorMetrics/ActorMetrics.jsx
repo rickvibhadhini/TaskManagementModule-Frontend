@@ -214,18 +214,18 @@ const AgentMetricsDashboard = () => {
             prefix={<CheckCircleOutlined className="text-blue-500" />}
             valueStyle={{ color: '#1890ff' }}
             // badgeText="Tasks completed by the agent"
-            info="Total number of tasks the agent has completed successfully"
+            info="Total number of tasks the actor has completed successfully."
           />
         </Col>
       <Col span={12}>
         <StatCard
           title="Task Efficiency Score"
-          value={metrics.task_efficiency_score}
+          value={Number(metrics.task_efficiency_score.toFixed(2))}
           suffix="%"
           prefix={<AuditOutlined className="text-green-500" />}
-          valueStyle={{ color: getEfficiencyColor(metrics.task_efficiency_score) }}
+          valueStyle={{ color: getEfficiencyColor(Number(metrics.task_efficiency_score.toFixed(2))) }}
           showProgress={true}
-          progressPercent={metrics.task_efficiency_score}
+          progressPercent={Number(metrics.task_efficiency_score.toFixed(2))}
           progressStatus={
             metrics.task_efficiency_score >= 80
               ? "success"
@@ -234,7 +234,7 @@ const AgentMetricsDashboard = () => {
               : "exception"
           }
           // badgeText="Efficiency of agent"
-          info="Efficiency score of the agent based on task performance"
+          info="An efficiency score measuring the actor's task performance against other actors of the same funnel."
         />
       </Col>
     </Row>
@@ -248,7 +248,7 @@ const AgentMetricsDashboard = () => {
             <MetricCard 
               title="Task Duration Metrics"
               items={durationMetricItems}
-              info={"Task duration metrics for the fastest and slowest tasks by the agent"}
+              info={"Task duration metrics for the fastest and slowest tasks by an actor."}
             />
 
             </Col>
@@ -256,7 +256,7 @@ const AgentMetricsDashboard = () => {
               <MetricCard 
                 title="Task Retry Metrics"
                 items={retryMetricItems}
-                info={"Task retry metrics for the most and least retried tasks by the agent"}
+                info={"Task retry metrics for the most and least retried tasks by an actor."}
               />
             </Col>
           </Row>
@@ -271,8 +271,8 @@ const AgentMetricsDashboard = () => {
                 chartType="line"
                 data={processedTaskTimeData}
                 dataKeys={lineChartDataKeys}
-                colors={['#1890ff', '#ff7875']}
-                info={"Average task time across all applications"}
+                colors={['#1890ff', '#ff7875']} 
+                info={"Line graph of actor's average task time across applications, with funnel average as threshold."}
                 tooltipFormatter={formatTime}
               />
             </Col>
@@ -283,7 +283,7 @@ const AgentMetricsDashboard = () => {
                 data={processedRetriesData}
                 dataKeys={barChartDataKeys}
                 colors={['#1890ff', '#ff7875']}
-                info={"Average retries per task across all applications"}
+                info={"Bar graph of actor's average retries across applications, with funnel average as threshold."}
               />
             </Col>
           </Row>
@@ -298,7 +298,7 @@ const AgentMetricsDashboard = () => {
           status: task.status,
         })) || []} 
         columns={columns}
-        info="Tasks assigned to the agent (NEW, TODO, IN_PROGRESS, FAILED)"
+        info="Tasks allocated to the actor (NEW, TODO, IN_PROGRESS, FAILED)."
       />
 
 

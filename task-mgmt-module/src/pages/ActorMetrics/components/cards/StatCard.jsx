@@ -31,7 +31,7 @@ const StatCard = ({ title, value, prefix, suffix, valueStyle, showProgress, prog
             <span style={{ color: 'black', fontWeight: 'bold' }}>{title}</span>
             {info && (
               <Tooltip title={info}>
-                <InfoCircleOutlined style={{ color: '#1890ff', cursor: 'pointer', fontSize: '14px' }} />
+                <InfoCircleOutlined style={{ color: 'black', cursor: 'pointer', fontSize: '14px' }} />
               </Tooltip>
             )}
           </div>
