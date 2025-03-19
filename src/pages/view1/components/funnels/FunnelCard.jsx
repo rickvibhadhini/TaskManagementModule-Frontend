@@ -159,8 +159,18 @@ const SendbackCard = ({ funnel, isExpanded, toggleFunnel }) => {
     </div>
   );
 };
+
 // RegularFunnelCard Component
-const RegularFunnelCard = ({ funnel, isExpanded, toggleFunnel, isLatestTask, isBlue, sendbackMap }) => {
+const RegularFunnelCard = ({ 
+  funnel, 
+  isExpanded, 
+  toggleFunnel, 
+  isLatestTask, 
+  isBlue, 
+  sendbackMap,
+  expandedTasks,
+  setExpandedTasks
+}) => {
   const headerBgColor = isLatestTask ? 'bg-yellow-50' : isBlue ? 'bg-blue-50' : 'bg-white';
   const statusColor = isLatestTask ? 'bg-yellow-100 text-yellow-800' : 
                      funnel.status === 'completed' ? 'bg-green-100 text-green-800' : 
@@ -168,7 +178,7 @@ const RegularFunnelCard = ({ funnel, isExpanded, toggleFunnel, isLatestTask, isB
                      'bg-gray-100 text-gray-800';
 
   return (
-    <div className={`rounded-lg shadow overflow-hidden ${isBlue ? 'border border-blue-200' : ''}`}>
+    <div id={`funnel-${funnel.id}`} className={`rounded-lg shadow overflow-hidden ${isBlue ? 'border border-blue-200' : ''}`}>
       <div className={`px-4 py-5 sm:px-6 ${headerBgColor}`}>
         <div className="flex justify-between items-center">
           <div className="flex items-center space-x-3">
@@ -211,7 +221,9 @@ const RegularFunnelCard = ({ funnel, isExpanded, toggleFunnel, isLatestTask, isB
           <TaskGroup 
             tasks={funnel.tasks} 
             isSendback={false} 
-            sendbackMap={sendbackMap}  // Pass sendbackMap to TaskGroup
+            sendbackMap={sendbackMap}
+            expandedTasks={expandedTasks}
+            setExpandedTasks={setExpandedTasks}
           />
         </div>
       )}
@@ -220,7 +232,17 @@ const RegularFunnelCard = ({ funnel, isExpanded, toggleFunnel, isLatestTask, isB
 };
 
 // Main FunnelCard Component
-const FunnelCard = ({ funnel, isExpanded, toggleFunnel, isLatestTask, isSendback, isBlue, sendbackMap }) => {
+const FunnelCard = ({ 
+  funnel, 
+  isExpanded, 
+  toggleFunnel, 
+  isLatestTask, 
+  isSendback, 
+  isBlue, 
+  sendbackMap,
+  expandedTasks,
+  setExpandedTasks 
+}) => {
   if (isSendback) {
     return <SendbackCard funnel={funnel} isExpanded={isExpanded} toggleFunnel={toggleFunnel} />;
   }
@@ -232,7 +254,9 @@ const FunnelCard = ({ funnel, isExpanded, toggleFunnel, isLatestTask, isSendback
       toggleFunnel={toggleFunnel}
       isLatestTask={isLatestTask}
       isBlue={isBlue}
-      sendbackMap={sendbackMap}  // Pass sendbackMap to RegularFunnelCard
+      sendbackMap={sendbackMap}
+      expandedTasks={expandedTasks}
+      setExpandedTasks={setExpandedTasks}
     />
   );
 };

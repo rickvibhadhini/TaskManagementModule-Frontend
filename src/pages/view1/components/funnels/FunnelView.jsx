@@ -2,7 +2,15 @@ import React from 'react';
 import FunnelCard from './FunnelCard';
 import { formatDuration, getStatusColor } from '../../utils/formatters';
 
-function FunnelView({ funnelData, expandedFunnels, toggleFunnel, sendbackMap }) {
+function FunnelView({ 
+  funnelData, 
+  expandedFunnels, 
+  toggleFunnel, 
+  sendbackMap, 
+  navigateToTask,
+  expandedTasks,
+  setExpandedTasks
+}) {
   // Separate the data into three categories
   const latestTask = funnelData.find(funnel => funnel.id === 'latest-task');
   const regularFunnels = funnelData.filter(funnel => 
@@ -14,41 +22,52 @@ function FunnelView({ funnelData, expandedFunnels, toggleFunnel, sendbackMap }) 
 
   // Extract the latest task details if available
   const latestTaskDetails = latestTask?.tasks[0];
+  
+  // Find which funnel contains the latest task (if any)
+  const findTaskInFunnels = () => {
+    if (!latestTaskDetails?.id) return null;
+    
+    for (const funnel of regularFunnels) {
+      const matchingTask = funnel.tasks.find(task => task.id === latestTaskDetails.id);
+      if (matchingTask) {
+        return { funnelId: funnel.id, taskId: matchingTask.id };
+      }
+    }
+    return null;
+  };
+  
+  const handleLatestTaskClick = () => {
+    const location = findTaskInFunnels();
+    if (location) {
+      navigateToTask(location.funnelId, location.taskId);
+    }
+  };
 
   return (
     <div className="space-y-4">
-      {/* Latest Task Section - Not a dropdown */}
+      {/* Redesigned Latest Task Section - Compact and Centered */}
       {latestTaskDetails && (
-        <div className="mb-4">
-          <h3 className="text-lg font-medium text-gray-900 mb-2">Latest Task</h3>
-          <div className="bg-yellow-50 border border-yellow-200 p-4 rounded-lg">
-            <div className="flex flex-col sm:flex-row sm:justify-between">
-              <div className="mb-2 sm:mb-0">
-                <div className="font-medium">{latestTaskDetails.name || 'Unknown Task'}</div>
-                <div className="text-sm text-gray-500">ID: {latestTaskDetails.id || 'N/A'}</div>
+        <div className="mb-6 flex justify-center">
+          <div 
+            className="bg-white shadow-md rounded-lg border-l-4 border-yellow-400 hover:shadow-lg transition-shadow duration-200 cursor-pointer max-w-md w-full"
+            onClick={handleLatestTaskClick}
+            title="Click to find this task in its funnel"
+          >
+            <div className="px-4 py-3">
+              <div className="flex items-center justify-between mb-2">
+                <span className="bg-yellow-100 text-yellow-800 text-xs font-medium px-2.5 py-1 rounded">Latest Task</span>
+                <span className={getStatusColor(latestTaskDetails.currentStatus || 'UNKNOWN')}>
+                  {latestTaskDetails.currentStatus || 'UNKNOWN'}
+                </span>
               </div>
-              <div className="flex flex-col sm:items-end">
-                <div className="text-sm">
-                  <span className="font-medium">Status:</span>{' '}
-                  <span className={getStatusColor(latestTaskDetails.currentStatus || 'UNKNOWN')}>
-                    {latestTaskDetails.currentStatus || 'UNKNOWN'}
-                  </span>
-                </div>
-                <div className="text-sm text-gray-500">
-                  <span className="font-medium">Handled by:</span> {latestTaskDetails.handledBy || 'N/A'}
-                </div>
-                {(latestTaskDetails.duration !== undefined || latestTaskDetails.sendbacks !== undefined) && (
-                  <div className="text-sm text-gray-500">
-                    {latestTaskDetails.duration !== undefined && (
-                      <span className="mr-3">
-                        <span className="font-medium">Duration:</span> {formatDuration(latestTaskDetails.duration)}
-                      </span>
-                    )}
-                    {latestTaskDetails.sendbacks !== undefined && (
-                      <span>
-                        <span className="font-medium">Sendbacks:</span> {latestTaskDetails.sendbacks}
-                      </span>
-                    )}
+              
+              <div className="font-medium text-gray-900">{latestTaskDetails.name || 'Unknown Task'}</div>
+              
+              <div className="flex justify-between items-center mt-2 text-sm">
+                <div className="text-gray-500 truncate">ID: {latestTaskDetails.id || 'N/A'}</div>
+                {latestTaskDetails.duration !== undefined && (
+                  <div className="text-gray-500">
+                    {formatDuration(latestTaskDetails.duration)}
                   </div>
                 )}
               </div>
@@ -69,7 +88,9 @@ function FunnelView({ funnelData, expandedFunnels, toggleFunnel, sendbackMap }) 
                 isExpanded={expandedFunnels[funnel.id] || false}
                 toggleFunnel={() => toggleFunnel(funnel.id)}
                 isBlue={true}
-                sendbackMap={sendbackMap}  // Pass sendbackMap to each FunnelCard
+                sendbackMap={sendbackMap}
+                expandedTasks={expandedTasks}
+                setExpandedTasks={setExpandedTasks}
               />
             ))}
           </div>

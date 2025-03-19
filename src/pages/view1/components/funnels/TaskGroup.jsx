@@ -4,16 +4,18 @@ import { getStatusDotColor, getStatusColor, formatDuration } from '../../utils/f
 import { FaCheckCircle } from 'react-icons/fa'; // Importing an icon
 import Tooltip from './Tooltip'; // Import the Tooltip component
 
-function TaskGroup({ tasks, isSendback, sendbackMap = {} }) {
-  const [expandedTasks, setExpandedTasks] = useState({});
+function TaskGroup({ tasks, isSendback, sendbackMap = {}, expandedTasks = {}, setExpandedTasks }) {
   const [tooltipVisible, setTooltipVisible] = useState(false);
   const [tooltipContent, setTooltipContent] = useState('');
+  const [tooltipTaskId, setTooltipTaskId] = useState(null);  // Track which task has tooltip visible
 
   const toggleTaskTimeline = (taskId) => {
-    setExpandedTasks(prev => ({
-      ...prev,
-      [taskId]: !prev[taskId]
-    }));
+    if (setExpandedTasks) {
+      setExpandedTasks(prev => ({
+        ...prev,
+        [taskId]: !prev[taskId]
+      }));
+    }
   };
 
   const sortedTasks = [...tasks].sort((a, b) => {
@@ -42,6 +44,18 @@ function TaskGroup({ tasks, isSendback, sendbackMap = {} }) {
     ).sort((a, b) => new Date(a.updatedAt) - new Date(b.updatedAt))
     : [];
 
+  const showTooltip = (taskId, content) => {
+    setTooltipVisible(true);
+    setTooltipContent(content);
+    setTooltipTaskId(taskId);
+  };
+  
+  const hideTooltip = () => {
+    setTooltipVisible(false);
+    setTooltipContent('');
+    setTooltipTaskId(null);
+  };
+
   return (
     <div className="space-y-3">
       {isSendback ? (
@@ -59,11 +73,20 @@ function TaskGroup({ tasks, isSendback, sendbackMap = {} }) {
         </div>
       ) : (
         sortedTasks.map((task, index) => (
-          <div key={task?.id || index} className="bg-gray-50 p-3 rounded-md relative">
+          <div id={`task-${task?.id}`} key={task?.id || index} className="bg-gray-50 p-3 rounded-md relative">
             <div className="flex justify-between items-center">
               <div className="flex-1">
-                <div className="font-medium">{task?.name || 'Unknown Task'}</div>
-                <div className="text-sm text-gray-500">ID: {task?.id || 'N/A'}</div>
+                {/* Task name displayed in ALL CAPS */}
+                <div className="font-medium uppercase">
+                  {task?.name || 'Unknown Task'}
+                </div>
+                
+                {/* Task ID is now hidden */}
+                
+                {/* Handled by information */}
+                <div className="text-sm text-gray-500 mt-1">
+                  <span className="font-medium">Handled by: </span>{task?.handledBy || 'N/A'}
+                </div>
               </div>
               <div className="flex-1 flex justify-end">
                 <div className="text-right">
@@ -74,41 +97,35 @@ function TaskGroup({ tasks, isSendback, sendbackMap = {} }) {
                     </span>
                   </div>
                   
-                  
                   {/* Dynamic sendback indicator based on sendbackMap */}
-{task.id && sendbackMap[task.id] && (
-  <div 
-    className="relative flex items-center"
-    onMouseEnter={() => {
-      setTooltipVisible(true);
-      const sendbacks = Object.values(sendbackMap[task.id]);
-      const sendbackCount = sendbacks.length;
-      
-      // Create tooltip content showing all sendbacks
-      const tooltipText = sendbacks.map((info, index) => 
-        `Sendback ${sendbackCount > 1 ? (index + 1) + ': ' : ''}\nSource Loan Stage: ${info.sourceLoanStage || 'N/A'}\nSource Sub Module: ${info.sourceSubModule || 'N/A'}\nTime: ${new Date(info.updatedAt).toLocaleString()}`
-      ).join('\n\n');
-      
-      setTooltipContent(tooltipText);
-    }}
-    onMouseLeave={() => {
-      setTooltipVisible(false);
-      setTooltipContent('');
-    }}
-  >
-    <span className="flex items-center text-gray-800 text-sm font-semibold">
-      <FaCheckCircle className="text-red-500 mr-1" />
-      Sendback Received 
-      {Object.keys(sendbackMap[task.id]).length > 1 ? 
-        ` (${Object.keys(sendbackMap[task.id]).length})` : ''}
-    </span>
-    <Tooltip content={tooltipContent} visible={tooltipVisible} />
-  </div>
-)}
+                  {task.id && sendbackMap[task.id] && (
+                    <div 
+                      className="relative flex items-center justify-end"
+                      onMouseEnter={() => {
+                        const sendbacks = Object.values(sendbackMap[task.id]);
+                        const sendbackCount = sendbacks.length;
+                        
+                        // Create tooltip content showing all sendbacks
+                        const tooltipText = sendbacks.map((info, index) => 
+                          `Sendback ${sendbackCount > 1 ? (index + 1) + ': ' : ''}\nSource Loan Stage: ${info.sourceLoanStage || 'N/A'}\nSource Sub Module: ${info.sourceSubModule || 'N/A'}\nTime: ${new Date(info.updatedAt).toLocaleString()}`
+                        ).join('\n\n');
+                        
+                        showTooltip(task.id, tooltipText);
+                      }}
+                      onMouseLeave={hideTooltip}
+                    >
+                      <span className="flex items-center text-gray-800 text-sm font-semibold">
+                        <FaCheckCircle className="text-red-500 mr-1" />
+                        Sendback Received 
+                        {Object.keys(sendbackMap[task.id]).length > 1 ? 
+                          ` (${Object.keys(sendbackMap[task.id]).length})` : ''}
+                      </span>
+                      {tooltipVisible && tooltipTaskId === task.id && (
+                        <Tooltip content={tooltipContent} visible={true} />
+                      )}
+                    </div>
+                  )}
                   
-                  <div className="text-sm text-gray-500 mb-1">
-                    <span className="font-medium">Handled by: </span>{task?.handledBy || 'N/A'}
-                  </div>
                   <div className="text-sm text-gray-500 flex justify-end mb-1">
                     {task?.duration !== undefined && (
                       <span className="mr-4">

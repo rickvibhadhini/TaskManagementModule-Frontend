@@ -12,6 +12,7 @@ import { fetchFunnelData } from './services/ApplicationListApi';
 
 function View1() {
   const [expandedFunnels, setExpandedFunnels] = useState({});
+  const [expandedTasks, setExpandedTasks] = useState({});  // New state for tracking expanded tasks
   const [applicationId, setApplicationId] = useState('');
   const [inputApplicationId, setInputApplicationId] = useState('');
   const [funnelData, setFunnelData] = useState([]);
@@ -21,7 +22,7 @@ function View1() {
   const [activeTab, setActiveTab] = useState('list'); 
   const [hideNewStatus, setHideNewStatus] = useState(true); 
   const [pollingInterval, setPollingInterval] = useState(null);
-  const [sendbackMap, setSendbackMap] = useState({});  // New state for sendback map
+  const [sendbackMap, setSendbackMap] = useState({});
 
   const [filters, setFilters] = useState({
     taskId: '',
@@ -36,6 +37,30 @@ function View1() {
     sortOrder: 'asc' 
   });
   const [showFilters, setShowFilters] = useState(false);
+  
+  // Function to navigate to a specific task within a funnel
+  const navigateToTask = (funnelId, taskId) => {
+    // First ensure the funnel is expanded
+    setExpandedFunnels(prev => ({
+      ...prev,
+      [funnelId]: true
+    }));
+    
+    // Then set this task to be expanded
+    setExpandedTasks(prev => ({
+      ...prev,
+      [taskId]: true
+    }));
+    
+    // Scroll to the funnel
+    setTimeout(() => {
+      const funnelElement = document.getElementById(`funnel-${funnelId}`);
+      if (funnelElement) {
+        funnelElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }, 100); // Small delay to ensure DOM is updated
+  };
+  
   const stopPolling = () => {
     if (pollingInterval) {
       clearInterval(pollingInterval);
@@ -76,6 +101,7 @@ function View1() {
     applyFilters();
   }, [filters, funnelData, hideNewStatus]);
 
+  // Create sendbackMap whenever funnelData changes
   useEffect(() => {
     // Create a map of sendbacks by targetTaskId
     const newSendbackMap = {};
@@ -380,7 +406,10 @@ function View1() {
           funnelData={displayData}
           expandedFunnels={expandedFunnels}
           toggleFunnel={toggleFunnel}
-          sendbackMap={sendbackMap}  // Pass sendbackMap to FunnelView
+          sendbackMap={sendbackMap}
+          navigateToTask={navigateToTask}
+          expandedTasks={expandedTasks}
+          setExpandedTasks={setExpandedTasks}
         />
       );
     } else {
