@@ -1,4 +1,3 @@
-// FunnelCard.jsx
 import React, { useState, useRef, useEffect } from 'react';
 import StatusTimeline from './StatusTimeline';
 import { getStatusColor, formatDuration } from '../../utils/formatters';
@@ -161,7 +160,7 @@ const SendbackCard = ({ funnel, isExpanded, toggleFunnel }) => {
   );
 };
 // RegularFunnelCard Component
-const RegularFunnelCard = ({ funnel, isExpanded, toggleFunnel, isLatestTask, isBlue }) => {
+const RegularFunnelCard = ({ funnel, isExpanded, toggleFunnel, isLatestTask, isBlue, sendbackMap }) => {
   const headerBgColor = isLatestTask ? 'bg-yellow-50' : isBlue ? 'bg-blue-50' : 'bg-white';
   const statusColor = isLatestTask ? 'bg-yellow-100 text-yellow-800' : 
                      funnel.status === 'completed' ? 'bg-green-100 text-green-800' : 
@@ -209,7 +208,11 @@ const RegularFunnelCard = ({ funnel, isExpanded, toggleFunnel, isLatestTask, isB
       {/* Expanded content */}
       {isExpanded && (
         <div className="px-4 py-5 sm:px-6 border-t border-gray-200 bg-white">
-          <TaskGroup tasks={funnel.tasks} isSendback={false} />
+          <TaskGroup 
+            tasks={funnel.tasks} 
+            isSendback={false} 
+            sendbackMap={sendbackMap}  // Pass sendbackMap to TaskGroup
+          />
         </div>
       )}
     </div>
@@ -217,7 +220,7 @@ const RegularFunnelCard = ({ funnel, isExpanded, toggleFunnel, isLatestTask, isB
 };
 
 // Main FunnelCard Component
-const FunnelCard = ({ funnel, isExpanded, toggleFunnel, isLatestTask, isSendback, isBlue }) => {
+const FunnelCard = ({ funnel, isExpanded, toggleFunnel, isLatestTask, isSendback, isBlue, sendbackMap }) => {
   if (isSendback) {
     return <SendbackCard funnel={funnel} isExpanded={isExpanded} toggleFunnel={toggleFunnel} />;
   }
@@ -229,6 +232,7 @@ const FunnelCard = ({ funnel, isExpanded, toggleFunnel, isLatestTask, isSendback
       toggleFunnel={toggleFunnel}
       isLatestTask={isLatestTask}
       isBlue={isBlue}
+      sendbackMap={sendbackMap}  // Pass sendbackMap to RegularFunnelCard
     />
   );
 };

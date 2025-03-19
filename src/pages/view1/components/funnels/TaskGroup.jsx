@@ -4,7 +4,7 @@ import { getStatusDotColor, getStatusColor, formatDuration } from '../../utils/f
 import { FaCheckCircle } from 'react-icons/fa'; // Importing an icon
 import Tooltip from './Tooltip'; // Import the Tooltip component
 
-function TaskGroup({ tasks, isSendback }) {
+function TaskGroup({ tasks, isSendback, sendbackMap = {} }) {
   const [expandedTasks, setExpandedTasks] = useState({});
   const [tooltipVisible, setTooltipVisible] = useState(false);
   const [tooltipContent, setTooltipContent] = useState('');
@@ -73,25 +73,39 @@ function TaskGroup({ tasks, isSendback }) {
                       {task?.currentStatus || 'UNKNOWN'}
                     </span>
                   </div>
-                  {task.id === "current_address_capture" && (
-                    <div 
-                      className="relative flex items-center"
-                      onMouseEnter={() => {
-                        setTooltipVisible(true);
-                        setTooltipContent(`Source Loan Stage: ${task.sourceLoanStage}, Source Sub Module: ${task.sourceSubModule}, Time: ${new Date(task.updatedAt).toLocaleString()}`);
-                      }}
-                      onMouseLeave={() => {
-                        setTooltipVisible(false);
-                        setTooltipContent('');
-                      }}
-                    >
-                      <span className="flex items-center text-gray-800 text-sm font-semibold">
-                        <FaCheckCircle className="text-red-500 mr-1" />
-                        Sendback Received
-                      </span>
-                      <Tooltip content={tooltipContent} visible={tooltipVisible} />
-                    </div>
-                  )}
+                  
+                  
+                  {/* Dynamic sendback indicator based on sendbackMap */}
+{task.id && sendbackMap[task.id] && (
+  <div 
+    className="relative flex items-center"
+    onMouseEnter={() => {
+      setTooltipVisible(true);
+      const sendbacks = Object.values(sendbackMap[task.id]);
+      const sendbackCount = sendbacks.length;
+      
+      // Create tooltip content showing all sendbacks
+      const tooltipText = sendbacks.map((info, index) => 
+        `Sendback ${sendbackCount > 1 ? (index + 1) + ': ' : ''}\nSource Loan Stage: ${info.sourceLoanStage || 'N/A'}\nSource Sub Module: ${info.sourceSubModule || 'N/A'}\nTime: ${new Date(info.updatedAt).toLocaleString()}`
+      ).join('\n\n');
+      
+      setTooltipContent(tooltipText);
+    }}
+    onMouseLeave={() => {
+      setTooltipVisible(false);
+      setTooltipContent('');
+    }}
+  >
+    <span className="flex items-center text-gray-800 text-sm font-semibold">
+      <FaCheckCircle className="text-red-500 mr-1" />
+      Sendback Received 
+      {Object.keys(sendbackMap[task.id]).length > 1 ? 
+        ` (${Object.keys(sendbackMap[task.id]).length})` : ''}
+    </span>
+    <Tooltip content={tooltipContent} visible={tooltipVisible} />
+  </div>
+)}
+                  
                   <div className="text-sm text-gray-500 mb-1">
                     <span className="font-medium">Handled by: </span>{task?.handledBy || 'N/A'}
                   </div>
