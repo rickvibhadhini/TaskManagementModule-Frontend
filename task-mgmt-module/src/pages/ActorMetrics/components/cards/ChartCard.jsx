@@ -95,7 +95,7 @@ const ChartCard = ({ title, chartType, data, dataKeys, colors, height = 300, inf
         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
           {title}
           <Tooltip title={info}>
-            <InfoCircleOutlined style={{ color: "#1890ff", cursor: "pointer" }} />
+            <InfoCircleOutlined style={{ color: "black", cursor: "pointer" }} />
           </Tooltip>
         </div>
       }

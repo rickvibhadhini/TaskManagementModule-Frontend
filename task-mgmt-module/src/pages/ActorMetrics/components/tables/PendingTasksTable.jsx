@@ -42,7 +42,7 @@ const PendingTasksTable = ({ tasks, columns, info }) => {
         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
           <span>Pending Tasks</span>
           <Tooltip title={info}>
-            <InfoCircleOutlined style={{ color: "#1890ff", cursor: "pointer" }} />
+            <InfoCircleOutlined style={{ color: "black", cursor: "pointer" }} />
           </Tooltip>
         </div>
       }

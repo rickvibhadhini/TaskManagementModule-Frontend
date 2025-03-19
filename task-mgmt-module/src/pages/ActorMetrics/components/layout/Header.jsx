@@ -33,11 +33,12 @@ const DashboardHeader = ({ agentId, setAgentId, handleAgentIdChange, timeFrame, 
       </div>
       <div className="flex items-center space-x-4">
         <Input 
-          placeholder="Enter Agent ID" 
+
+          placeholder="Enter Actor ID" 
           value={tempAgentId} 
-          onChange={(e) => setTempAgentId(e.target.value)} //updating the local state
-          // addonAfter={<Button type="primary" icon={<SearchOutlined />}>Search</Button>} 
-          style={{ width: 300 }}
+          onChange={(e) => setTempAgentId(e.target.value)} 
+          onPressEnter={handleSearch}
+          style={{ width: 300, marginRight: 8} }
         />
         <Button type="primary" icon={<SearchOutlined />} onClick={handleSearch}>Search</Button>
         <Select 

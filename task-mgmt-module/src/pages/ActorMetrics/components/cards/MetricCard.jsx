@@ -25,7 +25,7 @@ const MetricCard = ({ title, items, info}) => {
         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
           {title}
           <Tooltip title={info}>
-            <InfoCircleOutlined style={{ color: "#1890ff", cursor: "pointer" }} />
+            <InfoCircleOutlined style={{ color: "black", cursor: "pointer" }} />
           </Tooltip>
         </div>
     } 
