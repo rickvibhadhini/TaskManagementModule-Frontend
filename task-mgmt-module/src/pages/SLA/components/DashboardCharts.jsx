@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import { Card, Space, Radio, Row, Col, Divider, Tag, Button, Tooltip as AntTooltip } from 'antd';
+import { Typography } from 'antd';
 import { 
   BarChartOutlined, 
   LineChartOutlined, 
@@ -280,6 +281,9 @@ const DashboardCharts = ({
                     color: funnelColors[funnel]
                   }))}
                 />
+
+            
+                
                 <Bar
                   dataKey="minutes"
                   name="Average Time (minutes)"
@@ -292,6 +296,17 @@ const DashboardCharts = ({
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
+
+            <div style={{ 
+              textAlign: 'center', 
+              paddingTop: '8px', 
+              fontWeight: 'bold',
+              color: '#1890ff',
+              fontSize: '14px'
+            }}>
+              Funnels
+      </div>
+
           </div>
         </Card>
       </Col>
