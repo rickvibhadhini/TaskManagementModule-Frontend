@@ -260,61 +260,65 @@ const HomePage = () => {
         </Row>
       </Content>
 
-      <Footer 
-        style={{ 
-          background: themeValues.cardBackground,
-          borderTop: `1px solid ${themeValues.dividerColor}`,
-          maxWidth: '100%',
-          padding: '24px'
-        }}
-      >
-        <Row gutter={[32, 24]} style={{ maxWidth: '1440px', margin: '0 auto' }}>
-          <Col xs={24} md={8}>
-            <Title level={4} style={{ 
-              color: themeValues.primaryText,
-              marginBottom: '16px'
-            }}>
-              CARS24 CFSPL
-            </Title>
-            <Paragraph style={{ 
-              color: themeValues.secondaryText,
-              fontSize: '14px'
-            }}>
-              Transforming the way India buys and sells cars, providing technology-driven solutions for a seamless experience.
-            </Paragraph>
-          </Col>
-          
-          <Col xs={24} md={8}>
-            <Title level={5} style={{ 
-              color: themeValues.primaryText,
-              marginBottom: '16px'
-            }}>
-              
-            </Title>
-          </Col>
-          
-          <Col xs={24} md={8} style={{ textAlign: 'right' }}>
-            <Space style={{ marginBottom: '16px' }}>
-             
-              <Badge 
-                count="" 
-                style={{ 
-                  backgroundColor: '#f6ffed',
-                  color: '#52c41a',
-                  fontSize: '12px',
-                  fontWeight: 500
-                }} 
-              />
-            </Space>
-            <Paragraph style={{ 
-              color: themeValues.tertiaryText,
-              fontSize: '14px'
-            }}>
-              ©️ 2025 CARS24 CFSPL. All rights reserved.
-            </Paragraph>
-          </Col>
-        </Row>
-      </Footer>
+ <Footer 
+  style={{ 
+    background: themeValues.cardBackground,
+    borderTop: `1px solid ${themeValues.dividerColor}`,
+    padding: '12px',
+    position: 'fixed',
+    bottom: 0,
+    left: 0,
+    width: '100%',
+    zIndex: 10
+  }}
+>
+  <Row gutter={[32, 24]} style={{ maxWidth: '1440px', margin: '0 auto' }}>
+    <Col xs={24} md={8}>
+      <Title level={4} style={{ 
+        color: themeValues.primaryText,
+        marginBottom: '16px'
+      }}>
+        CARS24 CFSPL
+      </Title>
+      <Paragraph style={{ 
+        color: themeValues.secondaryText,
+        fontSize: '14px'
+      }}>
+       Better drives, better lives
+      </Paragraph>
+    </Col>
+    
+    <Col xs={24} md={8}>
+      <Title level={5} style={{ 
+        color: themeValues.primaryText,
+        marginBottom: '16px'
+      }}>
+       
+      </Title>
+    </Col>
+    
+    <Col xs={24} md={8} style={{ textAlign: 'right' }}>
+      <Space style={{ marginBottom: '16px' }}>
+        <Badge 
+          count="" 
+          style={{ 
+            backgroundColor: '#f6ffed',
+            color: '#52c41a',
+            fontSize: '12px',
+            fontWeight: 500
+          }} 
+        />
+      </Space>
+      <Paragraph style={{ 
+        color: themeValues.tertiaryText,
+        fontSize: '14px'
+      }}>
+        ©️ 2025 CARS24 CFSPL. All rights reserved.
+      </Paragraph>
+    </Col>
+  </Row>
+</Footer>
+
       <GlobalStyles />
     </Layout>
   );
