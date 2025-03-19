@@ -1,12 +1,10 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { Typography, Card, Button, Badge, Col } from "antd";
-import { useTheme } from "./ThemeContext";
 
 const { Title, Text, Paragraph } = Typography;
 
-const ModuleCard = ({ view, index }) => {
-  const { themeValues } = useTheme();
+const ModuleCard = ({ view, index, themeValues }) => {
   const [isHovered, setIsHovered] = useState(false);
 
   const handleMouseEnter = () => setIsHovered(true);
