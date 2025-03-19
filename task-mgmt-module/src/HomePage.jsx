@@ -1,16 +1,12 @@
 import React, { useState, useEffect } from "react";
-import { Layout, Typography, Row, Col, Divider, Switch, Space, Badge } from "antd";
-import { ThemeProvider, useTheme } from "./ThemeContext";
+import { Layout, Typography, Row, Col, Divider, Badge, Space } from "antd";
 import ModuleCard from "./ModuleCard";
 import { ActivityLogPic, AgentPic, SlaPic } from "./assets/index";
 import { cars24Logo } from "./assets/index";
 const { Header, Content, Footer } = Layout;
 const { Title, Text, Paragraph } = Typography;
 
-
 const GlobalStyles = () => {
-  const { themeValues } = useTheme();
-  
   return (
     <style>{`
       @keyframes fadeIn {
@@ -24,9 +20,7 @@ const GlobalStyles = () => {
       
       .module-card:hover {
         transform: translateY(-4px);
-        box-shadow: ${themeValues.theme === 'light' 
-          ? '0 12px 24px rgba(0, 0, 0, 0.10)' 
-          : '0 12px 24px rgba(0, 0, 0, 0.35)'} !important;
+        box-shadow: 0 12px 24px rgba(0, 0, 0, 0.10) !important;
       }
       
       .module-card:hover .card-image {
@@ -42,12 +36,24 @@ const GlobalStyles = () => {
   );
 };
 
-
-const HomePageContent = () => {
-  const { theme, toggleTheme, themeValues } = useTheme();
+const HomePage = () => {
   const [loaded, setLoaded] = useState(false);
 
-
+  // Light theme values
+  const themeValues = {
+    background: 'linear-gradient(to bottom right, #f0f5ff, #ffffff, #f0f7ff)',
+    headerBackground: 'rgba(255, 255, 255, 0.95)',
+    headerShadow: '0 2px 8px rgba(0,0,0,0.06)',
+    primaryText: 'rgba(0, 0, 0, 0.85)',
+    secondaryText: 'rgba(0, 0, 0, 0.65)',
+    tertiaryText: 'rgba(0, 0, 0, 0.45)',
+    accentColor: '#1890ff',
+    dividerColor: '#f0f0f0',
+    cardBackground: '#fff',
+    cardBorder: '#f0f0f0',
+    cardShadow: '0 4px 12px rgba(0, 0, 0, 0.05)',
+    particleColor: 'rgba(24, 144, 255, 0.12)',
+  };
 
   const views = [
     { 
@@ -85,6 +91,76 @@ const HomePageContent = () => {
 
   useEffect(() => {
     setLoaded(true);
+    
+    // Set up particles animation
+    let canvas = document.getElementById('particles-canvas');
+    
+    if (!canvas) {
+      canvas = document.createElement('canvas');
+      canvas.id = 'particles-canvas';
+      canvas.style.position = 'fixed';
+      canvas.style.top = '0';
+      canvas.style.left = '0';
+      canvas.style.width = '100%';
+      canvas.style.height = '100%';
+      canvas.style.pointerEvents = 'none';
+      canvas.style.zIndex = '1';
+      document.body.appendChild(canvas);
+    }
+
+    const ctx = canvas.getContext('2d');
+    const particles = [];
+    const particleCount = 30; 
+
+    // Set canvas dimensions to match viewport
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    for (let i = 0; i < particleCount; i++) {
+      particles.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        radius: Math.random() * 2.5 + 0.5, 
+        color: themeValues.particleColor,
+        speedX: Math.random() * 0.25 - 0.125,
+        speedY: Math.random() * 0.25 - 0.125
+      });
+    }
+
+    const animate = () => {
+      requestAnimationFrame(animate);
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      
+      particles.forEach(particle => {
+        ctx.beginPath();
+        ctx.arc(particle.x, particle.y, particle.radius, 0, Math.PI * 2);
+        ctx.fillStyle = particle.color;
+        ctx.fill();
+        
+        particle.x += particle.speedX;
+        particle.y += particle.speedY;
+        
+        if (particle.x < 0) particle.x = canvas.width;
+        if (particle.x > canvas.width) particle.x = 0;
+        if (particle.y < 0) particle.y = canvas.height;
+        if (particle.y > canvas.height) particle.y = 0;
+      });
+    };
+    
+    const animationId = requestAnimationFrame(animate);
+    
+    const handleResize = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    };
+    
+    window.addEventListener('resize', handleResize);
+    
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      cancelAnimationFrame(animationId);
+      if (canvas) canvas.remove();
+    };
   }, []);
   
   return (
@@ -116,7 +192,7 @@ const HomePageContent = () => {
       >
         <div style={{ display: 'flex', alignItems: 'center' }}>
           
-            <img src={cars24Logo} alt="Cars24 Logo" style={{ margin: '16px 0', height: '40px', cursor: 'pointer'}} />
+          <img src={cars24Logo} alt="Cars24 Logo" style={{ margin: '16px 0', height: '40px', cursor: 'pointer'}} />
           
           <Divider type="vertical" style={{ 
             height: '24px', 
@@ -127,7 +203,7 @@ const HomePageContent = () => {
             fontSize: '18px', 
             color: themeValues.primaryText
           }}>
-            Dashboard
+            Task Management Module
           </Text>
         </div>
         
@@ -136,19 +212,8 @@ const HomePageContent = () => {
             fontSize: '14px',
             color: themeValues.tertiaryText
           }}>
-            Task Management Module
+            TMM
           </Text>
-          
-          <Space align="center">
-            <Text style={{ marginRight: '8px' }}>
-              {theme === 'light' ? '☀️' : '🌙'}
-            </Text>
-            <Switch 
-              checked={theme === 'dark'}
-              onChange={toggleTheme}
-              size="small"
-            />
-          </Space>
         </div>
       </Header>
 
@@ -180,7 +245,7 @@ const HomePageContent = () => {
 
         <Row gutter={[24, 24]}>
           {views.map((view, index) => (
-            <ModuleCard key={view.id} view={view} index={index} />
+            <ModuleCard key={view.id} view={view} index={index} themeValues={themeValues} />
           ))}
         </Row>
       </Content>
@@ -223,8 +288,8 @@ const HomePageContent = () => {
               <Badge 
                 count="Version 2.1.4" 
                 style={{ 
-                  backgroundColor: theme === 'light' ? '#e6f7ff' : '#111d2c',
-                  color: theme === 'light' ? '#1890ff' : '#69c0ff',
+                  backgroundColor: '#e6f7ff',
+                  color: '#1890ff',
                   fontSize: '12px',
                   fontWeight: 500
                 }} 
@@ -232,8 +297,8 @@ const HomePageContent = () => {
               <Badge 
                 count="" 
                 style={{ 
-                  backgroundColor: theme === 'light' ? '#f6ffed' : '#162312',
-                  color: theme === 'light' ? '#52c41a' : '#73d13d',
+                  backgroundColor: '#f6ffed',
+                  color: '#52c41a',
                   fontSize: '12px',
                   fontWeight: 500
                 }} 
@@ -250,15 +315,6 @@ const HomePageContent = () => {
       </Footer>
       <GlobalStyles />
     </Layout>
-  );
-};
-
-
-const HomePage = () => {
-  return (
-    <ThemeProvider>
-      <HomePageContent />
-    </ThemeProvider>
   );
 };
 

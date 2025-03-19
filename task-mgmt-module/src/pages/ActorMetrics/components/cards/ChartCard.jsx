@@ -14,7 +14,24 @@ import {
   ResponsiveContainer 
 } from 'recharts';
 
-const ChartCard = ({ title, chartType, data, dataKeys, colors, height = 300, info}) => {
+const ChartCard = ({ title, chartType, data, dataKeys, colors, height = 300, info, tooltipFormatter}) => {
+
+  const CustomTooltip = ({ active, payload, label }) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="custom-tooltip" style={{ backgroundColor: 'white', padding: '10px', border: '1px solid #ccc' }}>
+          <p className="label">{`${label}`}</p>
+          {payload.map((entry, index) => (
+            <p key={index} style={{ color: entry.color }}>
+              {`${entry.name}: ${tooltipFormatter ? tooltipFormatter(entry.value) : entry.value}`}
+            </p>
+          ))}
+        </div>
+      );
+    }
+    return null;
+  };
+
   const renderChart = () => {
     if (chartType === 'line') {
       return (
@@ -25,7 +42,11 @@ const ChartCard = ({ title, chartType, data, dataKeys, colors, height = 300, inf
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis dataKey="task" interval={0} angle={-45} textAnchor="end"/>
           <YAxis />
-          <RechartsToolTip />
+          {tooltipFormatter ? (
+            <RechartsToolTip content={<CustomTooltip />} />
+          ) : (
+            <RechartsToolTip />
+          )}
           <Legend align="center" verticalAlign="top" />
           {dataKeys.map((key, index) => (
             <Line 
