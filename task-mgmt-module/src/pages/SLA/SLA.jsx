@@ -1,101 +1,151 @@
-import React from 'react';
-import { Modal, Button, Space, Card, Statistic, Typography } from 'antd';
-import { 
-  ClockCircleOutlined, 
-  ExclamationCircleOutlined, 
-  CheckCircleFilled, 
-  WarningFilled, 
-  CloseCircleFilled 
-} from '@ant-design/icons';
+import React, { useState, useRef, useEffect } from 'react';
+import { Layout, Typography, Card, Space, Alert, theme } from 'antd';
+import { BarChartOutlined } from '@ant-design/icons';
+import { DashboardCharts, DashboardTable, TaskDetailModal } from './components/index';
+import { SLA_ENDPOINTS } from '../../api/SlaEndpoint';
+import { funnelColors, funnelOrder, getButtonColor } from './components/Constant';
+import DashboardFooter from './Layout/Footer.jsx';
+import DashboardHeader from './Layout/Header.jsx';
+import axios from 'axios';
 
-const { Text } = Typography;
+const { Content } = Layout;
+const { Title } = Typography;
 
-const TaskDetailModal = ({ selectedTask, showDetailModal, setShowDetailModal, funnelColors }) => {
-  const getStatusIcon = (level) => {
-    if (level === 'critical') return <CloseCircleFilled style={{ color: '#f5222d' }} />;
-    if (level === 'warning') return <WarningFilled style={{ color: '#faad14' }} />;
-    return <CheckCircleFilled style={{ color: '#52c41a' }} />;
+const SLA = () => {
+  const { token } = theme.useToken();
+  const [selectedFunnel, setSelectedFunnel] = useState('all');
+  const [selectedTask, setSelectedTask] = useState(null);
+  const [showDetailModal, setShowDetailModal] = useState(false);
+  const [channel, setChannel] = useState('D2C');  // Default to "D2C"
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [showTable, setShowTable] = useState(false);
+  const [timeRange, setTimeRange] = useState([null, null]);
+  const tableRef = useRef(null);
+
+  const toggleView = () => {
+    setShowTable(!showTable);
+    if (!showTable && tableRef.current) {
+      setTimeout(() => {
+        tableRef.current?.scrollIntoView({ behavior: 'smooth' });
+      }, 100);
+    }
   };
 
+  const fetchData = async (channelValue) => {
+    if (!channelValue) return;
+
+    setLoading(true);
+    setError(null);
+    setData(null);
+    // Don't reset selectedFunnel here to maintain filter state
+    setShowTable(false);
+    setSelectedTask(null);
+
+    try {
+      const response = await axios.get(SLA_ENDPOINTS.getTimeByChannel(channelValue));
+      if (!response.data || !response.data.funnels || Object.keys(response.data.funnels).length === 0) {
+        setError(`No data available for channel ${channelValue}`);
+      } else {
+        setData(response.data);
+      }
+    } catch (err) {
+      console.error('Error fetching data:', err);
+      setError(`Failed to fetch data for channel ${channelValue}. Please try again.`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Handle filter reset
+  const resetFilters = () => {
+    setSelectedFunnel('all');
+    setTimeRange([null, null]);
+  };
+
+  // Fetch default data on mount
+  useEffect(() => {
+    fetchData("D2C");
+  }, []);
+
   return (
-    <Modal
-      title={selectedTask?.name || "Task Details"}
-      open={showDetailModal}
-      onCancel={() => setShowDetailModal(false)}
-      footer={[
-        <Button key="close" type="primary" onClick={() => setShowDetailModal(false)}>
-          Close
-        </Button>
-      ]}
-      centered
-    >
-      {selectedTask && (
-        <Space direction="vertical" size="large" style={{ width: '100%' }}>
-          <Card size="small" bodyStyle={{ textAlign: 'center' }}>
-            <Statistic 
-              title="Average Time" 
-              value={selectedTask.displayTime} 
-              prefix={<ClockCircleOutlined />} 
-            />
+    <Layout style={{ height: '100vh', width: '100vw' }}>
+      <DashboardHeader
+        channel={channel}
+        onChannelChange={(value) => {
+          setChannel(value);
+          fetchData(value);
+        }}
+        onLoadData={() => fetchData(channel)}
+        data={data}
+        error={error}
+        loading={loading}
+        selectedFunnel={selectedFunnel}
+        setSelectedFunnel={setSelectedFunnel}
+        funnelOrder={funnelOrder}
+        timeRange={timeRange}
+        setTimeRange={setTimeRange}
+      />
+      <Content style={{ padding: '24px', background: '#f0f2f5', overflowY: 'auto' }}>
+        {!data ? (
+          <Card style={{ textAlign: 'center', marginTop: 48 }}>
+            <Space direction="vertical" size="large" style={{ width: '100%' }}>
+              <Title level={4}>Welcome to SLA Monitoring Dashboard</Title>
+              <Typography.Text type="secondary">
+                Select a channel to load SLA monitoring data.
+              </Typography.Text>
+              <div style={{ padding: 32, background: '#f9f9f9', borderRadius: 8 }}>
+                <BarChartOutlined style={{ fontSize: 64, color: '#d9d9d9' }} />
+                <div style={{ marginTop: 16, color: '#8c8c8c' }}>
+                  Data visualization will appear here
+                </div>
+              </div>
+            </Space>
           </Card>
-          
-          <Card size="small" bodyStyle={{ textAlign: 'center' }}>
-            <Statistic 
-              title="% of Total TAT" 
-              value={selectedTask.percentOfTAT?.toFixed(1)} 
-              suffix="%" 
-              precision={1}
-              valueStyle={{ 
-                color: selectedTask.performanceLevel === 'critical' ? '#f5222d' : 
-                      selectedTask.performanceLevel === 'warning' ? '#faad14' : '#52c41a'
-              }}
-            />
-          </Card>
-          
-          <Card size="small" bodyStyle={{ textAlign: 'center' }}>
-            <Statistic 
-              title="Sendbacks" 
-              value={selectedTask.sendbacks} 
-              prefix={selectedTask.sendbacks > 2 ? <ExclamationCircleOutlined style={{ color: '#faad14' }} /> : null}
-              valueStyle={selectedTask.sendbacks > 2 ? { color: '#faad14' } : undefined}
-            />
-            {selectedTask.sendbacks > 3 && (
-              <Text type="warning">High number of sendbacks</Text>
+        ) : (
+          <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+            {!showTable ? (
+              <DashboardCharts 
+                data={data} 
+                selectedFunnel={selectedFunnel}
+                setSelectedFunnel={setSelectedFunnel}
+                funnelColors={funnelColors}
+                funnelOrder={funnelOrder}
+                setSelectedTask={setSelectedTask}
+                setShowDetailModal={setShowDetailModal}
+                toggleView={toggleView}
+                getButtonColor={getButtonColor}
+                timeRange={timeRange}
+              />
+            ) : (
+              <DashboardTable 
+                data={data}
+                selectedFunnel={selectedFunnel}
+                setSelectedFunnel={setSelectedFunnel}
+                funnelColors={funnelColors}
+                funnelOrder={funnelOrder}
+                setSelectedTask={setSelectedTask}
+                setShowDetailModal={setShowDetailModal}
+                toggleView={toggleView}
+                getButtonColor={getButtonColor}
+                tableRef={tableRef}
+                timeRange={timeRange}
+              />
             )}
-          </Card>
-          
-          <Card size="small" bodyStyle={{ textAlign: 'center' }}>
-            <Statistic 
-              title="Status" 
-              value={selectedTask.performanceLevel.charAt(0).toUpperCase() + selectedTask.performanceLevel.slice(1)} 
-              prefix={getStatusIcon(selectedTask.performanceLevel)}
-              valueStyle={{ 
-                color: selectedTask.performanceLevel === 'critical' ? '#f5222d' : 
-                      selectedTask.performanceLevel === 'warning' ? '#faad14' : '#52c41a'
-              }}
+
+            <TaskDetailModal
+              selectedTask={selectedTask}
+              showDetailModal={showDetailModal}
+              setShowDetailModal={setShowDetailModal}
+              funnelColors={funnelColors}
             />
-          </Card>
-          
-          <Card size="small" bodyStyle={{ textAlign: 'center' }}>
-            <Statistic 
-              title="Funnel" 
-              value={selectedTask.funnel.charAt(0).toUpperCase() + selectedTask.funnel.slice(1)} 
-              prefix={
-                <div style={{ 
-                  width: 16, 
-                  height: 16, 
-                  borderRadius: '50%', 
-                  backgroundColor: funnelColors[selectedTask.funnel] || '#000',
-                  display: 'inline-block',
-                  marginRight: 8
-                }} />
-              }
-            />
-          </Card>
-        </Space>
-      )}
-    </Modal>
+          </Space>
+        )}
+      </Content>
+      <DashboardFooter />
+    </Layout>
   );
 };
 
-export default TaskDetailModal;
+export default SLA;
