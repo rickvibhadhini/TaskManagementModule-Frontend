@@ -1,10 +1,8 @@
 import React from 'react';
 import FunnelCard from './FunnelCard';
-import { formatDuration,getStatusColor } from '../../utils/formatters';
+import { formatDuration, getStatusColor } from '../../utils/formatters';
 
-
-
-function FunnelView({ funnelData, expandedFunnels, toggleFunnel }) {
+function FunnelView({ funnelData, expandedFunnels, toggleFunnel, sendbackMap }) {
   // Separate the data into three categories
   const latestTask = funnelData.find(funnel => funnel.id === 'latest-task');
   const regularFunnels = funnelData.filter(funnel => 
@@ -71,6 +69,7 @@ function FunnelView({ funnelData, expandedFunnels, toggleFunnel }) {
                 isExpanded={expandedFunnels[funnel.id] || false}
                 toggleFunnel={() => toggleFunnel(funnel.id)}
                 isBlue={true}
+                sendbackMap={sendbackMap}  // Pass sendbackMap to each FunnelCard
               />
             ))}
           </div>
@@ -82,16 +81,15 @@ function FunnelView({ funnelData, expandedFunnels, toggleFunnel }) {
         <div>
           <h3 className="text-lg font-medium text-gray-900 mb-2">Sendback Tasks</h3>
           <div className="space-y-4">
-     
-{sendbackFunnels.map(funnel => (
-  <FunnelCard
-    key={funnel.id}
-    funnel={funnel}
-    isExpanded={expandedFunnels[funnel.id] || false}
-    toggleFunnel={() => toggleFunnel(funnel.id)}
-    isSendback={true}
-  />
-))}
+            {sendbackFunnels.map(funnel => (
+              <FunnelCard
+                key={funnel.id}
+                funnel={funnel}
+                isExpanded={expandedFunnels[funnel.id] || false}
+                toggleFunnel={() => toggleFunnel(funnel.id)}
+                isSendback={true}
+              />
+            ))}
           </div>
         </div>
       )}
@@ -105,8 +103,5 @@ function FunnelView({ funnelData, expandedFunnels, toggleFunnel }) {
     </div>
   );
 }
-
-
-
 
 export default FunnelView;

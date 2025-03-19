@@ -22,6 +22,7 @@ function ActivityLog() {
   const [activeTab, setActiveTab] = useState('list'); 
   const [hideNewStatus, setHideNewStatus] = useState(true); 
   const [pollingInterval, setPollingInterval] = useState(null);
+  const [sendbackMap, setSendbackMap] = useState({});  // New state for sendback map
 
   const [filters, setFilters] = useState({
     taskId: '',
@@ -75,6 +76,44 @@ function ActivityLog() {
   useEffect(() => {
     applyFilters();
   }, [filters, funnelData, hideNewStatus]);
+
+  useEffect(() => {
+    // Create a map of sendbacks by targetTaskId
+    const newSendbackMap = {};
+    
+    // Find all sendback funnels
+    const sendbackFunnels = funnelData.filter(funnel => 
+      funnel.id.startsWith('sendback-')
+    );
+    
+    // Extract sendback info from each funnel's tasks
+    sendbackFunnels.forEach(funnel => {
+      // Extract request ID from funnel name or ID
+      const requestIdMatch = funnel.name.match(/Sendbacks for (.+)$/);
+      const requestId = requestIdMatch ? requestIdMatch[1] : funnel.id;
+      
+      funnel.tasks.forEach(task => {
+        if (task.targetTaskId) {
+          // Store sendback information keyed by targetTaskId
+          if (!newSendbackMap[task.targetTaskId]) {
+            newSendbackMap[task.targetTaskId] = {};
+          }
+          
+          // Use requestId as the key for this specific sendback
+          if (!newSendbackMap[task.targetTaskId][requestId]) {
+            newSendbackMap[task.targetTaskId][requestId] = {
+              sourceLoanStage: task.sourceLoanStage,
+              sourceSubModule: task.sourceSubModule,
+              updatedAt: task.statusHistory?.[0]?.updatedAt || task.createdAt,
+              requestId: requestId
+            };
+          }
+        }
+      });
+    });
+    
+    setSendbackMap(newSendbackMap);
+  }, [funnelData]);
 
   const fetchFunnelData = async () => {
     setLoading(true);
@@ -340,6 +379,7 @@ function ActivityLog() {
           funnelData={displayData}
           expandedFunnels={expandedFunnels}
           toggleFunnel={toggleFunnel}
+          sendbackMap={sendbackMap}  // Pass sendbackMap to FunnelView
         />
       );
     } else {
