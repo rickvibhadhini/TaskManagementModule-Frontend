@@ -3,6 +3,7 @@ import { Layout, Typography, Row, Col, Divider, Badge, Space } from "antd";
 import ModuleCard from "./ModuleCard";
 import { ActivityLogPic, AgentPic, SlaPic } from "./assets/index";
 import { cars24Logo } from "./assets/index";
+import { AlignCenter } from "lucide-react";
 const { Header, Content, Footer } = Layout;
 const { Title, Text, Paragraph } = Typography;
 
@@ -73,7 +74,7 @@ const HomePage = () => {
       image: AgentPic, 
       description: "Monitor the actor performance",
       icon: "👨‍💼",
-      color: "#722ed1",
+      color: "#1890ff",
       badgeText: "Management"
     },
     { 
@@ -84,7 +85,7 @@ const HomePage = () => {
       image: SlaPic, 
       description: "Monitor the time taken for funnels/stages",
       icon: "⏱️",
-      color: "#faad14",
+      color: "#1890ff",
       badgeText: "Monitoring"
     }
   ];
@@ -92,7 +93,7 @@ const HomePage = () => {
   useEffect(() => {
     setLoaded(true);
     
-    // Set up particles animation
+   
     let canvas = document.getElementById('particles-canvas');
     
     if (!canvas) {
@@ -112,7 +113,7 @@ const HomePage = () => {
     const particles = [];
     const particleCount = 30; 
 
-    // Set canvas dimensions to match viewport
+   
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
 
@@ -174,48 +175,57 @@ const HomePage = () => {
       }}
     >
       <Header
+  style={{
+    background: themeValues.headerBackground,
+    backdropFilter: 'blur(8px)',
+    WebkitBackdropFilter: 'blur(8px)',
+    boxShadow: themeValues.headerShadow,
+    padding: '0 24px',
+    position: 'sticky',
+    top: 0,
+    zIndex: 10,
+    height: '68px',
+    maxWidth: '100%'
+  }}
+>
+  <div style={{ display: 'flex', alignItems: 'center', width: '100%' }}>
+   
+    <div style={{ flex: '0 0 auto', display: 'flex', alignItems: 'center' }}>
+      <img
+        src={cars24Logo}
+        alt="Cars24 Logo"
+        style={{ margin: '16px 0', height: '40px', cursor: 'pointer' }}
+      />
+      <Divider
+        type="vertical"
         style={{
-          background: themeValues.headerBackground,
-          backdropFilter: 'blur(8px)',
-          WebkitBackdropFilter: 'blur(8px)',
-          boxShadow: themeValues.headerShadow,
-          padding: '0 24px',
-          position: 'sticky',
-          top: 0,
-          zIndex: 10,
-          height: '68px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          maxWidth: '100%'
+          height: '24px',
+          margin: '0 16px',
+          background: themeValues.dividerColor
+        }}
+      />
+    </div>
+    
+    
+    <div style={{ flex: 1, textAlign: 'center', marginRight: '90px' }}>
+      <Text
+        strong
+        style={{
+          fontSize: '28px',
+          color: themeValues.primaryText
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center' }}>
-          
-          <img src={cars24Logo} alt="Cars24 Logo" style={{ margin: '16px 0', height: '40px', cursor: 'pointer'}} />
-          
-          <Divider type="vertical" style={{ 
-            height: '24px', 
-            margin: '0 16px',
-            background: themeValues.dividerColor
-          }} />
-          <Text strong style={{ 
-            fontSize: '18px', 
-            color: themeValues.primaryText
-          }}>
-            Task Management Module
-          </Text>
-        </div>
-        
-        <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-          <Text style={{ 
-            fontSize: '14px',
-            color: themeValues.tertiaryText
-          }}>
-            TMM
-          </Text>
-        </div>
-      </Header>
+        Task Management Module
+      </Text>
+    </div>
+    
+    
+    <div style={{ flex: '0 0 auto' }}>
+    
+    </div>
+  </div>
+</Header>
+
 
       <Content 
         style={{ 
@@ -232,14 +242,14 @@ const HomePage = () => {
             color: themeValues.primaryText,
             marginBottom: '8px'
           }}>
-            Module Selection
+            
           </Title>
           <Paragraph style={{ 
             color: themeValues.secondaryText,
             maxWidth: '700px',
             margin: '0 auto'
           }}>
-            Select one of the following modules to access specialized monitoring and management abilities.
+
           </Paragraph>
         </div>
 
@@ -285,15 +295,7 @@ const HomePage = () => {
           
           <Col xs={24} md={8} style={{ textAlign: 'right' }}>
             <Space style={{ marginBottom: '16px' }}>
-              <Badge 
-                count="Version 2.1.4" 
-                style={{ 
-                  backgroundColor: '#e6f7ff',
-                  color: '#1890ff',
-                  fontSize: '12px',
-                  fontWeight: 500
-                }} 
-              />
+             
               <Badge 
                 count="" 
                 style={{ 
