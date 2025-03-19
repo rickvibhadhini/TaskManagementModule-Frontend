@@ -45,7 +45,7 @@ function FunnelView({
 
   return (
     <div className="space-y-4">
-      {/* Redesigned Latest Task Section - Compact and Centered */}
+      {/* Redesigned Latest Task Section - Compact and Centered with Handled By */}
       {latestTaskDetails && (
         <div className="mb-6 flex justify-center">
           <div 
@@ -61,10 +61,15 @@ function FunnelView({
                 </span>
               </div>
               
-              <div className="font-medium text-gray-900">{latestTaskDetails.name || 'Unknown Task'}</div>
+              {/* Task name in ALL CAPS */}
+              <div className="font-medium text-gray-900 uppercase">{latestTaskDetails.name || 'Unknown Task'}</div>
               
               <div className="flex justify-between items-center mt-2 text-sm">
-                <div className="text-gray-500 truncate">ID: {latestTaskDetails.id || 'N/A'}</div>
+                {/* Added Handled By */}
+                <div className="text-gray-500">
+                  <span className="font-medium">Handled by:</span> {latestTaskDetails.handledBy || 'N/A'}
+                </div>
+                
                 {latestTaskDetails.duration !== undefined && (
                   <div className="text-gray-500">
                     {formatDuration(latestTaskDetails.duration)}

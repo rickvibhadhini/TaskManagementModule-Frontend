@@ -69,7 +69,7 @@ const SendbackCard = ({ funnel, isExpanded, toggleFunnel }) => {
             Sendback
           </span>
           <span className="text-lg font-medium text-gray-900">
-            Sendback received from{' '}
+            Sendback request Id: {' '}
             <span 
               ref={triggerRef}
               className="cursor-help relative"
