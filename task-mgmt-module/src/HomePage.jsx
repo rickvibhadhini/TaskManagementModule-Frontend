@@ -79,8 +79,7 @@ const HomePage = () => {
     },
     { 
       id: 3, 
-      name: "SLA Monitoring", 
-      hoverName: "SLA Time Monitoring", 
+      name: "SLA Time Monitoring", 
       path: "/SLA", 
       image: SlaPic, 
       description: "Monitor the time taken for funnels/stages",
