@@ -29,7 +29,7 @@ const DashboardHeader = ({ agentId, setAgentId, handleAgentIdChange, timeFrame, 
         <div className="mr-6 flex items-center">
         <img src={cars24Logo} alt="Cars24 Logo" onClick = {handleClick} style={{ margin: '16px 0', height: '40px', cursor: 'pointer'}} />
         </div>
-        <Title level={3} style={{ margin: 0, color: 'black' }}>Agent Metrics Dashboard</Title>
+        <Title level={3} style={{ margin: 0, color: 'black' }}>Actor Metrics Dashboard</Title>
       </div>
       <div className="flex items-center space-x-4">
         <Input 

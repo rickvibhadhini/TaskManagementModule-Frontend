@@ -6,7 +6,7 @@ const { Footer } = Layout;
 const DashboardFooter = () => {
   return (
     <Footer style={{ textAlign: 'center', backgroundColor: 'white' }}>
-      CARS24 Agent Metrics Dashboard ©2025
+      CARS24 Actor Metrics Dashboard ©2025
     </Footer>
   );
 };
