@@ -192,7 +192,7 @@ const AgentMetricsDashboard = () => {
         <StatCard
           title="Task Efficiency Score"
           value={metrics.task_efficiency_score}
-          suffix="/100"
+          suffix="%"
           prefix={<AuditOutlined className="text-green-500" />}
           valueStyle={{ color: getEfficiencyColor(metrics.task_efficiency_score) }}
           showProgress={true}
