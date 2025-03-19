@@ -1,7 +1,8 @@
 import React, { useState ,useEffect} from 'react';
 import GanttChart from './components/graph/GanttChart';
-import { fetchTasksByApplicationId } from './services/Ganntapi';
-import mockTaskData from './mockData/mockGanttChartData';
+import {  fetchTasksByApplicationId } from './services/Ganntapi';
+
+
 
 function Dashboard({ applicationId }) {
   //const [applicationId, setApplicationId] = useState('');
@@ -12,19 +13,22 @@ function Dashboard({ applicationId }) {
   
   useEffect(() => {
     const fetchTaskData = async () => {
+      setLoading(true);
       try {
-        const response = await fetch(`http://localhost:8081/applicationLog/graph/${applicationId}`);
-        if (!response.ok) {
-          throw new Error('Network response was not ok');
-        }
-        const data = await response.json();
-        setTaskData(data.data);
+        const data = await fetchTasksByApplicationId(applicationId);
+        setTaskData(data);
+        setError(null);
       } catch (error) {
         console.error('Error fetching task data:', error);
+        setError(error.message);
+      } finally {
+        setLoading(false);
       }
     };
-
-    fetchTaskData();
+    
+    if (applicationId) {
+      fetchTaskData();
+    }
   }, [applicationId]);
 
 
