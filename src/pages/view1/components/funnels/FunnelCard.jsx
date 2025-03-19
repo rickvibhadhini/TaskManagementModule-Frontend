@@ -6,7 +6,6 @@ import TaskGroup from './TaskGroup';
 import { createPortal } from 'react-dom';
 
 // SendbackCard Component
-// SendbackCard component in FunnelCard.jsx
 const SendbackCard = ({ funnel, isExpanded, toggleFunnel }) => {
   const [tooltipVisible, setTooltipVisible] = useState(false);
   const tooltipRef = useRef(null);
