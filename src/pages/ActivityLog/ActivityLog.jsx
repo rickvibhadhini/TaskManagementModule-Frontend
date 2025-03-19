@@ -1,16 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import Header from './components/common/Header';
+import Header from './components/Layout/Header';
 import FilterPanel from './components/filters/FilterPanel';
 import Dashboard from './Dashboard';
-import TabNavigation from './components/common/TabNavigation';
+import TabNavigation from './components/Layout/TabNavigation';
 import FunnelView from './components/funnels/FunnelView';
 import { transformApiData } from './utils/apiTransformers';
-import mocklogdata from './mockData/mocklogdata';
-import { fetchFunnelData } from './services/ApplicationListApi';
-//import AnalyticsView from './components/AnalyticsView';
+//import mocklogdata from './mockData/mocklogdata';
 
-function View1() {
+
+import { fetchFunnelData as fetchFunnelDataFromApi } from './services/ApplicationListApi';
+
+function ActivityLog() {
   const [expandedFunnels, setExpandedFunnels] = useState({});
   const [applicationId, setApplicationId] = useState('');
   const [inputApplicationId, setInputApplicationId] = useState('');
@@ -78,22 +79,20 @@ function View1() {
   const fetchFunnelData = async () => {
     setLoading(true);
     try {
-      const url = `http://localhost:8081/applicationLog/${applicationId}`;
-      const response = await axios.get(url);
-      const transformedData = transformApiData(response.data.data);                            // replaced for using mock data
-    
-      setFunnelData(transformedData);
-    
+      const transformedData = await fetchFunnelDataFromApi(applicationId);
+      
       // Initialize expanded state for all funnels
       const initialExpandedState = Object.fromEntries(
         transformedData.map(funnel => [funnel.id, false]) // Default collapsed
       );
       setExpandedFunnels(initialExpandedState);
-    
+      
+      setFunnelData(transformedData);
       setError(null);
-    } catch (err) {
-      console.error('Error fetching funnel data:', err);
-      setError('Failed to load activity data. Please try again later.');
+    } catch (error) {
+      console.error('Error fetching funnel data:', error);
+      setError('Failed to fetch application data');
+      setFunnelData([]);
     } finally {
       setLoading(false);
     }
@@ -392,4 +391,4 @@ function View1() {
   );
 }
 
-export default View1;
+export default ActivityLog;
