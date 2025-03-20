@@ -185,7 +185,7 @@ const AgentMetricsDashboard = () => {
       id: metrics.most_and_least_retried_task?.most_retried_task?.task_id 
         ? metrics.most_and_least_retried_task.most_retried_task.task_id.replace(/_/g, ' ') 
         : 'N/A',
-      value: (metrics.most_and_least_retried_task?.most_retried_task?.visited )-1
+      value: (metrics.most_and_least_retried_task?.most_retried_task?.visited )
         ? `${metrics.most_and_least_retried_task.most_retried_task.visited} retries`
         : '0 retries',
       bgColorClass: 'bg-orange-50'
@@ -196,7 +196,7 @@ const AgentMetricsDashboard = () => {
       id: metrics.most_and_least_retried_task?.least_retried_task?.task_id 
         ? metrics.most_and_least_retried_task.least_retried_task.task_id.replace(/_/g, ' ') 
         : 'N/A',
-      value: (metrics.most_and_least_retried_task?.least_retried_task?.visited )-1
+      value: (metrics.most_and_least_retried_task?.least_retried_task?.visited )
         ? `${metrics.most_and_least_retried_task.least_retried_task.visited} retries`
         : '0 retries',
       bgColorClass: 'bg-orange-50'
@@ -204,7 +204,7 @@ const AgentMetricsDashboard = () => {
   ];
 
   return (
-    <Layout className="min-h-screen" style={{backgroundColor: 'white'}}>
+    <Layout className="min-h-screen flex flex-col" style={{backgroundColor: 'white'}}>
       {/* Header Component */}
       <DashboardHeader 
         agentId={actorId}
@@ -214,14 +214,14 @@ const AgentMetricsDashboard = () => {
         handleTimeFrameChange={handleTimeFrameChange}
       />
       
-      <Content className="p-6" style={{ backgroundColor: '#f0f5ff', width: '100%', padding: '24px 48px' }}>
+      <Content className="p-6 flex-grow" style={{ backgroundColor: '#f0f5ff', width: '100%', padding: '24px 48px' }}>
         
         {!actorId.trim() ? (
-            <div className="flex justify-center items-center h-96 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow">
+            <div className="flex justify-center items-center min-h-[600px] bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow">
               <Empty
                 description={
                   <span className="text-lg text-gray-500">
-                    Enter the agent ID to see details
+                    Enter the actor ID to see details
                   </span>
                 }
               />
