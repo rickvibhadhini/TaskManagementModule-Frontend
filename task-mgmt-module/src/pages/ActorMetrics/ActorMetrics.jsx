@@ -215,7 +215,7 @@ const AgentMetricsDashboard = () => {
   ];
 
   return (
-    <Layout className="min-h-screen" style={{backgroundColor: 'white'}}>
+    <Layout className="min-h-screen flex flex-col" style={{backgroundColor: 'white'}}>
       {/* Header Component */}
       <DashboardHeader 
         agentId={actorId}
@@ -225,10 +225,10 @@ const AgentMetricsDashboard = () => {
         handleTimeFrameChange={handleTimeFrameChange}
       />
       
-      <Content className="p-6" style={{ backgroundColor: '#f0f5ff', width: '100%', padding: '24px 48px' }}>
+      <Content className="p-6 flex-grow" style={{ backgroundColor: '#f0f5ff', width: '100%', padding: '24px 48px' }}>
         
         {!actorId.trim() ? (
-            <div className="flex justify-center items-center h-96 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow">
+            <div className="flex justify-center items-center min-h-[600px] bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow">
               <Empty
                 description={
                   <span className="text-lg text-gray-500">
