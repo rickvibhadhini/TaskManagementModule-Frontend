@@ -5,8 +5,8 @@ import { statusColors } from '../../utils/Ganntutils';
 const TaskTooltip = ({ hoveredTask, tooltipPosition, onClose }) => {
   const [isPinned, setIsPinned] = useState(false);
   const [adjustedPosition, setAdjustedPosition] = useState({ x: 0, y: 0 });
+  const [activeTab, setActiveTab] = useState('overview');
   const tooltipRef = useRef(null);
-  const timelineRef = useRef(null);
 
   // Debounce function for position updates
   const debounce = (fn, delay) => {
@@ -87,6 +87,45 @@ const TaskTooltip = ({ hoveredTask, tooltipPosition, onClose }) => {
     e.stopPropagation();
     onClose();
   };
+  
+  // Calculate stats for the task
+  const calculateTaskStats = (task) => {
+    if (!task) return null;
+    
+    // Total duration
+    const totalDuration = task.segments.reduce((sum, segment) => {
+      return sum + (segment.endTime - segment.startTime);
+    }, 0);
+    
+    // Time per status
+    const timePerStatus = {};
+    task.segments.forEach(segment => {
+      const duration = segment.endTime - segment.startTime;
+      if (!timePerStatus[segment.status]) {
+        timePerStatus[segment.status] = 0;
+      }
+      timePerStatus[segment.status] += duration;
+    });
+    
+    return {
+      totalDuration,
+      timePerStatus
+    };
+  };
+
+  // Format time in a human-readable way
+  const formatTime = (ms) => {
+    const seconds = Math.floor(ms / 1000);
+    if (seconds < 60) return `${seconds}s`;
+    
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    if (minutes < 60) return `${minutes}m ${remainingSeconds}s`;
+    
+    const hours = Math.floor(minutes / 60);
+    const remainingMinutes = minutes % 60;
+    return `${hours}h ${remainingMinutes}m`;
+  };
 
   if (!hoveredTask) return null;
 
@@ -95,12 +134,11 @@ const TaskTooltip = ({ hoveredTask, tooltipPosition, onClose }) => {
 
   const formattedStatuses = hoveredTask.statuses.map((status) => ({
     ...status,
-    formattedTime: format(status.time, 'HH:mm:ss'),
+    formattedTime: format(status.time, 'h:mm:ss a'),
   }));
 
-  // Calculate the required width for the timeline based on number of statuses
-  const minStatusSpacing = 120; // Increased from 80 to provide more space
-  const timelineWidth = formattedStatuses.length * minStatusSpacing;
+  const taskStats = calculateTaskStats(hoveredTask);
+  
   return (
     <div
       ref={tooltipRef}
@@ -108,9 +146,9 @@ const TaskTooltip = ({ hoveredTask, tooltipPosition, onClose }) => {
       style={{
         left: `${adjustedPosition.x}px`,
         top: `${adjustedPosition.y}px`,
-        maxWidth: '400px',
+        width: '400px',
         maxHeight: '80vh',
-        overflow: 'hidden', // Changed from 'auto' to 'hidden'
+        overflow: 'hidden',
         opacity: 1,
         transform: 'translateZ(0)',
         willChange: 'transform',
@@ -118,148 +156,177 @@ const TaskTooltip = ({ hoveredTask, tooltipPosition, onClose }) => {
       }}
       onClick={handleTooltipClick}
     >
-      {/* Sticky header with close button */}
-      <div className="sticky top-0 z-10 bg-white flex justify-between items-center p-4 pb-2 border-b border-gray-100">
-        <h4 className="font-bold text-lg">{hoveredTask.id}</h4>
-        <button
-          className="text-gray-500 hover:text-gray-700 focus:outline-none"
-          onClick={handleCloseClick}
-          style={{
-            fontSize: '28px',
-            fontWeight: 'bold',
-            lineHeight: '24px',
-            width: '32px',
-            height: '32px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          ×
-        </button>
+      {/* Sticky header with tabs and close button */}
+      <div className="sticky top-0 z-10 bg-white">
+        <div className="flex justify-between items-center p-4 pb-2 border-b border-gray-100">
+          <h4 className="font-bold text-lg">{hoveredTask.id}</h4>
+          <button
+            className="text-gray-500 hover:text-gray-700 focus:outline-none"
+            onClick={handleCloseClick}
+            style={{
+              fontSize: '28px',
+              fontWeight: 'bold',
+              lineHeight: '24px',
+              width: '32px',
+              height: '32px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            ×
+          </button>
+        </div>
+        
+        {/* Tabs */}
+        <div className="flex border-b">
+          {['overview', 'stats'].map(tab => (
+            <button
+              key={tab}
+              className={`flex-1 py-2 text-sm font-medium ${
+                activeTab === tab 
+                  ? 'text-blue-600 border-b-2 border-blue-600' 
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+              onClick={() => setActiveTab(tab)}
+            >
+              {tab.charAt(0).toUpperCase() + tab.slice(1)}
+            </button>
+          ))}
+        </div>
       </div>
   
       {/* Scrollable content area */}
-      <div className="p-4 pt-2 overflow-auto" style={{ maxHeight: 'calc(80vh - 50px)' }}>
-        <div className="grid grid-cols-2 gap-2 mb-4">
+      <div className="p-4 overflow-auto" style={{ maxHeight: 'calc(80vh - 90px)' }}>
+        {/* Overview Tab */}
+        {activeTab === 'overview' && (
           <div>
-            <p>
-              <span className="font-semibold">Funnel:</span>
-              <span className="ml-1 inline-flex items-center">
-                <span 
-                  className="inline-block w-3 h-3 rounded-full mr-1" 
-                  style={{ backgroundColor: hoveredTask.funnelColor }}
-                ></span>
-                {hoveredTask.funnel}
-              </span>
-            </p>
-            <p>
-              <span className="font-semibold">Current Status:</span>
-              <span className="ml-1 inline-flex items-center">
-                <span 
-                  className="inline-block w-3 h-3 rounded-full mr-1" 
-                  style={{ backgroundColor: statusColors[segment.status] || '#6B7280' }}
-                ></span>
-                {segment.status}
-              </span>
-            </p>
-            <p><span className="font-semibold">Actor ID:</span> {hoveredTask.actorId || 'None'}</p>
-          </div>
-          <div>
-            <p><span className="font-semibold">Start:</span> {format(segment.startTime, 'HH:mm:ss')}</p>
-            <p><span className="font-semibold">End:</span> {format(segment.endTime, 'HH:mm:ss')}</p>
-            <p>
-              <span className="font-semibold">Duration:</span> {((segment.endTime - segment.startTime) / 1000).toFixed(2)}s
-            </p>
-          </div>
-        </div>
-  
-        <div className="mt-4">
-          <p className="font-semibold mb-2">Status Timeline:</p>
-          
-          <div 
-            className="relative" 
-            ref={timelineRef}
-            style={{ 
-              width: `${Math.max(350, timelineWidth)}px`, 
-              height: '90px', 
-              overflow: 'visible' 
-            }}
-          >
-            <div 
-              className="absolute left-0 right-0 h-0.5 bg-gray-300" 
-              style={{ top: '20px' }}
-            ></div>
+            <div className="grid grid-cols-2 gap-2 mb-4">
+              <div>
+                <p>
+                  <span className="font-semibold">Funnel:</span>
+                  <span className="ml-1 inline-flex items-center">
+                    <span 
+                      className="inline-block w-3 h-3 rounded-full mr-1" 
+                      style={{ backgroundColor: hoveredTask.funnelColor }}
+                    ></span>
+                    {hoveredTask.funnel}
+                  </span>
+                </p>
+                <p>
+                  <span className="font-semibold">Current Status:</span>
+                  <span className="ml-1 inline-flex items-center">
+                    <span 
+                      className="inline-block w-3 h-3 rounded-full mr-1" 
+                      style={{ backgroundColor: statusColors[segment.status] || '#6B7280' }}
+                    ></span>
+                    {segment.status}
+                  </span>
+                </p>
+                <p><span className="font-semibold">Actor ID:</span> {hoveredTask.actorId || 'None'}</p>
+              </div>
+              <div>
+                <p><span className="font-semibold">Start:</span> {format(segment.startTime, 'h:mm:ss a')}</p>
+                <p><span className="font-semibold">End:</span> {format(segment.endTime, 'h:mm:ss a')}</p>
+                <p>
+                  <span className="font-semibold">Duration:</span> {formatTime(segment.endTime - segment.startTime)}
+                </p>
+              </div>
+            </div>
             
-            {formattedStatuses.map((status, idx) => {
-              const position = (idx / (formattedStatuses.length - 1)) * 100;
-              
-              return (
-                <div 
-                  key={idx} 
-                  className="absolute pointer-events-none" 
-                  style={{ left: `${position}%`, top: 0 }}
-                >
-                  <div className="relative">
-                    <div
-                      className="absolute w-5 h-5 rounded-full border-2 border-white shadow-md"
-                      style={{ 
-                        backgroundColor: status.color,
-                        top: '20px',
-                        left: '-10px'
-                      }}
-                      title={`${status.status} at ${status.formattedTime}`}
+            {/* Current segment details */}
+            <div className="mt-4 p-3 bg-gray-50 rounded-lg">
+              <h5 className="font-medium mb-2">Current Segment Details</h5>
+              <p className="text-sm">
+                This task has been in <span className="font-medium">{segment.status}</span> status 
+                for {formatTime(segment.endTime - segment.startTime)}, which 
+                is {taskStats ? Math.round(((segment.endTime - segment.startTime) / taskStats.totalDuration) * 100) : 0}% 
+                of the total task duration.
+              </p>
+            </div>
+            
+            {/* Quick status summary */}
+            <div className="mt-4">
+              <h5 className="font-medium mb-2">Status Summary</h5>
+              <div className="flex space-x-2 overflow-x-auto pb-2">
+                {formattedStatuses.map((status, idx) => (
+                  <div 
+                    key={idx} 
+                    className="flex-shrink-0 px-3 py-2 bg-gray-50 rounded-md text-xs"
+                    style={{ borderLeft: `3px solid ${status.color || '#6B7280'}` }}
+                  >
+                    <p className="font-medium">{status.status}</p>
+                    <p className="text-gray-500">{status.formattedTime}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+        
+        {/* Stats Tab */}
+        {activeTab === 'stats' && taskStats && (
+          <div>
+            <div className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-100">
+              <h5 className="font-medium text-blue-800 mb-1">Total Task Duration</h5>
+              <p className="text-2xl font-bold text-blue-700">{formatTime(taskStats.totalDuration)}</p>
+            </div>
+            
+            {/* Time per status chart */}
+            <h5 className="font-medium mb-2">Time Spent per Status</h5>
+            <div className="space-y-3">
+              {Object.entries(taskStats.timePerStatus).map(([status, time]) => {
+                const percentage = Math.round((time / taskStats.totalDuration) * 100);
+                
+                return (
+                  <div key={status}>
+                    <div className="flex justify-between text-sm mb-1">
+                      <span className="flex items-center">
+                        <span 
+                          className="inline-block w-2 h-2 rounded-full mr-2"
+                          style={{ backgroundColor: statusColors[status] || '#6B7280' }}
+                        ></span>
+                        {status}
+                      </span>
+                      <span>{formatTime(time)} ({percentage}%)</span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div 
+                        className="h-2 rounded-full" 
+                        style={{ 
+                          width: `${percentage}%`,
+                          backgroundColor: statusColors[status] || '#6B7280' 
+                        }}
+                      ></div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            
+            {/* Status transitions */}
+            <div className="mt-4">
+              <h5 className="font-medium mb-2">Status Timeline</h5>
+              <div className="border-l-2 border-gray-200 pl-4 ml-3 space-y-4">
+                {formattedStatuses.map((status, idx) => (
+                  <div 
+                    key={idx} 
+                    className="relative"
+                  >
+                    <div 
+                      className="absolute w-3 h-3 rounded-full -left-5 top-1"
+                      style={{ backgroundColor: status.color }}
                     ></div>
+                    <p className="font-medium">{status.status}</p>
+                    <p className="text-xs text-gray-500">{status.formattedTime}</p>
                   </div>
-                  
-                  <div
-                    className="absolute text-xs font-medium whitespace-nowrap"
-                    style={{
-                      top: '45px',
-                      left: '-25px',
-                      width: '50px',
-                      textAlign: 'center'
-                    }}
-                  >
-                    {status.status}
-                  </div>
-                  
-                  <div
-                    className="absolute text-xs text-gray-500"
-                    style={{
-                      top: '0px',
-                      left: '-30px',
-                      width: '60px',
-                      textAlign: 'center'
-                    }}
-                  >
-                    {format(status.time, 'HH:mm:ss')}
-                  </div>
-                </div>
-              );
-            })}
-            
-            {formattedStatuses.slice(0, -1).map((status, idx) => {
-              const nextStatus = formattedStatuses[idx + 1];
-              const startPosition = (idx / (formattedStatuses.length - 1)) * 100;
-              const endPosition = ((idx + 1) / (formattedStatuses.length - 1)) * 100;
-              
-              return (
-                <div
-                  key={`connector-${idx}`}
-                  className="absolute h-0.5 bg-gray-400 pointer-events-none"
-                  style={{
-                    left: `${startPosition}%`,
-                    top: '20px',
-                    width: `${endPosition - startPosition}%`,
-                  }}
-                ></div>
-              );
-            })}
+                ))}
+              </div>
+            </div>
           </div>
-        </div>
+        )}
   
-        <div className="mt-2 text-xs text-gray-500 text-center italic">
+        <div className="mt-4 text-xs text-gray-500 text-center italic">
           {isPinned ? 'Click outside to close this tooltip' : 'Click to pin this tooltip'}
         </div>
       </div>
