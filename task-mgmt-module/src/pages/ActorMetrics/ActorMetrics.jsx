@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Layout, Row, Col, Empty} from 'antd';
 import { 
@@ -107,31 +108,41 @@ const AgentMetricsDashboard = () => {
 
   const [metrics, setMetrics] = useState({});
   const [loading, setLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState(null);
+
 
   const fetchMetrics = async () => {
     try {
       if (!actorId.trim()) {
         setMetrics({});
+        setErrorMessage(null);
         setLoading(false);
-        // setError(null);
-        // setNoDataFound(false);
         return;
       }
-
-      // setError(null);
-      // setNoDataFound(false);
+  
       const url = ACTOR_METRICS_ENDPOINT.actorMetrics(actorId, timeFrame);
       const response = await axios.get(url);
-      setMetrics(response.data); 
-      setAgentType(response.data.actor_type);
+  
+      if (response.data.Error) {
+        setErrorMessage(response.data.Error);
+        setMetrics({});
+      } else {
+        setErrorMessage(null);
+        setMetrics(response.data); 
+        setAgentType(response.data.actor_type);
+      }
+  
       console.log(response.data);
     } catch (error) {
       message.error("Failed to fetch data from server.");
       console.error("API Error:", error);
+      setErrorMessage("Server error. Please try again later.");
+      setMetrics({});
     } finally {
       setLoading(false);
     }
-  }; 
+  };
+  
 
   useEffect(() => {
     fetchMetrics();
@@ -185,7 +196,7 @@ const AgentMetricsDashboard = () => {
       id: metrics.most_and_least_retried_task?.most_retried_task?.task_id 
         ? metrics.most_and_least_retried_task.most_retried_task.task_id.replace(/_/g, ' ') 
         : 'N/A',
-      value: (metrics.most_and_least_retried_task?.most_retried_task?.visited )-1
+      value: (metrics.most_and_least_retried_task?.most_retried_task?.visited )
         ? `${metrics.most_and_least_retried_task.most_retried_task.visited} retries`
         : '0 retries',
       bgColorClass: 'bg-orange-50'
@@ -196,7 +207,7 @@ const AgentMetricsDashboard = () => {
       id: metrics.most_and_least_retried_task?.least_retried_task?.task_id 
         ? metrics.most_and_least_retried_task.least_retried_task.task_id.replace(/_/g, ' ') 
         : 'N/A',
-      value: (metrics.most_and_least_retried_task?.least_retried_task?.visited )-1
+      value: (metrics.most_and_least_retried_task?.least_retried_task?.visited )
         ? `${metrics.most_and_least_retried_task.least_retried_task.visited} retries`
         : '0 retries',
       bgColorClass: 'bg-orange-50'
@@ -221,13 +232,19 @@ const AgentMetricsDashboard = () => {
               <Empty
                 description={
                   <span className="text-lg text-gray-500">
-                    Enter the agent ID to see details
+                    Enter the actor ID to see details
                   </span>
                 }
               />
             </div>
           ) : (
             <>
+            {errorMessage && (
+        <div className="mb-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded-md">
+          <WarningOutlined className="mr-2" />
+          {errorMessage}
+        </div>
+      )}
 
         {/* Agent Info Card Component */}
         <Row gutter={16} className="mb-8">
