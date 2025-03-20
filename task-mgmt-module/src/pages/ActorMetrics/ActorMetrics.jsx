@@ -171,7 +171,7 @@ const AgentMetricsDashboard = () => {
       id: metrics.most_and_least_retried_task?.most_retried_task?.task_id 
         ? metrics.most_and_least_retried_task.most_retried_task.task_id.replace(/_/g, ' ') 
         : 'N/A',
-      value: (metrics.most_and_least_retried_task?.most_retried_task?.visited )-1
+      value: (metrics.most_and_least_retried_task?.most_retried_task?.visited )
         ? `${metrics.most_and_least_retried_task.most_retried_task.visited} retries`
         : '0 retries',
       bgColorClass: 'bg-orange-50'
@@ -182,7 +182,7 @@ const AgentMetricsDashboard = () => {
       id: metrics.most_and_least_retried_task?.least_retried_task?.task_id 
         ? metrics.most_and_least_retried_task.least_retried_task.task_id.replace(/_/g, ' ') 
         : 'N/A',
-      value: (metrics.most_and_least_retried_task?.least_retried_task?.visited )-1
+      value: (metrics.most_and_least_retried_task?.least_retried_task?.visited )
         ? `${metrics.most_and_least_retried_task.least_retried_task.visited} retries`
         : '0 retries',
       bgColorClass: 'bg-orange-50'
