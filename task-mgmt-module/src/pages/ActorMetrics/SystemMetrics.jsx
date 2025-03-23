@@ -14,7 +14,7 @@ import {
 import axios from 'axios';
 import SYSTEM_METRICS_ENDPOINT from '../../api/SystemMetricsEndpoint';
 
-import {DashboardHeader, AgentInfoCard, StatCard, MetricCard, ChartCard, PendingTasksTable, DashboardFooter} from './components/index';
+import {DashboardHeader, AgentInfoCard, StatCard, MetricCard, ChartCard, PendingTasksTable, DashboardFooter, TaskListByRetries} from './components/index';
 import { data } from 'react-router-dom';
 import SystemHeader from './components/layout/SystemHeader';
 
@@ -97,11 +97,11 @@ const SystemMetricsDashboard = () => {
     return '#f5222d';
   };
 
-  const lineChartDataKeys = [
+  const taskTimeDataKeys = [
     { dataKey: 'system', name: 'System Performance', activeDot: true },
   ]; 
 
-  const barChartDataKeys = [
+  const retryDataKeys = [
     { dataKey: 'system', name: 'System Performance' },
   ];  
 
@@ -150,16 +150,13 @@ const SystemMetricsDashboard = () => {
   const processedTaskTimeData = metrics.average_task_time_across_applications
   ? Object.keys(metrics.average_task_time_across_applications).map(task => ({
       task: task.replace(/_/g, ' '),
-      agent: (metrics.average_task_time_across_applications?.[task] || 0)
+      system: (metrics.average_task_time_across_applications?.[task] || 0) / 60000
     }))
   : [];
 
   const processedRetriesData = Object.keys(metrics.average_retries || {}).map(task => ({
     task: task.replace(/_/g, ' '), 
-    agent: metrics.average_retries[task], 
-    threshold: metrics.average_retries_threshold?.[task] 
-      ? Number(metrics.average_retries_threshold[task].toFixed(2)) 
-      : 0 
+    system: metrics.average_retries[task]
   }));
 
   const durationMetricItems = [
@@ -312,12 +309,17 @@ const SystemMetricsDashboard = () => {
             />
 
             </Col>
-            <Col span={12}>
+            {/* <Col span={12}>
               <MetricCard 
                 title="Task Retry Metrics"
                 items={retryMetricItems}
                 info={"Task retry metrics for the most and least retried tasks by an actor."}
               />
+            </Col> */}
+            <Col span={12}>
+            <TaskListByRetries tasksByRetries={metrics.tasks_sorted_by_retries}
+            info="Tasks grouped by retry count"
+            />
             </Col>
           </Row>
         </div>
@@ -328,12 +330,13 @@ const SystemMetricsDashboard = () => {
             <Col span={12}>
               <ChartCard 
                 title="Average Task Time (minutes)"
-                chartType="line"
+                chartType="bar"
                 data={processedTaskTimeData}
-                dataKeys={lineChartDataKeys}
-                colors={['#1890ff', '#ff7875']} 
-                info={"Line graph of actor's average task time across applications, with funnel average as threshold."}
+                dataKeys={taskTimeDataKeys}
+                colors={['#1890ff']} 
+                info={"Bar graph of actor's average task time across applications, with funnel average as threshold."}
                 tooltipFormatter={formatTime}
+                height={350}
               />
             </Col>
             <Col span={12}>
@@ -341,10 +344,11 @@ const SystemMetricsDashboard = () => {
                 title="Average Retries Per Task"
                 chartType="bar"
                 data={processedRetriesData}
-                dataKeys={barChartDataKeys}
-                colors={['#1890ff', '#ff7875']}
+                dataKeys={retryDataKeys}
+                colors={['#1890ff']}
                 info={"Bar graph of actor's average retries across applications, with funnel average as threshold."}
                 tooltipFormatter={(value) => Number(value).toFixed(2)}
+                height={350}
               />
             </Col>
           </Row>
