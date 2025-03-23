@@ -20,6 +20,10 @@ const DashboardHeader = ({ agentId, setAgentId, handleAgentIdChange, timeFrame, 
 
   const handleSearch = () => {
     setAgentId(tempAgentId)
+  } 
+
+  const handleSystemView = () => {
+    navigate("/actorMetrics/system");
   }
 
   return (
@@ -38,12 +42,12 @@ const DashboardHeader = ({ agentId, setAgentId, handleAgentIdChange, timeFrame, 
           value={tempAgentId} 
           onChange={(e) => setTempAgentId(e.target.value)} 
           onPressEnter={handleSearch}
-          style={{ width: 300, marginRight: 8} }
+          style={{ width: 120, marginRight: 8} }
         />
-        <Button type="primary" icon={<SearchOutlined />} onClick={handleSearch}>Search</Button>
+        <Button type="primary" icon={<SearchOutlined />} onClick={handleSearch} style={{ width: 90, marginRight: 8} }>Search</Button>
         <Select 
           defaultValue={timeFrame} 
-          style={{ width: 180 }} 
+          style={{ width: 120, marginRight: 8 }} 
           onChange={handleTimeFrameChange}
         >
           <Option value="7">Last 7 Days</Option>
@@ -51,6 +55,8 @@ const DashboardHeader = ({ agentId, setAgentId, handleAgentIdChange, timeFrame, 
           <Option value="30">Last 30 Days</Option>
           <Option value="90">Last 90 Days</Option>
         </Select>
+
+        <Button type="primary" onClick={handleSystemView} style={{ width: 120, marginRight: 8} }>System Metrics</Button>
       </div>
     </Header>
   );
