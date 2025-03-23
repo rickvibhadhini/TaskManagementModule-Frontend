@@ -1,5 +1,6 @@
+
 import React, { useState, useEffect } from 'react';
-import { Layout, Row, Col } from 'antd';
+import { Layout, Row, Col, Empty} from 'antd';
 import { 
   CheckCircleOutlined, 
   ClockCircleOutlined, 
@@ -85,6 +86,8 @@ const AgentMetricsDashboard = () => {
 
   const handleAgentIdChange = (e) => {
     setActorId(e.target.value);
+    // setError(null);
+    // setNoDataFound(false);
   };
   
   const getEfficiencyColor = (score) => {
@@ -105,21 +108,41 @@ const AgentMetricsDashboard = () => {
 
   const [metrics, setMetrics] = useState({});
   const [loading, setLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState(null);
+
 
   const fetchMetrics = async () => {
     try {
+      if (!actorId.trim()) {
+        setMetrics({});
+        setErrorMessage(null);
+        setLoading(false);
+        return;
+      }
+  
       const url = ACTOR_METRICS_ENDPOINT.actorMetrics(actorId, timeFrame);
       const response = await axios.get(url);
-      setMetrics(response.data); 
-      setAgentType(response.data.actor_type);
+  
+      if (response.data.Error) {
+        setErrorMessage(response.data.Error);
+        setMetrics({});
+      } else {
+        setErrorMessage(null);
+        setMetrics(response.data); 
+        setAgentType(response.data.actor_type);
+      }
+  
       console.log(response.data);
     } catch (error) {
       message.error("Failed to fetch data from server.");
       console.error("API Error:", error);
+      setErrorMessage("Server error. Please try again later.");
+      setMetrics({});
     } finally {
       setLoading(false);
     }
-  }; 
+  };
+  
 
   useEffect(() => {
     fetchMetrics();
@@ -136,7 +159,9 @@ const AgentMetricsDashboard = () => {
   const processedRetriesData = Object.keys(metrics.average_retries || {}).map(task => ({
     task: task.replace(/_/g, ' '), 
     agent: metrics.average_retries[task], 
-    threshold: metrics.average_retries_threshold?.[task] || 0 
+    threshold: metrics.average_retries_threshold?.[task] 
+      ? Number(metrics.average_retries_threshold[task].toFixed(2)) 
+      : 0 
   }));
 
   const durationMetricItems = [
@@ -171,7 +196,7 @@ const AgentMetricsDashboard = () => {
       id: metrics.most_and_least_retried_task?.most_retried_task?.task_id 
         ? metrics.most_and_least_retried_task.most_retried_task.task_id.replace(/_/g, ' ') 
         : 'N/A',
-      value: (metrics.most_and_least_retried_task?.most_retried_task?.visited )-1
+      value: (metrics.most_and_least_retried_task?.most_retried_task?.visited )
         ? `${metrics.most_and_least_retried_task.most_retried_task.visited} retries`
         : '0 retries',
       bgColorClass: 'bg-orange-50'
@@ -182,7 +207,7 @@ const AgentMetricsDashboard = () => {
       id: metrics.most_and_least_retried_task?.least_retried_task?.task_id 
         ? metrics.most_and_least_retried_task.least_retried_task.task_id.replace(/_/g, ' ') 
         : 'N/A',
-      value: (metrics.most_and_least_retried_task?.least_retried_task?.visited )-1
+      value: (metrics.most_and_least_retried_task?.least_retried_task?.visited )
         ? `${metrics.most_and_least_retried_task.least_retried_task.visited} retries`
         : '0 retries',
       bgColorClass: 'bg-orange-50'
@@ -190,7 +215,7 @@ const AgentMetricsDashboard = () => {
   ];
 
   return (
-    <Layout className="min-h-screen" style={{backgroundColor: 'white'}}>
+    <Layout className="min-h-screen flex flex-col" style={{backgroundColor: 'white'}}>
       {/* Header Component */}
       <DashboardHeader 
         agentId={actorId}
@@ -200,10 +225,39 @@ const AgentMetricsDashboard = () => {
         handleTimeFrameChange={handleTimeFrameChange}
       />
       
-      <Content className="p-6" style={{ backgroundColor: '#f0f5ff', width: '100%', padding: '24px 48px' }}>
-        {/* Agent Info Card Component */}
-        <AgentInfoCard agentId={actorId} agentType={agentType} timeFrame={timeFrame} />
+      <Content className="p-6 flex-grow" style={{ backgroundColor: '#f0f5ff', width: '100%', padding: '24px 48px' }}>
         
+        {!actorId.trim() ? (
+            <div className="flex justify-center items-center min-h-[600px] bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow">
+              <Empty
+                description={
+                  <span className="text-lg text-gray-500">
+                    Enter the actor ID to see details
+                  </span>
+                }
+              />
+            </div>
+          ) : (
+            <>
+            {errorMessage && (
+        <div className="mb-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded-md">
+          <WarningOutlined className="mr-2" />
+          {errorMessage}
+        </div>
+      )}
+
+        {/* Agent Info Card Component */}
+        <Row gutter={16} className="mb-8">
+          <Col span={6}>
+            <AgentInfoCard label={"Actor ID"} value={actorId} />
+          </Col>
+          <Col span={11}>
+            <AgentInfoCard label={"E-mail"} value={metrics.handled_by} />
+          </Col>
+          <Col span={7}>
+            <AgentInfoCard label={"Actor Type"} value={metrics.actor_type} />
+          </Col>
+        </Row>
         {/* Stats Cards */}
         <div className="mb-8">
             <Row gutter={24}>
@@ -214,18 +268,25 @@ const AgentMetricsDashboard = () => {
             prefix={<CheckCircleOutlined className="text-blue-500" />}
             valueStyle={{ color: '#1890ff' }}
             // badgeText="Tasks completed by the agent"
-            info="Total number of tasks the agent has completed successfully"
+            info="Total number of tasks the actor has completed successfully."
           />
         </Col>
       <Col span={12}>
         <StatCard
           title="Task Efficiency Score"
-          value={metrics.task_efficiency_score}
+          value={metrics.task_efficiency_score !== undefined 
+            ? Number(metrics.task_efficiency_score.toFixed(2)) 
+            : '0'}
+          
           suffix="%"
           prefix={<AuditOutlined className="text-green-500" />}
-          valueStyle={{ color: getEfficiencyColor(metrics.task_efficiency_score) }}
+          valueStyle={{ color: getEfficiencyColor(metrics.task_efficiency_score !== undefined 
+            ? Number(metrics.task_efficiency_score.toFixed(2)) 
+            : '0') }}
           showProgress={true}
-          progressPercent={metrics.task_efficiency_score}
+          progressPercent={metrics.task_efficiency_score !== undefined 
+            ? Number(metrics.task_efficiency_score.toFixed(2)) 
+            : '0'}
           progressStatus={
             metrics.task_efficiency_score >= 80
               ? "success"
@@ -234,7 +295,7 @@ const AgentMetricsDashboard = () => {
               : "exception"
           }
           // badgeText="Efficiency of agent"
-          info="Efficiency score of the agent based on task performance"
+          info="An efficiency score measuring the actor's task performance against other actors of the same funnel."
         />
       </Col>
     </Row>
@@ -248,7 +309,7 @@ const AgentMetricsDashboard = () => {
             <MetricCard 
               title="Task Duration Metrics"
               items={durationMetricItems}
-              info={"Task duration metrics for the fastest and slowest tasks by the agent"}
+              info={"Task duration metrics for the fastest and slowest tasks by an actor."}
             />
 
             </Col>
@@ -256,7 +317,7 @@ const AgentMetricsDashboard = () => {
               <MetricCard 
                 title="Task Retry Metrics"
                 items={retryMetricItems}
-                info={"Task retry metrics for the most and least retried tasks by the agent"}
+                info={"Task retry metrics for the most and least retried tasks by an actor."}
               />
             </Col>
           </Row>
@@ -271,8 +332,8 @@ const AgentMetricsDashboard = () => {
                 chartType="line"
                 data={processedTaskTimeData}
                 dataKeys={lineChartDataKeys}
-                colors={['#1890ff', '#ff7875']}
-                info={"Average task time across all applications"}
+                colors={['#1890ff', '#ff7875']} 
+                info={"Line graph of actor's average task time across applications, with funnel average as threshold."}
                 tooltipFormatter={formatTime}
               />
             </Col>
@@ -283,7 +344,8 @@ const AgentMetricsDashboard = () => {
                 data={processedRetriesData}
                 dataKeys={barChartDataKeys}
                 colors={['#1890ff', '#ff7875']}
-                info={"Average retries per task across all applications"}
+                info={"Bar graph of actor's average retries across applications, with funnel average as threshold."}
+                tooltipFormatter={(value) => Number(value).toFixed(2)}
               />
             </Col>
           </Row>
@@ -298,9 +360,10 @@ const AgentMetricsDashboard = () => {
           status: task.status,
         })) || []} 
         columns={columns}
-        info="Tasks assigned to the agent (NEW, TODO, IN_PROGRESS, FAILED)"
+        info="Tasks allocated to the actor (NEW, TODO, IN_PROGRESS, FAILED)."
       />
-
+      </>
+      )}
 
       </Content>
       
