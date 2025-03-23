@@ -141,7 +141,7 @@ const TaskDetailModal = ({ selectedTask, showDetailModal, setShowDetailModal, fu
     return null;
   }, [selectedTask, data]);
 
-  // Process distribution data into three buckets.
+  // Process distribution data into three buckets based on backend categorization.
   const distributionBuckets = useMemo(() => {
     if (!taskDistributionData) {
       console.warn("No task distribution data available");
@@ -151,60 +151,59 @@ const TaskDetailModal = ({ selectedTask, showDetailModal, setShowDetailModal, fu
     console.log("Processing distribution data:", taskDistributionData);
     
     const buckets = {
-      critical: { count: 0, applicationIds: [], applicationStatusMap: {} },
-      warning: { count: 0, applicationIds: [], applicationStatusMap: {} },
-      good: { count: 0, applicationIds: [], applicationStatusMap: {} }
+      critical: { count: 0, applicationIds: [], applicationStatusMap: {}, timeRange: "" },
+      warning: { count: 0, applicationIds: [], applicationStatusMap: {}, timeRange: "" },
+      good: { count: 0, applicationIds: [], applicationStatusMap: {}, timeRange: "" }
     };
 
-    // Make sure we're iterating through the correct structure
-    Object.entries(taskDistributionData).forEach(([timeRange, rangeData]) => {
-      console.log("Processing time range:", timeRange, "with data:", rangeData);
-      
-      // Skip if rangeData is not properly structured
-      if (!rangeData || typeof rangeData !== 'object') {
-        console.warn("Invalid range data for timeRange:", timeRange);
-        return;
-      }
-      
-      let performanceLevel = 'good';
-      const lowerRange = timeRange.toLowerCase();
-      
-      // Determine performance level based on time range
-      if (lowerRange.includes('hrs') || lowerRange.includes('hour')) {
-        performanceLevel = 'critical';
-      } else if (lowerRange.includes('min')) {
-        const match = lowerRange.match(/(\d+)\s*min/);
-        if (match && parseInt(match[1], 10) > 5) {
-          performanceLevel = 'warning';
-        }
-      }
-      
-      // Ensure count is a number
-      const count = typeof rangeData.count === 'number' ? rangeData.count : 0;
-      buckets[performanceLevel].count += count;
-      
-      // Ensure applicationIds is an array
+    // Assuming the backend already provides data in three categories:
+    // First entry in taskDistributionData = good
+    // Second entry = warning
+    // Third entry = critical
+    const entries = Object.entries(taskDistributionData);
+    
+    // Map the entries to their respective buckets based on order
+    if (entries.length >= 1) {
+      const [timeRange, rangeData] = entries[0]; // First bucket = good
+      buckets.good.count = typeof rangeData.count === 'number' ? rangeData.count : 0;
+      buckets.good.timeRange = timeRange;
       if (Array.isArray(rangeData.applicationIds)) {
-        buckets[performanceLevel].applicationIds = [
-          ...buckets[performanceLevel].applicationIds,
-          ...rangeData.applicationIds
-        ];
+        buckets.good.applicationIds = rangeData.applicationIds;
       }
-      
-      // Ensure applicationStatusMap is an object
       if (rangeData.applicationStatusMap && typeof rangeData.applicationStatusMap === 'object') {
-        buckets[performanceLevel].applicationStatusMap = {
-          ...buckets[performanceLevel].applicationStatusMap,
-          ...rangeData.applicationStatusMap
-        };
+        buckets.good.applicationStatusMap = rangeData.applicationStatusMap;
       }
-    });
+    }
+    
+    if (entries.length >= 2) {
+      const [timeRange, rangeData] = entries[1]; // Second bucket = warning
+      buckets.warning.count = typeof rangeData.count === 'number' ? rangeData.count : 0;
+      buckets.warning.timeRange = timeRange;
+      if (Array.isArray(rangeData.applicationIds)) {
+        buckets.warning.applicationIds = rangeData.applicationIds;
+      }
+      if (rangeData.applicationStatusMap && typeof rangeData.applicationStatusMap === 'object') {
+        buckets.warning.applicationStatusMap = rangeData.applicationStatusMap;
+      }
+    }
+    
+    if (entries.length >= 3) {
+      const [timeRange, rangeData] = entries[2]; // Third bucket = critical
+      buckets.critical.count = typeof rangeData.count === 'number' ? rangeData.count : 0;
+      buckets.critical.timeRange = timeRange;
+      if (Array.isArray(rangeData.applicationIds)) {
+        buckets.critical.applicationIds = rangeData.applicationIds;
+      }
+      if (rangeData.applicationStatusMap && typeof rangeData.applicationStatusMap === 'object') {
+        buckets.critical.applicationStatusMap = rangeData.applicationStatusMap;
+      }
+    }
     
     console.log("Processed distribution buckets:", buckets);
     return buckets;
   }, [taskDistributionData]);
 
-  // Prepare pie chart data.
+  // Prepare pie chart data with updated labels.
   const pieChartData = useMemo(() => {
     if (!distributionBuckets) {
       console.warn("No distribution buckets available");
@@ -214,9 +213,27 @@ const TaskDetailModal = ({ selectedTask, showDetailModal, setShowDetailModal, fu
     console.log("Creating pie chart data from buckets:", distributionBuckets);
     
     let arr = [
-      { name: 'Critical', value: distributionBuckets.critical.count, color: '#f5222d', performanceLevel: 'critical' },
-      { name: 'Warning', value: distributionBuckets.warning.count, color: '#faad14', performanceLevel: 'warning' },
-      { name: 'Good', value: distributionBuckets.good.count, color: '#52c41a', performanceLevel: 'good' }
+      { 
+        name: 'Most Time Taken Task', 
+        value: distributionBuckets.critical.count, 
+        color: '#f5222d', 
+        performanceLevel: 'critical',
+        timeRange: distributionBuckets.critical.timeRange
+      },
+      { 
+        name: 'Average Time Taken Task', 
+        value: distributionBuckets.warning.count, 
+        color: '#faad14', 
+        performanceLevel: 'warning',
+        timeRange: distributionBuckets.warning.timeRange
+      },
+      { 
+        name: 'Least Time Taken Task', 
+        value: distributionBuckets.good.count, 
+        color: '#52c41a', 
+        performanceLevel: 'good',
+        timeRange: distributionBuckets.good.timeRange
+      }
     ].filter(item => item.value > 0);
     
     // Check if we have any data points
@@ -225,18 +242,15 @@ const TaskDetailModal = ({ selectedTask, showDetailModal, setShowDetailModal, fu
       return [];
     }
     
-    // If only one bucket is available, force its color to yellow.
-    if (arr.length === 1) {
-      arr = arr.map(item => ({ ...item, color: '#faad14', performanceLevel: 'warning' }));
-    }
+    // We no longer force a single segment to yellow - we keep its original color
     
     console.log("Final pie chart data:", arr);
     return arr;
   }, [distributionBuckets]);
 
   const handlePieClick = (entry) => {
-    if (!entry || !entry.name) return;
-    const bucketName = entry.name.toLowerCase();
+    if (!entry || !entry.performanceLevel) return;
+    const bucketName = entry.performanceLevel;
     console.log("Pie segment clicked:", bucketName);
     setSelectedBucket(bucketName);
     setShowDistributionTable(true);
@@ -250,6 +264,7 @@ const TaskDetailModal = ({ selectedTask, showDetailModal, setShowDetailModal, fu
             <div style={{ color: payload[0].payload.color, fontWeight: 'bold' }}>
               {payload[0].name}: {payload[0].value}
             </div>
+            <div>Time Range: {payload[0].payload.timeRange}</div>
             <div>Click to view applications</div>
           </div>
         </Card>
