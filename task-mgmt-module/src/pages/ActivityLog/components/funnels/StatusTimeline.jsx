@@ -7,11 +7,37 @@ function StatusTimeline({ statusHistory }) {
     return <div className="text-gray-500 text-sm italic">No status history available</div>;
   }
 
+  // Filter out duplicate consecutive statuses with time difference less than 1 second
+  const filteredStatusHistory = statusHistory.reduce((filtered, currentStatus, index) => {
+    // Always include the first status
+    if (index === 0) {
+      filtered.push(currentStatus);
+      return filtered;
+    }
+
+    const prevStatus = statusHistory[index - 1];
+    
+    // Check if current status is the same as previous status
+    const isSameStatus = currentStatus.status === prevStatus.status;
+    
+    // Calculate time difference in milliseconds
+    const prevTime = new Date(prevStatus.updatedAt).getTime();
+    const currentTime = new Date(currentStatus.updatedAt).getTime();
+    const timeDifference = currentTime - prevTime;
+    
+    // Only add current status if it's different from previous or time difference is >= 1000ms (1 second)
+    if (!isSameStatus || timeDifference >= 1000) {
+      filtered.push(currentStatus);
+    }
+    
+    return filtered;
+  }, []);
+
   return (
     <div className="w-full overflow-x-auto py-3">
       <div className="flex items-start gap-y-6 min-w-max mx-auto justify-center">
-        {statusHistory.map((status, index) => {
-          const isLast = index === statusHistory.length - 1;
+        {filteredStatusHistory.map((status, index) => {
+          const isLast = index === filteredStatusHistory.length - 1;
           const formattedTime = new Date(status.updatedAt).toLocaleString('en-US', {
             month: 'short',
             day: 'numeric',
@@ -24,7 +50,7 @@ function StatusTimeline({ statusHistory }) {
           let duration = null;
           if (!isLast) {
             const currentTime = new Date(status.updatedAt).getTime();
-            const nextTime = new Date(statusHistory[index + 1].updatedAt).getTime();
+            const nextTime = new Date(filteredStatusHistory[index + 1].updatedAt).getTime();
             const durationMs = nextTime - currentTime;
             duration = formatDuration(durationMs);
           }

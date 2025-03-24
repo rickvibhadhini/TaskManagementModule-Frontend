@@ -1,17 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import Header from './components/common/Header';
+import Header from './components/Layout/Header';
 import FilterPanel from './components/filters/FilterPanel';
 import Dashboard from './Dashboard';
-import TabNavigation from './components/common/TabNavigation';
+import TabNavigation from './components/Layout/TabNavigation';
 import FunnelView from './components/funnels/FunnelView';
 import { transformApiData } from './utils/apiTransformers';
-import mocklogdata from './mockData/mocklogdata';
-import { fetchFunnelData } from './services/ApplicationListApi';
-//import AnalyticsView from './components/AnalyticsView';
+//import mocklogdata from './mockData/mocklogdata';
 
-function View1() {
+
+import { fetchFunnelData as fetchFunnelDataFromApi } from './services/ApplicationListApi';
+
+function ActivityLog() {
   const [expandedFunnels, setExpandedFunnels] = useState({});
+  const [expandedTasks, setExpandedTasks] = useState({});  // New state for tracking expanded tasks
   const [applicationId, setApplicationId] = useState('');
   const [inputApplicationId, setInputApplicationId] = useState('');
   const [funnelData, setFunnelData] = useState([]);
@@ -21,6 +23,7 @@ function View1() {
   const [activeTab, setActiveTab] = useState('list'); 
   const [hideNewStatus, setHideNewStatus] = useState(true); 
   const [pollingInterval, setPollingInterval] = useState(null);
+  const [sendbackMap, setSendbackMap] = useState({});
 
   const [filters, setFilters] = useState({
     taskId: '',
@@ -35,6 +38,30 @@ function View1() {
     sortOrder: 'asc' 
   });
   const [showFilters, setShowFilters] = useState(false);
+  
+  // Function to navigate to a specific task within a funnel
+  const navigateToTask = (funnelId, taskId) => {
+    // First ensure the funnel is expanded
+    setExpandedFunnels(prev => ({
+      ...prev,
+      [funnelId]: true
+    }));
+    
+    // Then set this task to be expanded
+    setExpandedTasks(prev => ({
+      ...prev,
+      [taskId]: true
+    }));
+    
+    // Scroll to the funnel
+    setTimeout(() => {
+      const funnelElement = document.getElementById(`funnel-${funnelId}`);
+      if (funnelElement) {
+        funnelElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }, 100); // Small delay to ensure DOM is updated
+  };
+  
   const stopPolling = () => {
     if (pollingInterval) {
       clearInterval(pollingInterval);
@@ -49,7 +76,7 @@ function View1() {
     const interval = setInterval(() => {
       console.log("Polling triggered at:", new Date().toLocaleTimeString());
       fetchFunnelData();
-    }, 100000); // Poll every 100 seconds
+    }, 10000*6*5); // Poll every 5 min
   
     setPollingInterval(interval);
   };
@@ -75,25 +102,62 @@ function View1() {
     applyFilters();
   }, [filters, funnelData, hideNewStatus]);
 
+  // Create sendbackMap whenever funnelData changes
+  useEffect(() => {
+    // Create a map of sendbacks by targetTaskId
+    const newSendbackMap = {};
+    
+    // Find all sendback funnels
+    const sendbackFunnels = funnelData.filter(funnel => 
+      funnel.id.startsWith('sendback-')
+    );
+    
+    // Extract sendback info from each funnel's tasks
+    sendbackFunnels.forEach(funnel => {
+      // Extract request ID from funnel name or ID
+      const requestIdMatch = funnel.name.match(/Sendbacks for (.+)$/);
+      const requestId = requestIdMatch ? requestIdMatch[1] : funnel.id;
+      
+      funnel.tasks.forEach(task => {
+        if (task.targetTaskId) {
+          // Store sendback information keyed by targetTaskId
+          if (!newSendbackMap[task.targetTaskId]) {
+            newSendbackMap[task.targetTaskId] = {};
+          }
+          
+          // Use requestId as the key for this specific sendback
+          if (!newSendbackMap[task.targetTaskId][requestId]) {
+            newSendbackMap[task.targetTaskId][requestId] = {
+              sourceLoanStage: task.sourceLoanStage,
+              sourceSubModule: task.sourceSubModule,
+              updatedAt: task.statusHistory?.[0]?.updatedAt || task.createdAt,
+              requestId: requestId
+            };
+          }
+        }
+      });
+    });
+    
+    setSendbackMap(newSendbackMap);
+  }, [funnelData]);
+
   const fetchFunnelData = async () => {
     setLoading(true);
     try {
-      const url = `http://localhost:8080/applicationLog/${applicationId}`;
-      const response = await axios.get(url);
-      const transformedData = transformApiData(response.data.data);                            // replaced for using mock data
-    
-      setFunnelData(transformedData);
-    
+      const transformedData = await fetchFunnelDataFromApi(applicationId);
+      
       // Initialize expanded state for all funnels
       const initialExpandedState = Object.fromEntries(
         transformedData.map(funnel => [funnel.id, false]) // Default collapsed
       );
       setExpandedFunnels(initialExpandedState);
-    
+      
+      setFunnelData(transformedData);
       setError(null);
-    } catch (err) {
-      console.error('Error fetching funnel data:', err);
-      setError('Failed to load activity data. Please try again later.');
+    } catch (error) {
+      console.error('Error fetching funnel data:', error);
+      setError('Failed to fetch application data');
+      setFunnelData([]);
     } finally {
       setLoading(false);
     }
@@ -341,6 +405,10 @@ function View1() {
           funnelData={displayData}
           expandedFunnels={expandedFunnels}
           toggleFunnel={toggleFunnel}
+          sendbackMap={sendbackMap}
+          navigateToTask={navigateToTask}
+          expandedTasks={expandedTasks}
+          setExpandedTasks={setExpandedTasks}
         />
       );
     } else {
@@ -392,4 +460,4 @@ function View1() {
   );
 }
 
-export default View1;
+export default ActivityLog;
