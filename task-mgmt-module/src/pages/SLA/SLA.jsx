@@ -75,7 +75,7 @@ const SLA = () => {
   }, []);
 
   return (
-    <Layout style={{ height: '100vh', width: '100vw' }}>
+    <Layout style={{ height: '100vh', width: '100vw' , display: 'flex', flexDirection: 'column', overflowX: 'hidden'}}>
       <DashboardHeader
         channel={channel}
         onChannelChange={(value) => {
@@ -91,7 +91,7 @@ const SLA = () => {
         onDaysFilterChange={(value) => setDaysFilter(value)}
         onAppStatusFilterChange={(value) => setAppStatusFilter(value)}
       />
-      <Content ref={contentRef} style={{ padding: '24px', background: '#f0f2f5', overflowY: 'auto' }}>
+      <Content ref={contentRef} style={{ padding: '24px', background: '#f0f2f5', flex: '1 0 auto', overflowY: 'auto', overflowX: 'hidden' }}>
         {!data ? (
           <Card style={{ textAlign: 'center', marginTop: 48 }}>
             <Space direction="vertical" size="large" style={{ width: '100%' }}>

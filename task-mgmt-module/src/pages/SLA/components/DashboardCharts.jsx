@@ -271,6 +271,10 @@ const DashboardCharts = ({
               </BarChart>
             </ResponsiveContainer>
           </div>
+          {/* Added Funnels label in blue below the legend */}
+          <div style={{ textAlign: 'center', marginTop: 8, fontWeight: 'bold', color: '#1890ff' }}>
+            Funnels
+          </div>
         </Card>
       </Col>
       <Col xs={24} lg={12}>

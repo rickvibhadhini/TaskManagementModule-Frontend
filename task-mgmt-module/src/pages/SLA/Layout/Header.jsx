@@ -99,7 +99,6 @@ const DashboardHeader = ({
           </Space>
         </Col>
       </Row>
-
       {error && (
         <Alert
           message={error}
