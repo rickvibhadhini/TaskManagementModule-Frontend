@@ -1,12 +1,12 @@
+// src/components/Layout/Header.jsx
 import React from 'react';
-import { Layout, Typography, Button, Card, Space, Alert, Select, Row, Col, Tooltip, InputNumber, DatePicker } from 'antd';
-import { ClockCircleOutlined, FilterOutlined } from '@ant-design/icons';
+import { Layout, Typography, Button, Card, Space, Alert, Select, Row, Col } from 'antd';
+import { ClockCircleOutlined } from '@ant-design/icons';
 import { Link } from 'react-router-dom';
 import { cars24Logo } from "../../../assets/index";
 
 const { Header } = Layout;
 const { Title, Text } = Typography;
-const { RangePicker } = DatePicker;
 
 const DashboardHeader = ({ 
   channel, 
@@ -15,25 +15,22 @@ const DashboardHeader = ({
   data, 
   error, 
   loading,
-  selectedFunnel,
-  setSelectedFunnel,
-  funnelOrder,
-  timeRange,
-  setTimeRange
+  daysFilter,
+  appStatusFilter,
+  onDaysFilterChange,
+  onAppStatusFilterChange
 }) => {
   return (
     <Header style={{ background: '#fff', padding: '0 24px', boxShadow: '0 1px 4px rgba(0,21,41,.08)' }}>
       <Row justify="space-between" align="middle">
         <Col>
-          
-            <Link to="/">
-              <img 
-                src={cars24Logo} 
-                alt="Cars24 Logo" 
-                style={{ margin: '16px 0', height: '40px', cursor: 'pointer' }} 
-              />
-            </Link>
-          
+          <Link to="/">
+            <img 
+              src={cars24Logo} 
+              alt="Cars24 Logo" 
+              style={{ margin: '16px 0', height: '40px', cursor: 'pointer' }} 
+            />
+          </Link>
         </Col>
         
         <Col>
@@ -58,28 +55,32 @@ const DashboardHeader = ({
                 allowClear
               />
               
-             
-              
-              <Tooltip title="Filter by average task time (minutes)">
-                <Space size="small">
-                  <FilterOutlined />
-                  <InputNumber
-                    placeholder="Min"
-                    min={0}
-                    style={{ width: 80 }}
-                    value={timeRange?.[0]}
-                    onChange={(value) => setTimeRange([value, timeRange?.[1]])}
-                  />
-                  <span>-</span>
-                  <InputNumber
-                    placeholder="Max"
-                    min={0}
-                    style={{ width: 80 }}
-                    value={timeRange?.[1]}
-                    onChange={(value) => setTimeRange([timeRange?.[0], value])}
-                  />
-                </Space>
-              </Tooltip>
+              {/* New Days and Application Status filters */}
+              <Space size="small">
+                <Select
+                  placeholder="Select Days"
+                  value={daysFilter}
+                  onChange={onDaysFilterChange}
+                  style={{ width: 140 }}
+                  options={[
+                    { value: 7, label: 'Last 7 days' },
+                    { value: 15, label: 'Last 15 days' },
+                    { value: 30, label: 'Last 30 days' },
+                  ]}
+                />
+                
+                <Select
+                  placeholder="Application Status"
+                  value={appStatusFilter}
+                  onChange={onAppStatusFilterChange}
+                  style={{ width: 140 }}
+                  options={[
+                    { value: 'Pending', label: 'Pending' },
+                    { value: 'Rejected', label: 'Rejected' },
+                    { value: 'Approved', label: 'Approved' },
+                  ]}
+                />
+              </Space>
               
               <Button type="primary" onClick={onLoadData} loading={loading}>
                 Apply Filters
@@ -98,7 +99,6 @@ const DashboardHeader = ({
           </Space>
         </Col>
       </Row>
-
       {error && (
         <Alert
           message={error}

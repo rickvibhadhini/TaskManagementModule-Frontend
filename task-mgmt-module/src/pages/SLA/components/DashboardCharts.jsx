@@ -1,6 +1,15 @@
 import React, { useMemo } from 'react';
-import { Card, Space, Radio, Row, Col, Divider, Tag, Button, Tooltip as AntTooltip } from 'antd';
-import { Typography } from 'antd';
+import { 
+  Card, 
+  Space, 
+  Radio, 
+  Row, 
+  Col, 
+  Divider, 
+  Tag, 
+  Button, 
+  Tooltip as AntTooltip 
+} from 'antd';
 import { 
   BarChartOutlined, 
   LineChartOutlined, 
@@ -8,7 +17,7 @@ import {
   CheckCircleFilled, 
   WarningFilled, 
   CloseCircleFilled,
-  InfoCircleOutlined 
+  InfoCircleOutlined
 } from '@ant-design/icons';
 import { 
   BarChart, 
@@ -33,10 +42,9 @@ const DashboardCharts = ({
   setSelectedTask, 
   setShowDetailModal,
   toggleView,
-  getButtonColor,
-  timeRange
+  getButtonColor
 }) => {
- 
+
   const convertTimeToMinutes = (timeStr) => {
     if (!timeStr) return 0;
     const parts = timeStr.split(' ');
@@ -105,9 +113,8 @@ const DashboardCharts = ({
 
   const getLineChartData = useMemo(() => {
     if (!data || !data.funnels) return [];
-    let result = [];
-    
     if (selectedFunnel === 'all') {
+      const result = [];
       Object.entries(getTasksByFunnel).forEach(([funnel, tasks]) => {
         if (Array.isArray(tasks)) {
           tasks.forEach(task => {
@@ -123,8 +130,9 @@ const DashboardCharts = ({
           });
         }
       });
+      return result;
     } else if (getTasksByFunnel[selectedFunnel]) {
-      result = getTasksByFunnel[selectedFunnel].map(task => ({
+      return getTasksByFunnel[selectedFunnel].map(task => ({
         name: task.taskId,
         minutes: task.minutes,
         percentOfTAT: task.percentOfTAT,
@@ -134,29 +142,13 @@ const DashboardCharts = ({
         funnel: selectedFunnel
       }));
     }
-    
-    // Apply time range filter if set
-    if (timeRange && (timeRange[0] !== null || timeRange[1] !== null)) {
-      result = result.filter(item => {
-        if (timeRange[0] !== null && item.minutes < timeRange[0]) {
-          return false;
-        }
-        if (timeRange[1] !== null && item.minutes > timeRange[1]) {
-          return false;
-        }
-        return true;
-      });
-    }
-    
-    return result;
-  }, [getTasksByFunnel, selectedFunnel, timeRange]);
+    return [];
+  }, [getTasksByFunnel, selectedFunnel]);
 
-  
   const tickInterval = useMemo(() => {
     return getLineChartData.length > 10 ? Math.ceil(getLineChartData.length / 10) : 0;
   }, [getLineChartData]);
 
-  
   const maxTaskMinutes = useMemo(() => {
     if (getLineChartData.length > 0) {
       return Math.max(...getLineChartData.map(item => item.minutes));
@@ -229,31 +221,16 @@ const DashboardCharts = ({
   const CHART_HEIGHT = 350;
   const BAR_CHART_HEIGHT = 430;
 
-  // Get task count after filtering
-  const taskCount = getLineChartData.length;
-
   return (
     <Row gutter={[16, 16]}>
-      <Col xs={24}>
-        {timeRange && (timeRange[0] !== null || timeRange[1] !== null) && (
-          <Card size="small" style={{ marginBottom: 16 }}>
-            <Space>
-              <strong>Active Filters:</strong>
-              {timeRange[0] !== null && <Tag color="blue">Min Time: {timeRange[0]} minutes</Tag>}
-              {timeRange[1] !== null && <Tag color="blue">Max Time: {timeRange[1]} minutes</Tag>}
-              <Tag color="green">Showing {taskCount} tasks</Tag>
-            </Space>
-          </Card>
-        )}
-      </Col>
-      
       <Col xs={24} lg={12}>
         <Card
           title={
             <Space>
               <BarChartOutlined />
               <span>Average Time Per Funnel</span>
-              <AntTooltip title="This chart shows the average processing time for each funnel stage. Click on a bar to filter the timeline by that funnel.">
+              {/* Info button for the bar chart */}
+              <AntTooltip title="Shows the average time taken for each funnel stage. Click on a bar to filter the timeline.">
                 <Button type="text" size="small" icon={<InfoCircleOutlined />} />
               </AntTooltip>
             </Space>
@@ -281,9 +258,6 @@ const DashboardCharts = ({
                     color: funnelColors[funnel]
                   }))}
                 />
-
-            
-                
                 <Bar
                   dataKey="minutes"
                   name="Average Time (minutes)"
@@ -296,17 +270,10 @@ const DashboardCharts = ({
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
-
-            <div style={{ 
-              textAlign: 'center', 
-              paddingTop: '8px', 
-              fontWeight: 'bold',
-              color: '#1890ff',
-              fontSize: '14px'
-            }}>
-              Funnels
-      </div>
-
+          </div>
+          {/* Added Funnels label in blue below the legend */}
+          <div style={{ textAlign: 'center', marginTop: 8, fontWeight: 'bold', color: '#1890ff' }}>
+            Funnels
           </div>
         </Card>
       </Col>
@@ -315,13 +282,12 @@ const DashboardCharts = ({
           title={
             <Space>
               <LineChartOutlined />
-              <span>Task Timeline </span>
-              <AntTooltip title="This chart shows the time taken for each task in sequence. Click on any data point to view detailed task information. The color of each point represents its performance status.">
+              <span>Task Timeline</span>
+              {/* Info button for the line chart */}
+              <AntTooltip title="Displays the time taken by each task in sequence. Click on a data point for details.">
                 <Button type="text" size="small" icon={<InfoCircleOutlined />} />
               </AntTooltip>
-            
             </Space>
-            
           }
           hoverable
           extra={
