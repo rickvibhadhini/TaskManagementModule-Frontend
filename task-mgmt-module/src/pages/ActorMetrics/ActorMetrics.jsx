@@ -13,7 +13,7 @@ import {
 import axios from 'axios';
 import ACTOR_METRICS_ENDPOINT from '../../api/ActorMetricsEndpoint';
 
-import {DashboardHeader, AgentInfoCard, StatCard, MetricCard, ChartCard, PendingTasksTable, DashboardFooter} from './components/index';
+import {DashboardHeader, AgentInfoCard, StatCard, MetricCard, ChartCard, PendingTasksTable, DashboardFooter, TaskListByRetries} from './components/index';
 import { data } from 'react-router-dom';
 
 const { Content } = Layout;
@@ -96,12 +96,12 @@ const AgentMetricsDashboard = () => {
     return '#f5222d';
   };
 
-  const lineChartDataKeys = [
-    { dataKey: 'agent', name: 'Actor Performance', activeDot: true },
-    { dataKey: 'threshold', name: 'Avg Actor Performance', dashed: true }
+  const taskTimeDataKeys = [
+    { dataKey: 'agent', name: 'Actor Performance'},
+    { dataKey: 'threshold', name: 'Avg Actor Performance'}
   ]; 
 
-  const barChartDataKeys = [
+  const retryDataKeys = [
     { dataKey: 'agent', name: 'Actor Performance' },
     { dataKey: 'threshold', name: 'Avg Actor Performance' }
   ];  
@@ -313,12 +313,17 @@ const AgentMetricsDashboard = () => {
             />
 
             </Col>
-            <Col span={12}>
+            {/* <Col span={12}>
               <MetricCard 
                 title="Task Retry Metrics"
                 items={retryMetricItems}
                 info={"Task retry metrics for the most and least retried tasks by an actor."}
               />
+            </Col> */}
+            <Col span={12}>
+            <TaskListByRetries tasksByRetries={metrics.tasks_sorted_by_retries}
+            info="Tasks grouped by retry count"
+            />
             </Col>
           </Row>
         </div>
@@ -329,12 +334,13 @@ const AgentMetricsDashboard = () => {
             <Col span={12}>
               <ChartCard 
                 title="Average Task Time (minutes)"
-                chartType="line"
+                chartType="bar"
                 data={processedTaskTimeData}
-                dataKeys={lineChartDataKeys}
+                dataKeys={taskTimeDataKeys}
                 colors={['#1890ff', '#ff7875']} 
-                info={"Line graph of actor's average task time across applications, with funnel average as threshold."}
+                info={"Bar graph of actor's average task time across applications, with funnel average as threshold."}
                 tooltipFormatter={formatTime}
+                height={350}
               />
             </Col>
             <Col span={12}>
@@ -342,10 +348,11 @@ const AgentMetricsDashboard = () => {
                 title="Average Retries Per Task"
                 chartType="bar"
                 data={processedRetriesData}
-                dataKeys={barChartDataKeys}
+                dataKeys={retryDataKeys}
                 colors={['#1890ff', '#ff7875']}
                 info={"Bar graph of actor's average retries across applications, with funnel average as threshold."}
                 tooltipFormatter={(value) => Number(value).toFixed(2)}
+                height={350}
               />
             </Col>
           </Row>

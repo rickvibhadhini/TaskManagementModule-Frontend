@@ -5,3 +5,4 @@ export { default as MetricCard } from './cards/MetricCard';
 export { default as ChartCard } from './cards/ChartCard';
 export { default as PendingTasksTable } from './tables/PendingTasksTable';
 export { default as DashboardFooter } from './layout/Footer';
+export {default as TaskListByRetries} from './cards/TaskListByRetries';
