@@ -141,6 +141,7 @@ const ChartCard = ({ title, chartType, data, dataKeys, colors, height = 300, inf
   return (
     <Card
       title={title}
+      className="h-full shadow-sm hover:shadow-lg transition-shadow"
       extra={
         <div className="flex items-center">
           {info && (
