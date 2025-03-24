@@ -1,59 +1,64 @@
 import React, { useState } from 'react';
 import StatusTimeline from './StatusTimeline';
 import { getStatusDotColor, getStatusColor, formatDuration } from '../../utils/formatters';
+import { FaCheckCircle } from 'react-icons/fa'; // Importing an icon
+import Tooltip from './Tooltip'; // Import the Tooltip component
 
-function TaskGroup({ tasks, isSendback }) {
-  // State to track which tasks have expanded timelines
-  const [expandedTasks, setExpandedTasks] = useState({});
+function TaskGroup({ tasks, isSendback, sendbackMap = {}, expandedTasks = {}, setExpandedTasks }) {
+  const [tooltipVisible, setTooltipVisible] = useState(false);
+  const [tooltipContent, setTooltipContent] = useState('');
+  const [tooltipTaskId, setTooltipTaskId] = useState(null);  // Track which task has tooltip visible
 
-  // Toggle timeline visibility for a task
   const toggleTaskTimeline = (taskId) => {
-    setExpandedTasks(prev => ({
-      ...prev,
-      [taskId]: !prev[taskId]
-    }));
+    if (setExpandedTasks) {
+      setExpandedTasks(prev => ({
+        ...prev,
+        [taskId]: !prev[taskId]
+      }));
+    }
   };
 
-  // Sort tasks by createdAt date if available
   const sortedTasks = [...tasks].sort((a, b) => {
-    // Check if both tasks have createdAt property
     if (a?.createdAt && b?.createdAt) {
       return new Date(a.createdAt) - new Date(b.createdAt);
     }
-    // If only one has createdAt, prioritize the one without
     if (a?.createdAt) return 1;
     if (b?.createdAt) return -1;
-    // If neither has createdAt, maintain original order
     return 0;
   });
 
-  // For sendback view, combine all status histories from all tasks
   const sendbackStatusHistory = isSendback ? 
-    // Flatten all status histories from all tasks
     sortedTasks.flatMap(task => 
-      // If task has statusHistory, use it
       task.statusHistory && task.statusHistory.length > 0 
         ? task.statusHistory.map(status => ({
             ...status,
             handledBy: task.handledBy,
             taskId: task.id
           }))
-        // Otherwise create a single status entry from the task
         : [{
             status: task.currentStatus || 'UNKNOWN',
             updatedAt: task.updatedAt || task.createdAt || new Date().toISOString(),
             handledBy: task.handledBy,
             taskId: task.id
           }]
-    )
-    // Sort by updatedAt date
-    .sort((a, b) => new Date(a.updatedAt) - new Date(b.updatedAt))
+    ).sort((a, b) => new Date(a.updatedAt) - new Date(b.updatedAt))
     : [];
+
+  const showTooltip = (taskId, content) => {
+    setTooltipVisible(true);
+    setTooltipContent(content);
+    setTooltipTaskId(taskId);
+  };
+  
+  const hideTooltip = () => {
+    setTooltipVisible(false);
+    setTooltipContent('');
+    setTooltipTaskId(null);
+  };
 
   return (
     <div className="space-y-3">
       {isSendback ? (
-        // Single Sendback Card with Timeline
         <div className="bg-pink-50 p-3 rounded-md">
           <div className="flex justify-between items-center">
             <div className="flex-1">
@@ -63,65 +68,26 @@ function TaskGroup({ tasks, isSendback }) {
                 </span>
                 <span className="font-medium">Sendback History</span>
               </div>
-              <div className="text-sm text-gray-600 mt-1">
-                {sortedTasks.length} sendback tasks
-              </div>
-            </div>
-            
-            <div className="flex-1 flex justify-end">
-              <div className="text-right">
-                <div className="text-sm mb-1">
-                  <span className="font-medium">Statuses: </span>
-                  <span className="text-gray-600">
-                    {[...new Set(sortedTasks.map(t => t.currentStatus))].join(', ')}
-                  </span>
-                </div>
-                <div className="text-sm text-gray-500 mb-1">
-                  <span className="font-medium">Handled by: </span>
-                  {[...new Set(sortedTasks.map(t => t.handledBy))].join(', ') || 'N/A'}
-                </div>
-                <div className="text-sm text-gray-500 mb-1">
-                  <span className="font-medium">Total Duration: </span>
-                  {formatDuration(sortedTasks.reduce((sum, t) => sum + (t.duration || 0), 0))}
-                </div>
-                
-                {/* Show Timeline button on the outer card */}
-                <div 
-                  className="text-xs text-blue-600 flex items-center justify-end mt-1 cursor-pointer"
-                  onClick={() => toggleTaskTimeline('sendback-timeline')}
-                >
-                  {expandedTasks['sendback-timeline'] ? 'Hide Timeline' : 'Show Timeline'}
-                  <svg 
-                    xmlns="http://www.w3.org/2000/svg" 
-                    className={`h-4 w-4 ml-1 transition-transform ${expandedTasks['sendback-timeline'] ? 'rotate-180' : ''}`} 
-                    fill="none" 
-                    viewBox="0 0 24 24" 
-                    stroke="currentColor"
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
-                </div>
-              </div>
             </div>
           </div>
-          
-          {/* Timeline for all sendback tasks using your existing StatusTimeline component */}
-          {expandedTasks['sendback-timeline'] && sendbackStatusHistory.length > 0 && (
-            <div className="mt-4 border-t border-pink-200 pt-3">
-              <StatusTimeline statusHistory={sendbackStatusHistory} />
-            </div>
-          )}
         </div>
       ) : (
-        // Regular Tasks - List View
         sortedTasks.map((task, index) => (
-          <div key={task?.id || index} className="bg-gray-50 p-3 rounded-md">
+          <div id={`task-${task?.id}`} key={task?.id || index} className="bg-gray-50 p-3 rounded-md relative">
             <div className="flex justify-between items-center">
               <div className="flex-1">
-                <div className="font-medium">{task?.name || 'Unknown Task'}</div>
-                <div className="text-sm text-gray-500">ID: {task?.id || 'N/A'}</div>
+                {/* Task name displayed in ALL CAPS */}
+                <div className="font-medium uppercase">
+                  {task?.name || 'Unknown Task'}
+                </div>
+                
+                {/* Task ID is now hidden */}
+                
+                {/* Handled by information */}
+                <div className="text-sm text-gray-500 mt-1">
+                  <span className="font-medium">Handled by: </span>{task?.handledBy || 'N/A'}
+                </div>
               </div>
-              
               <div className="flex-1 flex justify-end">
                 <div className="text-right">
                   <div className="text-sm mb-1">
@@ -130,9 +96,36 @@ function TaskGroup({ tasks, isSendback }) {
                       {task?.currentStatus || 'UNKNOWN'}
                     </span>
                   </div>
-                  <div className="text-sm text-gray-500 mb-1">
-                    <span className="font-medium">Handled by: </span>{task?.handledBy || 'N/A'}
-                  </div>
+                  
+                  {/* Dynamic sendback indicator based on sendbackMap */}
+                  {task.id && sendbackMap[task.id] && (
+                    <div 
+                      className="relative flex items-center justify-end"
+                      onMouseEnter={() => {
+                        const sendbacks = Object.values(sendbackMap[task.id]);
+                        const sendbackCount = sendbacks.length;
+                        
+                        // Create tooltip content showing all sendbacks
+                        const tooltipText = sendbacks.map((info, index) => 
+                          `Sendback ${sendbackCount > 1 ? (index + 1) + ': ' : ''}\nSource Loan Stage: ${info.sourceLoanStage || 'N/A'}\nSource Sub Module: ${info.sourceSubModule || 'N/A'}\nTime: ${new Date(info.updatedAt).toLocaleString()}`
+                        ).join('\n\n');
+                        
+                        showTooltip(task.id, tooltipText);
+                      }}
+                      onMouseLeave={hideTooltip}
+                    >
+                      <span className="flex items-center text-gray-800 text-sm font-semibold">
+                        <FaCheckCircle className="text-red-500 mr-1" />
+                        Sendback Received 
+                        {Object.keys(sendbackMap[task.id]).length > 1 ? 
+                          ` (${Object.keys(sendbackMap[task.id]).length})` : ''}
+                      </span>
+                      {tooltipVisible && tooltipTaskId === task.id && (
+                        <Tooltip content={tooltipContent} visible={true} />
+                      )}
+                    </div>
+                  )}
+                  
                   <div className="text-sm text-gray-500 flex justify-end mb-1">
                     {task?.duration !== undefined && (
                       <span className="mr-4">
@@ -145,7 +138,6 @@ function TaskGroup({ tasks, isSendback }) {
                       </span>
                     )}
                   </div>
-                  
                   <div 
                     className="text-xs text-blue-600 flex items-center justify-end mt-1 cursor-pointer"
                     onClick={() => toggleTaskTimeline(task?.id || index)}
@@ -164,8 +156,6 @@ function TaskGroup({ tasks, isSendback }) {
                 </div>
               </div>
             </div>
-            
-            {/* Status Timeline for Regular Task */}
             {expandedTasks[task?.id || index] && task?.statusHistory && task.statusHistory.length > 0 && (
               <div className="mt-4 border-t border-gray-200 pt-3">
                 <StatusTimeline statusHistory={task.statusHistory} />

@@ -2,7 +2,7 @@
 
 export const fetchTasksByApplicationId = async (applicationId) => {
     try {
-      const response = await fetch(`http://localhost:8080/applicationLog/graph/${applicationId}`);
+      const response = await fetch(`http://localhost:8081/applicationLog/graph/${applicationId}`);
       
       if (!response.ok) {
         throw new Error(`API error: ${response.status} ${response.statusText}`);

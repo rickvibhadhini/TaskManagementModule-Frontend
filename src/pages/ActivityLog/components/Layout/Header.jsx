@@ -1,5 +1,6 @@
-
+import { cars24Logo } from "../../../../assets/index";
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 
 function Header({ 
   inputApplicationId, 
@@ -10,12 +11,26 @@ function Header({
   toggleFilters, 
   showFilters 
 }) {
+  const navigate = useNavigate();
+  
+  const handleClick = () => {
+    navigate("/");
+  };
+
   return (
     <header className="bg-white shadow">
       <div className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between">
-          <div className="flex-1 min-w-0">
-            <h1 className="text-lg font-bold leading-6 text-gray-900 sm:truncate">
+          <div className="flex items-center flex-1 min-w-0">
+            <img 
+              src={cars24Logo} 
+              onClick={handleClick} 
+              alt="Cars24 Logo" 
+              width="120" 
+              height="auto"
+              className="cursor-pointer"
+            />
+            <h1 className="text-lg font-bold leading-6 text-gray-900 sm:truncate ml-4">
               Loan Application Tracking
             </h1>
           </div>
