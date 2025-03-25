@@ -138,8 +138,8 @@ function TaskGroup({ tasks, isSendback, sendbackMap = {}, expandedTasks = {}, se
       </span>
     )}
     {task?.visited !== undefined && (
-      <span>
-        <span className="font-medium">Retries: </span>{task.visited}
+      <span span className="mr-4">
+          <span className="font-medium">Retries: </span> {task.visited > 0 ? task.visited - 1 : task.visited}
       </span>
     )}
 </div>
