@@ -1,49 +1,10 @@
 import React, { useMemo } from 'react';
-import { 
-  Card, 
-  Space, 
-  Radio, 
-  Row, 
-  Col, 
-  Divider, 
-  Tag, 
-  Button, 
-  Tooltip as AntTooltip 
-} from 'antd';
-import { 
-  BarChartOutlined, 
-  LineChartOutlined, 
-  TableOutlined, 
-  CheckCircleFilled, 
-  WarningFilled, 
-  CloseCircleFilled,
-  InfoCircleOutlined
-} from '@ant-design/icons';
-import { 
-  BarChart, 
-  Bar, 
-  LineChart, 
-  Line, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  Legend, 
-  ResponsiveContainer, 
-  Cell 
-} from 'recharts';
+import { Card, Space, Radio, Row, Col, Divider, Tag, Button, Tooltip as AntTooltip } from 'antd';
+import { BarChartOutlined, LineChartOutlined, TableOutlined, CheckCircleFilled, WarningFilled, CloseCircleFilled,InfoCircleOutlined} from '@ant-design/icons';
+import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } from 'recharts';
 
-const DashboardCharts = ({ 
-  data, 
-  selectedFunnel, 
-  setSelectedFunnel, 
-  funnelColors, 
-  funnelOrder, 
-  setSelectedTask, 
-  setShowDetailModal,
-  toggleView,
-  getButtonColor
-}) => {
+const DashboardCharts = ({ data, selectedFunnel, setSelectedFunnel, funnelColors, funnelOrder, setSelectedTask, setShowDetailModal,toggleView,getButtonColor}) => 
+  {
 
   const convertTimeToMinutes = (timeStr) => {
     if (!timeStr) return 0;

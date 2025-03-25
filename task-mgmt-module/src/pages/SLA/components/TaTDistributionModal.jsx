@@ -1,13 +1,13 @@
-// src/components/TatDistributionModal.jsx
 import React, { useState, useEffect } from 'react';
 import { Modal, Tabs, Table } from 'antd';
+import { useNavigate } from 'react-router-dom';
 
 const { TabPane } = Tabs;
 
 const TatDistributionModal = ({ visible, tatDistribution, onClose }) => {
   const [activeTab, setActiveTab] = useState('');
+  const navigate = useNavigate();
 
-  // When tatDistribution changes, default to the first bucket.
   useEffect(() => {
     if (tatDistribution) {
       const buckets = Object.keys(tatDistribution);
@@ -17,17 +17,25 @@ const TatDistributionModal = ({ visible, tatDistribution, onClose }) => {
     }
   }, [tatDistribution]);
 
-  // Table columns for application details.
   const columns = [
     {
       title: 'Application ID',
       dataIndex: 'applicationId',
       key: 'applicationId',
+      render: (text) => (
+        <span 
+          style={{ cursor: 'pointer', color: '#1890ff', textDecoration: 'underline' }}
+          onClick={() => navigate('/activityLog', { state: { appId: text } })}
+        >
+          {text}
+        </span>
+      ),
     },
     {
       title: 'Status',
       dataIndex: 'status',
       key: 'status',
+      render: (text) => text || 'Pending'
     },
   ];
 
