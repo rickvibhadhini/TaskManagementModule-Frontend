@@ -32,7 +32,7 @@ const SystemHeader = ({ funnel, setFunnel, handleFunnelChange, timeFrame, handle
 
         <Select 
             placeholder="SYSTEM_METRICS" 
-            style={{ width: 120, marginRight : 8}} 
+            style={{ width: 160, marginRight : 8}} 
             onChange={handleFunnelChange}
           >
             <Option value="SOURCING">SOURCING</Option>
