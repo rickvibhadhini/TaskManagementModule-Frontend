@@ -40,28 +40,28 @@ const GanttChart = ({ data }) => {
     if (filters.status && !task.statuses.some(s => s.status === filters.status)) {
       return false;
     }
-    
+
     // Search filter
     if (filters.search && !task.id.toLowerCase().includes(filters.search.toLowerCase())) {
       return false;
     }
-    
+
     // Funnel filter
     if (filters.funnels.length > 0 && !filters.funnels.includes(task.funnel)) {
       return false;
     }
-    
+
     // Date range filter
     if (filters.dateRange) {
       const { start, end } = filters.dateRange;
       const taskStart = task.segments[0]?.startTime;
       const taskEnd = task.segments[task.segments.length - 1]?.endTime;
-      
+  
       if (taskStart > end || taskEnd < start) {
         return false;
       }
     }
-    
+
     return true;
   });
 
@@ -83,7 +83,7 @@ const GanttChart = ({ data }) => {
     <div className="w-full bg-white rounded-lg shadow-lg p-6">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-xl font-bold">Task Workflow Timeline</h2>
-        
+    
         <select 
           className="form-select text-sm border-gray-300 rounded-md"
           value={timeScale}
@@ -95,7 +95,7 @@ const GanttChart = ({ data }) => {
           <option value={60 * 1000}>Minute Scale</option>
         </select>
       </div>
-      
+  
       {/* Tabs - only timeline and summary */}
       <div className="border-b border-gray-200 mb-6">
         <nav className="-mb-px flex space-x-8">
@@ -114,14 +114,14 @@ const GanttChart = ({ data }) => {
           ))}
         </nav>
       </div>
-      
+  
       {/* Filter Panel */}
       <FilterPanel 
         allStatuses={allStatuses} 
         funnels={funnels} 
         onFilterChange={handleFilterChange}
       />
-      
+  
       {/* Status legend */}
       {activeTab === 'timeline' && (
         <div className="mb-4">
@@ -146,7 +146,7 @@ const GanttChart = ({ data }) => {
           </div>
         </div>
       )}
-      
+  
       {/* Content based on active tab */}
       {activeTab === 'timeline' && (
         <>
@@ -162,7 +162,7 @@ const GanttChart = ({ data }) => {
           />
         </>
       )}
-      
+  
       {activeTab === 'summary' && (
         <>
           {/* Funnel Summary Component */}
