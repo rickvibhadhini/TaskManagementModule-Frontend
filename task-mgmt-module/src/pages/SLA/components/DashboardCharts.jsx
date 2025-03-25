@@ -1,20 +1,11 @@
 import React, { useMemo } from 'react';
 import { Card, Space, Radio, Row, Col, Divider, Tag, Button, Tooltip as AntTooltip } from 'antd';
-import { BarChartOutlined, LineChartOutlined, TableOutlined, CheckCircleFilled, WarningFilled, CloseCircleFilled } from '@ant-design/icons';
+import { BarChartOutlined, LineChartOutlined, TableOutlined, CheckCircleFilled, WarningFilled, CloseCircleFilled,InfoCircleOutlined} from '@ant-design/icons';
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } from 'recharts';
 
-const DashboardCharts = ({ 
-  data, 
-  selectedFunnel, 
-  setSelectedFunnel, 
-  funnelColors, 
-  funnelOrder, 
-  setSelectedTask, 
-  setShowDetailModal,
-  toggleView,
-  getButtonColor
-}) => {
- 
+const DashboardCharts = ({ data, selectedFunnel, setSelectedFunnel, funnelColors, funnelOrder, setSelectedTask, setShowDetailModal,toggleView,getButtonColor}) => 
+  {
+
   const convertTimeToMinutes = (timeStr) => {
     if (!timeStr) return 0;
     const parts = timeStr.split(' ');
@@ -115,12 +106,10 @@ const DashboardCharts = ({
     return [];
   }, [getTasksByFunnel, selectedFunnel]);
 
-  
   const tickInterval = useMemo(() => {
     return getLineChartData.length > 10 ? Math.ceil(getLineChartData.length / 10) : 0;
   }, [getLineChartData]);
 
-  
   const maxTaskMinutes = useMemo(() => {
     if (getLineChartData.length > 0) {
       return Math.max(...getLineChartData.map(item => item.minutes));
@@ -201,6 +190,10 @@ const DashboardCharts = ({
             <Space>
               <BarChartOutlined />
               <span>Average Time Per Funnel</span>
+              {/* Info button for the bar chart */}
+              <AntTooltip title="Shows the average time taken for each funnel stage. Click on a bar to filter the timeline.">
+                <Button type="text" size="small" icon={<InfoCircleOutlined />} />
+              </AntTooltip>
             </Space>
           }
           hoverable
@@ -239,6 +232,10 @@ const DashboardCharts = ({
               </BarChart>
             </ResponsiveContainer>
           </div>
+          {/* Added Funnels label in blue below the legend */}
+          <div style={{ textAlign: 'center', marginTop: 8, fontWeight: 'bold', color: '#1890ff' }}>
+            Funnels
+          </div>
         </Card>
       </Col>
       <Col xs={24} lg={12}>
@@ -246,7 +243,11 @@ const DashboardCharts = ({
           title={
             <Space>
               <LineChartOutlined />
-              <span>Task Sequence Timeline</span>
+              <span>Task Timeline</span>
+              {/* Info button for the line chart */}
+              <AntTooltip title="Displays the time taken by each task in sequence. Click on a data point for details.">
+                <Button type="text" size="small" icon={<InfoCircleOutlined />} />
+              </AntTooltip>
             </Space>
           }
           hoverable
