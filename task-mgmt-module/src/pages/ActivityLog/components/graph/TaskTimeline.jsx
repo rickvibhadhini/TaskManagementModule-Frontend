@@ -64,18 +64,28 @@ const TaskTimeline = ({ funnels, tasksByFunnel, timeRange, timeScale, compactVie
 
   // Scroll to the rightmost part (most recent events) on initial load
   useEffect(() => {
-    if (!initialScrollAppliedRef.current && timelineRef.current && headerRef.current) {
-      const timelineContent = timelineRef.current.querySelector('.flex-1');
-      const headerContent = headerRef.current.querySelector('.flex-1');
-      
-      if (timelineContent && headerContent) {
-        // Set scroll to the rightmost position
-        const maxScroll = timelineContent.scrollWidth - timelineContent.clientWidth;
-        timelineContent.scrollLeft = maxScroll;
-        headerContent.scrollLeft = maxScroll;
-        initialScrollAppliedRef.current = true;
+    // Use a short timeout to ensure the component is fully rendered
+    const scrollTimer = setTimeout(() => {
+      if (!initialScrollAppliedRef.current && timelineRef.current && headerRef.current) {
+        const timelineContent = timelineRef.current.querySelector('.flex-1');
+        const headerContent = headerRef.current.querySelector('.flex-1');
+        
+        if (timelineContent && headerContent) {
+          // Set scroll to the rightmost position
+          const maxScroll = timelineContent.scrollWidth - timelineContent.clientWidth;
+          timelineContent.scrollLeft = maxScroll;
+          headerContent.scrollLeft = maxScroll;
+          initialScrollAppliedRef.current = true;
+        }
       }
-    }
+    }, 100);
+    
+    return () => clearTimeout(scrollTimer);
+  }, [timeRange, zoomLevel]);
+
+  // Reset initial scroll flag when time range or zoom changes
+  useEffect(() => {
+    initialScrollAppliedRef.current = false;
   }, [timeRange, zoomLevel]);
 
   const getSegmentPosition = useCallback((segment, timeRange) => {
@@ -235,7 +245,8 @@ const TaskTimeline = ({ funnels, tasksByFunnel, timeRange, timeScale, compactVie
       const targetRect = targetEl.getBoundingClientRect();
   
       // Calculate positions for the line
-      const lineX = sendbackRect.right - timelineRect.left + timeline.scrollLeft;
+      // Move the line 5px to the right of the segment to avoid overlapping
+      const lineX = sendbackRect.right - timelineRect.left + timeline.scrollLeft + 5;
       const sendbackY = sendbackRect.top - timelineRect.top + timeline.scrollTop + (sendbackRect.height / 2);
       const targetY = targetRect.top - timelineRect.top + timeline.scrollTop + (targetRect.height / 2);
       const lineHeight = Math.abs(targetY - sendbackY);
@@ -249,8 +260,8 @@ const TaskTimeline = ({ funnels, tasksByFunnel, timeRange, timeScale, compactVie
       line.style.top = `${topY}px`;
       line.style.width = '2px';
       line.style.height = `${lineHeight}px`;
-      line.style.borderLeft = '2px dashed #f97316';
-      line.style.zIndex = '50';
+      line.style.borderLeft = '2px dashed rgba(249, 115, 22, 0.7)'; // More transparent orange
+      line.style.zIndex = '5'; // Lower z-index to not overlap with segments
   
       // Create arrow
       const arrow = document.createElement('div');
@@ -262,9 +273,9 @@ const TaskTimeline = ({ funnels, tasksByFunnel, timeRange, timeScale, compactVie
       arrow.style.height = '0';
       arrow.style.borderLeft = '5px solid transparent';
       arrow.style.borderRight = '5px solid transparent';
-      arrow.style.borderTop = sendbackY < targetY ? '6px solid #f97316' : 'none';
-      arrow.style.borderBottom = sendbackY > targetY ? '6px solid #f97316' : 'none';
-      arrow.style.zIndex = '51';
+      arrow.style.borderTop = sendbackY < targetY ? '6px solid rgba(249, 115, 22, 0.7)' : 'none';
+      arrow.style.borderBottom = sendbackY > targetY ? '6px solid rgba(249, 115, 22, 0.7)' : 'none';
+      arrow.style.zIndex = '5';
   
       // Add elements to the timeline
       timeline.appendChild(line);
