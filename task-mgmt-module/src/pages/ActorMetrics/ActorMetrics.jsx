@@ -278,7 +278,7 @@ const AgentMetricsDashboard = () => {
         </Col>
       <Col span={12}>
         <StatCard
-          title="Task Efficiency Score"
+          title="Efficiency Score"
           value={metrics.task_efficiency_score !== undefined 
             ? Number(metrics.task_efficiency_score.toFixed(2)) 
             : '0'}

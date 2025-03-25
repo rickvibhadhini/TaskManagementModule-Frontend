@@ -1,12 +1,14 @@
 import React from 'react';
-import { Card, Statistic, Badge, Tooltip } from 'antd';
+import { Card, Statistic, Tooltip } from 'antd';
 import { InfoCircleOutlined } from '@ant-design/icons';
 
 const Progress = ({ percent, status }) => {
   const getBackgroundColor = () => {
-    if (status === 'success') return '#52c41a';
-    if (status === 'normal') return '#1890ff';
-    return '#f5222d';
+    if (percent >= 90) return '#237804';  // Dark Green
+    if (percent > 75) return '#52c41a';  // Green
+    if (percent > 49) return '#fa8c16';  // Orange
+    if (percent >= 25) return '#f5222d'; // Red
+    return '#d9d9d9';  // Gray for values below 25
   };
 
   return (
@@ -23,6 +25,14 @@ const Progress = ({ percent, status }) => {
 };
 
 const StatCard = ({ title, value, prefix, suffix, valueStyle, showProgress, progressPercent, progressStatus, info }) => {
+  const getTextColor = () => {
+    if (progressPercent >= 90) return '#237804'; 
+    if (progressPercent > 75) return '#52c41a'; 
+    if (progressPercent > 49) return '#fa8c16'; 
+    if (progressPercent >= 25) return '#f5222d'; 
+    return 'black';
+  };
+
   return (
     <Card className="h-full shadow-sm hover:shadow-lg transition-shadow">
       <Statistic
@@ -39,7 +49,7 @@ const StatCard = ({ title, value, prefix, suffix, valueStyle, showProgress, prog
         value={value ?? 0}
         prefix={prefix}
         suffix={suffix}
-        valueStyle={valueStyle}
+        valueStyle={{ ...valueStyle, color: getTextColor(), fontWeight: 'bold' }}
       />
       
       {showProgress && (
