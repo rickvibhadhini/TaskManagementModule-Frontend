@@ -15,15 +15,12 @@ const SendbackCard = ({ funnel, isExpanded, toggleFunnel }) => {
   const sourceSubModule = firstTask?.sourceSubModule;
   const targetTaskId = firstTask?.targetTaskId;
   
-  // Function to get the last 6 characters of a string
   const getTruncatedId = (id) => {
     if (!id) return '';
     return id.slice(-6);
   };
   
-  // Function to extract request ID from funnel name
   const getRequestId = () => {
-    // Assuming the funnel name is in format "Sendbacks for {request_id}"
     const match = funnel.name.match(/Sendbacks for (.+)$/);
     return match ? match[1] : '';
   };
@@ -31,15 +28,12 @@ const SendbackCard = ({ funnel, isExpanded, toggleFunnel }) => {
   const requestId = getRequestId();
   const truncatedId = getTruncatedId(requestId);
   
-  // Get the most recent status from status history
   const mostRecentStatus = funnel.tasks?.flatMap(task => 
     task.statusHistory || []
   )?.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))?.[0]?.status || 'UNKNOWN';
 
-  // Get unique handlers
   const handlers = [...new Set(funnel.tasks?.map(task => task.handledBy) || [])].filter(Boolean).join(', ') || 'N/A';
 
-  // Combine all status histories for timeline
   const sendbackStatusHistory = funnel.tasks?.flatMap(task => 
     task.statusHistory?.map(status => ({
       ...status,
@@ -48,22 +42,19 @@ const SendbackCard = ({ funnel, isExpanded, toggleFunnel }) => {
     })) || []
   ).sort((a, b) => new Date(a.updatedAt) - new Date(b.updatedAt)) || [];
 
-  // Position the tooltip when it becomes visible
   useEffect(() => {
     if (tooltipVisible && tooltipRef.current && triggerRef.current) {
       const triggerRect = triggerRef.current.getBoundingClientRect();
       const tooltipRect = tooltipRef.current.getBoundingClientRect();
       
-      // Position tooltip above the trigger element
       tooltipRef.current.style.top = `${triggerRect.top - tooltipRect.height - 10}px`;
       tooltipRef.current.style.left = `${triggerRect.left - (tooltipRect.width / 2) + (triggerRect.width / 2)}px`;
     }
   }, [tooltipVisible]);
 
   return (
-    <div className="rounded-lg shadow overflow-hidden">
-      <div className="px-4 py-5 sm:px-6 bg-pink-50">
-        {/* Header with status badge and name */}
+    <div className="rounded-lg shadow overflow-hidden max-w-4xl mx-auto">
+      <div className="px-4 py-5 sm:px-5 bg-pink-50">
         <div className="flex items-center space-x-3 mb-3">
           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
             Sendback
@@ -81,9 +72,7 @@ const SendbackCard = ({ funnel, isExpanded, toggleFunnel }) => {
           </span>
         </div>
 
-        {/* Source and Target Information Row */}
         <div className="flex justify-between items-start text-sm text-gray-600">
-          {/* Left side - Source information */}
           <div className="space-y-1">
             <div>
               <span className="font-medium">Source Stage: </span>
@@ -95,7 +84,6 @@ const SendbackCard = ({ funnel, isExpanded, toggleFunnel }) => {
             </div>
           </div>
 
-          {/* Right side - Target and Status information */}
           <div className="text-right space-y-1">
             <div>
               <span className="font-medium">Target Task: </span>
@@ -114,7 +102,6 @@ const SendbackCard = ({ funnel, isExpanded, toggleFunnel }) => {
           </div>
         </div>
 
-        {/* Show Timeline button */}
         <div 
           className="cursor-pointer flex items-center justify-end mt-2"
           onClick={toggleFunnel}
@@ -133,14 +120,12 @@ const SendbackCard = ({ funnel, isExpanded, toggleFunnel }) => {
         </div>
       </div>
 
-      {/* Timeline directly in SendbackCard */}
       {isExpanded && sendbackStatusHistory.length > 0 && (
-        <div className="px-4 py-5 sm:px-6 border-t border-pink-200 bg-white">
+        <div className="px-4 py-5 sm:px-5 border-t border-pink-200 bg-white">
           <StatusTimeline statusHistory={sendbackStatusHistory} />
         </div>
       )}
       
-      {/* Portal for tooltip to avoid layout issues */}
       {tooltipVisible && createPortal(
         <div 
           ref={tooltipRef}
@@ -148,7 +133,7 @@ const SendbackCard = ({ funnel, isExpanded, toggleFunnel }) => {
           style={{
             maxWidth: '300px',
             minWidth: '200px',
-            transition: 'none' // Disable transitions to prevent jitter
+            transition: 'none'
           }}
         >
           <div className="font-medium">Full Request ID:</div>
@@ -178,8 +163,8 @@ const RegularFunnelCard = ({
                      'bg-gray-100 text-gray-800';
 
   return (
-    <div id={`funnel-${funnel.id}`} className={`rounded-lg shadow overflow-hidden ${isBlue ? 'border border-blue-200' : ''}`}>
-      <div className={`px-4 py-5 sm:px-6 ${headerBgColor}`}>
+    <div id={`funnel-${funnel.id}`} className={`rounded-lg shadow overflow-hidden max-w-4xl mx-auto ${isBlue ? 'border border-blue-200' : ''}`}>
+      <div className={`px-4 py-5 sm:px-5 ${headerBgColor}`}>
         <div className="flex justify-between items-center">
           <div className="flex items-center space-x-3">
             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusColor}`}>
@@ -196,7 +181,6 @@ const RegularFunnelCard = ({
           )}
         </div>
 
-        {/* Expand/Collapse button */}
         <div 
           className="cursor-pointer flex items-center justify-end mt-2"
           onClick={toggleFunnel}
@@ -215,9 +199,8 @@ const RegularFunnelCard = ({
         </div>
       </div>
 
-      {/* Expanded content */}
       {isExpanded && (
-        <div className="px-4 py-5 sm:px-6 border-t border-gray-200 bg-white">
+        <div className="px-4 py-5 sm:px-5 border-t border-gray-200 bg-white">
           <TaskGroup 
             tasks={funnel.tasks} 
             isSendback={false} 
