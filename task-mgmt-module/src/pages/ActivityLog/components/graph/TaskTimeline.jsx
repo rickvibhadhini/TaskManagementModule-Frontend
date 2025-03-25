@@ -19,6 +19,7 @@ const TaskTimeline = ({ funnels, tasksByFunnel, timeRange, timeScale, compactVie
   const hoverIntentTimerRef = useRef(null);
   const currentHoveredTaskRef = useRef(null);
   const isDraggingTaskRef = useRef(false);
+  const initialScrollAppliedRef = useRef(false);
 
   // Toggle funnel collapse
   const toggleFunnel = useCallback((funnel) => {
@@ -45,15 +46,37 @@ const TaskTimeline = ({ funnels, tasksByFunnel, timeRange, timeScale, compactVie
 
   const timeTicks = generateTimeTicks();
 
-  // Synchronize horizontal scroll between header and content
-  const synchronizeScroll = useCallback(() => {
+  // Synchronize horizontal scroll between header and content in both directions
+  const synchronizeScroll = useCallback((source) => {
     if (headerRef.current && timelineRef.current) {
+      const headerContent = headerRef.current.querySelector('.flex-1');
       const timelineContent = timelineRef.current.querySelector('.flex-1');
-      if (timelineContent) {
-        headerRef.current.querySelector('.flex-1').scrollLeft = timelineContent.scrollLeft;
+      
+      if (headerContent && timelineContent) {
+        if (source === 'header') {
+          timelineContent.scrollLeft = headerContent.scrollLeft;
+        } else {
+          headerContent.scrollLeft = timelineContent.scrollLeft;
+        }
       }
     }
   }, []);
+
+  // Scroll to the rightmost part (most recent events) on initial load
+  useEffect(() => {
+    if (!initialScrollAppliedRef.current && timelineRef.current && headerRef.current) {
+      const timelineContent = timelineRef.current.querySelector('.flex-1');
+      const headerContent = headerRef.current.querySelector('.flex-1');
+      
+      if (timelineContent && headerContent) {
+        // Set scroll to the rightmost position
+        const maxScroll = timelineContent.scrollWidth - timelineContent.clientWidth;
+        timelineContent.scrollLeft = maxScroll;
+        headerContent.scrollLeft = maxScroll;
+        initialScrollAppliedRef.current = true;
+      }
+    }
+  }, [timeRange, zoomLevel]);
 
   const getSegmentPosition = useCallback((segment, timeRange) => {
     if (!timeRange.start || !timeRange.end) return { left: 0, width: 0 };
@@ -268,7 +291,7 @@ const TaskTimeline = ({ funnels, tasksByFunnel, timeRange, timeScale, compactVie
     if (!timelineContent) return;
 
     const handleScroll = () => {
-      synchronizeScroll();
+      synchronizeScroll('timeline');
       
       // Handle connection redrawing on scroll
       if (timelineContent.scrollTimeout) {
@@ -290,6 +313,25 @@ const TaskTimeline = ({ funnels, tasksByFunnel, timeRange, timeScale, compactVie
       }
     };
   }, [drawTaskConnections, synchronizeScroll]);
+
+  // Handle header scroll
+  useEffect(() => {
+    const header = headerRef.current;
+    if (!header) return;
+
+    const headerContent = header.querySelector('.flex-1');
+    if (!headerContent) return;
+
+    const handleHeaderScroll = () => {
+      synchronizeScroll('header');
+    };
+
+    headerContent.addEventListener('scroll', handleHeaderScroll);
+
+    return () => {
+      headerContent.removeEventListener('scroll', handleHeaderScroll);
+    };
+  }, [synchronizeScroll]);
 
   // Handle mouse wheel for zooming
   const handleWheel = useCallback((e) => {
@@ -330,7 +372,7 @@ const TaskTimeline = ({ funnels, tasksByFunnel, timeRange, timeScale, compactVie
       const timelineContent = timelineRef.current.querySelector('.flex-1');
       if (timelineContent) {
         timelineContent.scrollLeft = scrollStart.current - dx;
-        synchronizeScroll();
+        synchronizeScroll('timeline');
       }
     }
   }, [synchronizeScroll]);
@@ -455,6 +497,13 @@ const TaskTimeline = ({ funnels, tasksByFunnel, timeRange, timeScale, compactVie
 
   return (
     <div className="flex flex-col" style={{ borderTop: '1px solid #e5e7eb' }}>
+      {/* Fixed zoom control */}
+      <div className="fixed top-4 right-4 z-40">
+        <div className="text-xs bg-white px-2 py-1 rounded-md shadow-sm border border-gray-200">
+          Zoom: {Math.round(zoomLevel * 100)}% | Ctrl+Wheel to zoom, Drag to pan
+        </div>
+      </div>
+
       {/* Header row - Make this entire row sticky */}
       <div className="sticky top-0 z-30 flex border-b border-gray-200" ref={headerRef}>
         {/* Left sidebar header */}
@@ -467,12 +516,6 @@ const TaskTimeline = ({ funnels, tasksByFunnel, timeRange, timeScale, compactVie
         {/* Timeline header */}
         <div className="flex-1 overflow-x-auto bg-gray-50" style={{ overflowY: 'hidden' }}>
           <div className="relative min-width-content" style={{ width: `${100 * zoomLevel}%`, height: '40px' }}>
-            <div className="flex items-center justify-between px-4 absolute right-4 top-1/2 transform -translate-y-1/2 z-20">
-              <div className="text-xs bg-white px-2 py-1 rounded-md shadow-sm border border-gray-200">
-                Zoom: {Math.round(zoomLevel * 100)}% | Ctrl+Wheel to zoom, Drag to pan
-              </div>
-            </div>
-            
             {timeTicks.map((tick, i) => (
               <div
                 key={i}
