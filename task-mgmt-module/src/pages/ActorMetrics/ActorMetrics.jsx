@@ -113,6 +113,11 @@ const AgentMetricsDashboard = () => {
 
   const fetchMetrics = async () => {
     try {
+      
+      setLoading(true);
+      setErrorMessage(null); // Ensure previous error is cleared
+      setMetrics({}); // Reset previous data
+
       if (!actorId.trim()) {
         setMetrics({});
         setErrorMessage(null);
@@ -308,7 +313,7 @@ const AgentMetricsDashboard = () => {
             <Col span={12}>
             <MetricCard 
               title="Task Duration Metrics"
-              items={durationMetricItems}
+              taskDurations={metrics.task_duration || {}}
               info={"Task duration metrics for the fastest and slowest tasks by an actor."}
             />
 
