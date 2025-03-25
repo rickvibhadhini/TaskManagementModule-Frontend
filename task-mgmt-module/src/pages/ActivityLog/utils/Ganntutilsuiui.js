@@ -50,29 +50,13 @@ export const processDataForChart = (funnelGroups) => {
         if (taskTime > maxTime) maxTime = taskTime;
       }
       
-      // Special handling for sendback tasks - create unique keys for each sendback
-      let taskKey;
-      // In Ganntutils.js
-      if (task.taskId === "sendback") {
-        // Create a unique key using the combination of funnel, target, sourceLoanStage, and sourceSubModule
-        const targetPart = task.targetTaskId || 'unknown';
-        const sourceStagePart = task.sourceLoanStage || 'unknown';
-        const sourceModulePart = task.sourceSubModule || 'unknown';
-        
-        // This ensures sendbacks with the same source and target are grouped together
-        taskKey = `${task.funnel}:${task.taskId}_${targetPart}_${sourceStagePart}_${sourceModulePart}`;
-      } else {
-        // For regular tasks, use the standard composite key
-        taskKey = `${task.funnel}:${task.taskId}`;
-      }
+      // Use a composite key that includes both taskId and funnel
+      const taskKey = `${task.funnel}:${task.taskId}`;
       
       if (!taskMap[taskKey]) {
         // Initialize the task with segments array
         taskMap[taskKey] = {
-          id: task.taskId === "sendback" ? 
-          `${task.taskId}_${task.targetTaskId || 'unknown'}_${task.sourceLoanStage || 'unknown'}_${task.sourceSubModule || 'unknown'}` : 
-          task.taskId,
-          originalTaskId: task.taskId,
+          id: task.taskId,
           funnel: task.funnel,
           segments: [{
             startTime: taskTime,
@@ -85,12 +69,7 @@ export const processDataForChart = (funnelGroups) => {
             color: statusColors[task.status] || '#6B7280'
           }],
           actorId: task.actorId,
-          funnelColor: funnelColors[task.funnel] || '#95a5a6', // Default to grey
-          // Store additional metadata for sendback tasks
-          targetTaskId: task.targetTaskId,
-          sourceLoanStage: task.sourceLoanStage,
-          sourceSubModule: task.sourceSubModule,
-          metadata: task.metadata || {}
+          funnelColor: funnelColors[task.funnel] || '#95a5a6' // Default to grey
         };
       } else {
         // Add status change
