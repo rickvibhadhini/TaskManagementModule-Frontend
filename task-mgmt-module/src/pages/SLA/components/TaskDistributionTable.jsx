@@ -74,12 +74,12 @@ const TaskDistributionTable = ({ visible, onClose, data, performanceLevel, taskN
       <Table
         columns={columns}
         dataSource={tableData}
-        pagination={{
-          pageSize: pageSize,
-          showSizeChanger: true,
-          pageSizeOptions: ['25', '50', '75', '100'],
-          showTotal: (total) => `Total ${total} applications`
-        }}
+        // pagination={{
+        //   pageSize: pageSize,
+        //   showSizeChanger: true,
+        //   pageSizeOptions: ['25', '50', '75', '100'],
+        //   showTotal: (total) => `Total ${total} applications`
+        // }}
         scroll={{ y: 400 }}
       />
     </Modal>

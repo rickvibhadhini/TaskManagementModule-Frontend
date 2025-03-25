@@ -128,20 +128,19 @@ const TaskDetailModal = ({ selectedTask, showDetailModal, setShowDetailModal, fu
       }
     }
     
-    // Final fallback: if we can't find a match, use a well-known task that exists
-    // This is just for debugging - remove in production
+
     const fallbackKey = Object.keys(data.taskDistributions)[0];
     if (fallbackKey) {
       console.warn("No direct match found. Using fallback key for debugging:", fallbackKey);
       return data.taskDistributions[fallbackKey];
     }
     
-    // If still not found, log a warning and return null
+    
     console.warn("No matching task distribution found for taskId:", taskId, "or name:", taskName);
     return null;
   }, [selectedTask, data]);
 
-  // Process distribution data into three buckets based on backend categorization.
+  
   const distributionBuckets = useMemo(() => {
     if (!taskDistributionData) {
       console.warn("No task distribution data available");
@@ -156,15 +155,12 @@ const TaskDetailModal = ({ selectedTask, showDetailModal, setShowDetailModal, fu
       good: { count: 0, applicationIds: [], applicationStatusMap: {}, timeRange: "" }
     };
 
-    // Assuming the backend already provides data in three categories:
-    // First entry in taskDistributionData = good
-    // Second entry = warning
-    // Third entry = critical
+
     const entries = Object.entries(taskDistributionData);
     
-    // Map the entries to their respective buckets based on order
+
     if (entries.length >= 1) {
-      const [timeRange, rangeData] = entries[0]; // First bucket = good
+      const [timeRange, rangeData] = entries[0]; 
       buckets.good.count = typeof rangeData.count === 'number' ? rangeData.count : 0;
       buckets.good.timeRange = timeRange;
       if (Array.isArray(rangeData.applicationIds)) {
@@ -176,7 +172,7 @@ const TaskDetailModal = ({ selectedTask, showDetailModal, setShowDetailModal, fu
     }
     
     if (entries.length >= 2) {
-      const [timeRange, rangeData] = entries[1]; // Second bucket = warning
+      const [timeRange, rangeData] = entries[1]; 
       buckets.warning.count = typeof rangeData.count === 'number' ? rangeData.count : 0;
       buckets.warning.timeRange = timeRange;
       if (Array.isArray(rangeData.applicationIds)) {
@@ -188,7 +184,7 @@ const TaskDetailModal = ({ selectedTask, showDetailModal, setShowDetailModal, fu
     }
     
     if (entries.length >= 3) {
-      const [timeRange, rangeData] = entries[2]; // Third bucket = critical
+      const [timeRange, rangeData] = entries[2]; 
       buckets.critical.count = typeof rangeData.count === 'number' ? rangeData.count : 0;
       buckets.critical.timeRange = timeRange;
       if (Array.isArray(rangeData.applicationIds)) {
@@ -203,7 +199,7 @@ const TaskDetailModal = ({ selectedTask, showDetailModal, setShowDetailModal, fu
     return buckets;
   }, [taskDistributionData]);
 
-  // Prepare pie chart data with updated labels.
+  
   const pieChartData = useMemo(() => {
     if (!distributionBuckets) {
       console.warn("No distribution buckets available");
@@ -236,13 +232,12 @@ const TaskDetailModal = ({ selectedTask, showDetailModal, setShowDetailModal, fu
       }
     ].filter(item => item.value > 0);
     
-    // Check if we have any data points
+
     if (arr.length === 0) {
       console.warn("No data points for pie chart");
       return [];
     }
     
-    // We no longer force a single segment to yellow - we keep its original color
     
     console.log("Final pie chart data:", arr);
     return arr;
