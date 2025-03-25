@@ -1,10 +1,20 @@
 import React, { useState } from "react";
-import { Card, Typography, Tooltip, Divider, Button } from "antd";
-import { InfoCircleOutlined, RetweetOutlined, DownOutlined, UpOutlined } from "@ant-design/icons";
+import { Card, Typography, Tooltip, Divider, Button, Input } from "antd";
+import { InfoCircleOutlined, RetweetOutlined, DownOutlined, UpOutlined, SearchOutlined } from "@ant-design/icons";
 
-const { Title, Text } = Typography;
+const { Title } = Typography;
 
 const TaskRetriesByCount = ({ tasksByRetries, info }) => {
+  const [searchTerm, setSearchTerm] = useState("");
+  const [expandedStates, setExpandedStates] = useState({});
+
+  const toggleExpand = (count) => {
+    setExpandedStates((prev) => ({
+      ...prev,
+      [count]: !prev[count],
+    }));
+  };
+
   const groupedTasks = {};
   
   if (tasksByRetries && Array.isArray(tasksByRetries)) {
@@ -23,9 +33,16 @@ const TaskRetriesByCount = ({ tasksByRetries, info }) => {
     .map(Number)
     .sort((a, b) => b - a);
 
+  const filteredTasks = {};
+  sortedCounts.forEach(count => {
+    filteredTasks[count] = groupedTasks[count].filter(task =>
+      task.task_id.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  });
+
   return (
     <Card
-      className="h-full shadow-sm hover:shadow-lg transition-shadow"
+      className="h-auto shadow-sm hover:shadow-lg transition-shadow"
       title={
         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
           <div className="flex items-center mt-2">
@@ -38,11 +55,21 @@ const TaskRetriesByCount = ({ tasksByRetries, info }) => {
         </div>
       }
     >
-      <div className="max-h-64 overflow-y-auto">
+      <Input
+        placeholder="Search tasks..."
+        prefix={<SearchOutlined />}
+        value={searchTerm}
+        onChange={(e) => setSearchTerm(e.target.value)}
+        className="mb-4"
+      />
+
+      <div>
         {sortedCounts.length > 0 ? (
           sortedCounts.map((count, index) => {
-            const [expanded, setExpanded] = useState(false);
-            const tasks = groupedTasks[count];
+            const expanded = expandedStates[count] || false;
+            const tasks = filteredTasks[count];
+            if (tasks.length === 0) return null;
+
             const visibleTasks = expanded ? tasks : tasks.slice(0, 4);
 
             return (
@@ -72,7 +99,7 @@ const TaskRetriesByCount = ({ tasksByRetries, info }) => {
                     {tasks.length > 4 && (
                       <Button
                         type="link"
-                        onClick={() => setExpanded(!expanded)}
+                        onClick={() => toggleExpand(count)}
                         className="mt-2"
                       >
                         {expanded ? "Show less" : "Show more"} {expanded ? <UpOutlined /> : <DownOutlined />}

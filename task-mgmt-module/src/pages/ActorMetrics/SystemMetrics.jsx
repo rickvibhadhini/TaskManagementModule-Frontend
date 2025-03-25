@@ -14,7 +14,7 @@ import {
 import axios from 'axios';
 import SYSTEM_METRICS_ENDPOINT from '../../api/SystemMetricsEndpoint';
 
-import {DashboardHeader, AgentInfoCard, StatCard, MetricCard, ChartCard, PendingTasksTable, DashboardFooter, TaskListByRetries} from './components/index';
+import {DashboardHeader, AgentInfoCard, StatCard, MetricCard, ChartCard, PendingTasksTable, DashboardFooter, TaskListByRetries, SystemStatCard} from './components/index';
 import { data } from 'react-router-dom';
 import SystemHeader from './components/layout/SystemHeader';
 
@@ -112,6 +112,10 @@ const SystemMetricsDashboard = () => {
 
   const fetchMetrics = async () => {
     try {
+      setLoading(true);
+      setErrorMessage(null); 
+      setMetrics({}); 
+
       if (!funnel.trim()) {
         setMetrics({});
         setErrorMessage(null);
@@ -242,12 +246,12 @@ const SystemMetricsDashboard = () => {
       )}
 
         {/* Agent Info Card Component */}
-        <Row gutter={16} className="mb-8">
-          <Col span={6}>
+        <Row gutter={16} className="mb-0">
+          <Col span={8}>
             <AgentInfoCard label={"Funnel"} value={funnel} />
           </Col>
-          <Col span={12}>
-          <StatCard
+          <Col span={8}>
+          <SystemStatCard
             title="Total Tasks Completed"
             value={metrics.total_tasks_completed}
             prefix={<CheckCircleOutlined className="text-blue-500" />}
@@ -256,6 +260,9 @@ const SystemMetricsDashboard = () => {
             info="Total number of tasks the actor has completed successfully."
           />
         </Col>
+        <Col span={8}>
+            <AgentInfoCard label={"ExecutionType"} value={"AUTOMATED"} />
+          </Col>
           {/* <Col span={11}>
             <AgentInfoCard label={"E-mail"} value={metrics.handled_by} />
           </Col> */}
