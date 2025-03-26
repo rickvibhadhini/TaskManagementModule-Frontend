@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Typography, Button, Tooltip, Table } from 'antd';
+import { Card, Typography, Button, Tooltip, Table, Input } from 'antd';
 import { InfoCircleOutlined } from '@ant-design/icons';
 
 const { Title } = Typography;
+const { Search } = Input;
 
-const MetricCard = ({ title, info, taskDurations }) => {
+const MetricCard = ({ title, info, taskDurations, formatTime }) => {
   const [displayData, setDisplayData] = useState([]);
+  const [filteredData, setFilteredData] = useState([]);
   const [activePercentile, setActivePercentile] = useState('P90');
+  const [searchText, setSearchText] = useState('');
 
   const percentiles = {
     P90: 0,
@@ -19,11 +22,12 @@ const MetricCard = ({ title, info, taskDurations }) => {
 
     const formattedData = Object.entries(taskDurations).map(([task_name, durations]) => ({
       task_name,
-      slowest_time: durations[percentile],
-      fastest_time: durations[durations.length - 1],
+      slowest_time: formatTime((durations[percentile])/60000),
+      fastest_time: formatTime((durations[durations.length - 1])/60000),
     }));
 
     setDisplayData(formattedData);
+    setFilteredData(formattedData);
   };
 
   const handlePercentileChange = (percentileKey) => {
@@ -34,6 +38,14 @@ const MetricCard = ({ title, info, taskDurations }) => {
   useEffect(() => {
     calculatePercentile(percentiles.P90);
   }, [taskDurations]);
+
+  const handleSearch = (value) => {
+    setSearchText(value);
+    const filtered = displayData.filter((item) =>
+      item.task_name.toLowerCase().includes(value.toLowerCase())
+    );
+    setFilteredData(filtered);
+  };
 
   const columns = [
     {
@@ -65,22 +77,31 @@ const MetricCard = ({ title, info, taskDurations }) => {
       }
       className="h-full shadow-sm hover:shadow-lg transition-shadow"
     >
-      <div className="flex justify-start space-x-4 mb-4">
-        {Object.keys(percentiles).map((key) => (
-          <Button
-            key={key}
-            shape="round"
-            type={activePercentile === key ? 'primary' : 'default'}
-            onClick={() => handlePercentileChange(key)}
-          >
-            {key}
-          </Button>
-        ))}
+      <div className="flex justify-between mb-4">
+        <div className="flex space-x-4">
+          {Object.keys(percentiles).map((key) => (
+            <Button
+              key={key}
+              shape="round"
+              type={activePercentile === key ? 'primary' : 'default'}
+              onClick={() => handlePercentileChange(key)}
+            >
+              {key}
+            </Button>
+          ))}
+        </div>
+        <Search
+          placeholder="Search tasks..."
+          value={searchText}
+          onChange={(e) => handleSearch(e.target.value)}
+          style={{ width: 200 }}
+          allowClear
+        />
       </div>
       <Table 
-        dataSource={displayData} 
+        dataSource={filteredData} 
         columns={columns} 
-        pagination={{ pageSize: 10 }} 
+        pagination={{ pageSize: 6 }} 
         rowKey="task_name" 
       />
     </Card>

@@ -6,3 +6,4 @@ export { default as ChartCard } from './cards/ChartCard';
 export { default as PendingTasksTable } from './tables/PendingTasksTable';
 export { default as DashboardFooter } from './layout/Footer';
 export {default as TaskListByRetries} from './cards/TaskListByRetries';
+export {default as SystemStatCard} from './cards/SystemStatCard';

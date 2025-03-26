@@ -278,7 +278,7 @@ const AgentMetricsDashboard = () => {
         </Col>
       <Col span={12}>
         <StatCard
-          title="Task Efficiency Score"
+          title="Efficiency Score"
           value={metrics.task_efficiency_score !== undefined 
             ? Number(metrics.task_efficiency_score.toFixed(2)) 
             : '0'}
@@ -315,6 +315,7 @@ const AgentMetricsDashboard = () => {
               title="Task Duration Metrics"
               taskDurations={metrics.task_duration || {}}
               info={"Task duration metrics for the fastest and slowest tasks by an actor."}
+              formatTime={formatTime}
             />
 
             </Col>

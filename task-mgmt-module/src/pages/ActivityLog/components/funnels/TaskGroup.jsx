@@ -127,17 +127,22 @@ function TaskGroup({ tasks, isSendback, sendbackMap = {}, expandedTasks = {}, se
                   )}
                   
                   <div className="text-sm text-gray-500 flex justify-end mb-1">
-                    {task?.duration !== undefined && (
-                      <span className="mr-4">
-                        <span className="font-medium">Duration: </span>{formatDuration(task.duration)}
-                      </span>
-                    )}
-                    {task?.sendbacks !== undefined && (
-                      <span>
-                        <span className="font-medium">Sendbacks: </span>{task.sendbacks}
-                      </span>
-                    )}
-                  </div>
+    {task?.duration !== undefined && (
+      <span className="mr-4">
+        <span className="font-medium">Duration: </span>{formatDuration(task.duration)}
+      </span>
+    )}
+    {task?.sendbacks !== undefined && (
+      <span className="mr-4">
+        <span className="font-medium">Sendbacks: </span>{task.sendbacks}
+      </span>
+    )}
+    {task?.visited !== undefined && (
+      <span span className="mr-4">
+          <span className="font-medium">Retries: </span> {task.visited > 0 ? task.visited - 1 : task.visited}
+      </span>
+    )}
+</div>
                   <div 
                     className="text-xs text-blue-600 flex items-center justify-end mt-1 cursor-pointer"
                     onClick={() => toggleTaskTimeline(task?.id || index)}
