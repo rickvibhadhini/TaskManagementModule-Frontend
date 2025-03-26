@@ -8,7 +8,9 @@ const TaskTimeline = ({ funnels, tasksByFunnel, timeRange, timeScale, compactVie
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
   const [collapsedFunnels, setCollapsedFunnels] = useState({});
   const [zoomLevel, setZoomLevel] = useState(1);
-  const [connectionKey, setConnectionKey] = useState(0); // For forcing connection updates
+  const [connectionKey, setConnectionKey] = useState(0);
+  const [discreteTimePoints, setDiscreteTimePoints] = useState([]);
+  const [showDiscreteTime, setShowDiscreteTime] = useState(true);
 
   const timelineRef = useRef(null);
   const headerRef = useRef(null);
@@ -21,6 +23,11 @@ const TaskTimeline = ({ funnels, tasksByFunnel, timeRange, timeScale, compactVie
   const isDraggingTaskRef = useRef(false);
   const initialScrollAppliedRef = useRef(false);
 
+  // Constants for consistent sizing - HEADER_HEIGHT increased for better time axis visibility
+  const ROW_HEIGHT = compactView ? '26px' : '40px';
+  const HEADER_HEIGHT = '60px'; // Increased from 40px to 60px
+  const FUNNEL_HEADER_HEIGHT = '40px';
+
   // Toggle funnel collapse
   const toggleFunnel = useCallback((funnel) => {
     setCollapsedFunnels(prev => ({
@@ -29,20 +36,156 @@ const TaskTimeline = ({ funnels, tasksByFunnel, timeRange, timeScale, compactVie
     }));
   }, []);
 
-  // Generate time ticks based on time scale and zoom level
-  const generateTimeTicks = useCallback(() => {
+  // Identify discrete time points from task data
+  const identifyDiscreteTimePoints = useCallback(() => {
     if (!timeRange.start || !timeRange.end) return [];
-
-    const totalDuration = timeRange.end - timeRange.start;
-    const adjustedTimeScale = timeScale / zoomLevel;
-    const numTicks = Math.ceil(totalDuration / adjustedTimeScale) + 1;
-
-    return Array.from({ length: numTicks }).map((_, i) => {
-      const tickTime = new Date(timeRange.start.getTime() + (adjustedTimeScale * i));
-      const position = `${(i * adjustedTimeScale / totalDuration) * 100 * zoomLevel}%`;
-      return { time: tickTime, position };
+    
+    // Collect all unique timestamps where tasks start or end
+    const allTasks = Object.values(tasksByFunnel).flat();
+    const timePointsSet = new Set();
+    
+    allTasks.forEach(task => {
+      task.segments.forEach(segment => {
+        timePointsSet.add(segment.startTime.getTime());
+        timePointsSet.add(segment.endTime.getTime());
+      });
     });
-  }, [timeRange, timeScale, zoomLevel]);
+    
+    // Convert to array and sort
+    const timePoints = Array.from(timePointsSet).sort((a, b) => a - b);
+    
+    // If no time points, use timeRange boundaries
+    if (timePoints.length === 0) {
+      return [timeRange.start.getTime(), timeRange.end.getTime()];
+    }
+    
+    // Add surrounding minutes to the earliest and latest points for context
+    const minTime = Math.max(timeRange.start.getTime(), timePoints[0] - 60000);
+    const maxTime = Math.min(timeRange.end.getTime(), timePoints[timePoints.length - 1] + 60000);
+    
+    // Create the final array with Date objects
+    return [minTime, ...timePoints, maxTime].map(t => new Date(t));
+  }, [tasksByFunnel, timeRange]);
+
+  // Generate time ticks with better spacing and limited count for readability
+  const generateTimeTicks = useCallback(() => {
+    if (!timeRange.start || !timeRange.end || discreteTimePoints.length === 0) return [];
+    
+    if (!showDiscreteTime) {
+      // Linear time ticks (original behavior)
+      const adjustedTimeScale = timeScale / zoomLevel;
+      const totalDuration = timeRange.end - timeRange.start;
+      
+      // Reduce the number of ticks to prevent overcrowding
+      const preferredTickInterval = Math.max(adjustedTimeScale, 300000); // At least 5 minutes between ticks
+      const numTicks = Math.min(Math.ceil(totalDuration / preferredTickInterval) + 1, 20); // Cap at 20 ticks
+      const actualInterval = totalDuration / (numTicks - 1);
+      
+      return Array.from({ length: numTicks }).map((_, i) => {
+        const tickTime = new Date(timeRange.start.getTime() + (actualInterval * i));
+        const position = `${(i * actualInterval / totalDuration) * 100 * zoomLevel}%`;
+        return { 
+          time: tickTime, 
+          position,
+          isDiscrete: false
+        };
+      });
+    } else {
+      // Discrete time ticks - equally spaced visually
+      // Filter out timestamps that are too close together
+      const uniqueTimePoints = [];
+      for (let i = 0; i < discreteTimePoints.length; i++) {
+        if (i === 0 || 
+            discreteTimePoints[i].getTime() - discreteTimePoints[i-1].getTime() > 1000) {
+          uniqueTimePoints.push(discreteTimePoints[i]);
+        }
+      }
+      
+      // Cap the number of displayed points to prevent overcrowding
+      let displayPoints = uniqueTimePoints;
+      if (uniqueTimePoints.length > 15) { // Reduced from 50 to 15 for better readability
+        const step = Math.ceil(uniqueTimePoints.length / 15);
+        displayPoints = uniqueTimePoints.filter((_, idx) => idx % step === 0 || idx === uniqueTimePoints.length - 1);
+      }
+      
+      return displayPoints.map((time, index, array) => {
+        // Each tick position is proportional to its index, not its time value
+        const position = `${(index / (array.length - 1 || 1)) * 100 * zoomLevel}%`;
+        return {
+          time,
+          position,
+          isDiscrete: true,
+          // Add jump indicator if there's a big time gap to the next point
+          hasJump: index < array.length - 1 && 
+                  (array[index + 1] - time) > 300000 // 5 minutes
+        };
+      });
+    }
+  }, [timeRange, timeScale, zoomLevel, discreteTimePoints, showDiscreteTime]);
+
+  // Get segment position based on discrete time points
+  const getSegmentPosition = useCallback((segment, timeRange) => {
+    if (!timeRange.start || !timeRange.end || discreteTimePoints.length === 0) {
+      return { left: 0, width: 0 };
+    }
+    
+    if (!showDiscreteTime) {
+      // Linear time scaling with boundary checks
+      const totalDuration = timeRange.end - timeRange.start;
+      const startRatio = Math.max(0, Math.min(1, (segment.startTime - timeRange.start) / totalDuration));
+      const endRatio = Math.max(0, Math.min(1, (segment.endTime - timeRange.start) / totalDuration));
+      
+      const left = startRatio * 100 * zoomLevel;
+      const width = Math.max((endRatio - startRatio) * 100 * zoomLevel, 1.0);
+      
+      return { left: `${left}%`, width: `${width}%` };
+    } else {
+      // Discrete time scaling with better index handling
+      // Find indices in the discrete time array
+      let startIndex = -1;
+      let endIndex = -1;
+      
+      for (let i = 0; i < discreteTimePoints.length; i++) {
+        if (discreteTimePoints[i].getTime() === segment.startTime.getTime()) {
+          startIndex = i;
+        }
+        if (discreteTimePoints[i].getTime() === segment.endTime.getTime()) {
+          endIndex = i;
+        }
+      }
+      
+      // If exact matches not found, find nearest points
+      if (startIndex === -1) {
+        startIndex = discreteTimePoints.findIndex(point => 
+          point.getTime() > segment.startTime.getTime()
+        ) - 1;
+        if (startIndex < 0) startIndex = 0;
+      }
+      
+      if (endIndex === -1) {
+        endIndex = discreteTimePoints.findIndex(point => 
+          point.getTime() >= segment.endTime.getTime()
+        );
+        if (endIndex < 0) endIndex = discreteTimePoints.length - 1;
+      }
+      
+      // Calculate position based on indices
+      const totalPoints = discreteTimePoints.length - 1 || 1; // Avoid division by zero
+      const startPosition = (startIndex / totalPoints) * 100 * zoomLevel;
+      const endPosition = (endIndex / totalPoints) * 100 * zoomLevel;
+      
+      // Ensure minimum width and handle boundary conditions
+      const width = Math.max(endPosition - startPosition, 1.5);
+      
+      return { left: `${startPosition}%`, width: `${width}%` };
+    }
+  }, [discreteTimePoints, zoomLevel, showDiscreteTime]);
+
+  // Update time points when data changes
+  useEffect(() => {
+    const timePoints = identifyDiscreteTimePoints();
+    setDiscreteTimePoints(timePoints);
+  }, [identifyDiscreteTimePoints, tasksByFunnel]);
 
   const timeTicks = generateTimeTicks();
 
@@ -87,19 +230,6 @@ const TaskTimeline = ({ funnels, tasksByFunnel, timeRange, timeScale, compactVie
   useEffect(() => {
     initialScrollAppliedRef.current = false;
   }, [timeRange, zoomLevel]);
-
-  const getSegmentPosition = useCallback((segment, timeRange) => {
-    if (!timeRange.start || !timeRange.end) return { left: 0, width: 0 };
-
-    const totalDuration = timeRange.end - timeRange.start;
-    const segmentStart = segment.startTime - timeRange.start;
-    const segmentDuration = segment.endTime - segment.startTime;
-
-    const left = (segmentStart / totalDuration) * 100 * zoomLevel;
-    const width = (segmentDuration / totalDuration) * 100 * zoomLevel;
-
-    return { left: `${left}%`, width: `${Math.max(width, 0.5)}%` };
-  }, [zoomLevel]);
 
   // Format task display name
   const getTaskDisplayName = useCallback((task) => {
@@ -205,83 +335,97 @@ const TaskTimeline = ({ funnels, tasksByFunnel, timeRange, timeScale, compactVie
   }, []);
 
   // Draw connections between sendback tasks and their targets using HTML elements
-  const drawTaskConnections = useCallback(() => {
-    // First remove any existing connection lines
-    const existingLines = document.querySelectorAll('.sendback-connection-line, .sendback-connection-arrow');
-    existingLines.forEach(line => line.remove());
+  // Update the drawTaskConnections function in the TaskTimeline component:
+const drawTaskConnections = useCallback(() => {
+  // First remove any existing connection lines
+  const existingLines = document.querySelectorAll('.sendback-connection-line, .sendback-connection-arrow');
+  existingLines.forEach(line => line.remove());
 
-    // Find all sendback tasks
-    const allTasks = Object.values(tasksByFunnel).flat();
-    const sendbackTasks = allTasks.filter(task => 
-      task.originalTaskId === 'sendback' && task.targetTaskId && !collapsedFunnels[task.funnel]
+  // Find all sendback tasks
+  const allTasks = Object.values(tasksByFunnel).flat();
+  const sendbackTasks = allTasks.filter(task => 
+    task.originalTaskId === 'sendback' && task.targetTaskId && !collapsedFunnels[task.funnel]
+  );
+
+  if (!timelineRef.current || sendbackTasks.length === 0) return;
+
+  // Get timeline container for positioning
+  const timeline = timelineRef.current.querySelector('.flex-1');
+  if (!timeline) return;
+  
+  const timelineRect = timeline.getBoundingClientRect();
+
+  // Create connections for each sendback task
+  sendbackTasks.forEach(sendbackTask => {
+    // Find the target task
+    const targetTasks = allTasks.filter(
+      task => task.id === sendbackTask.targetTaskId && !collapsedFunnels[task.funnel]
     );
 
-    if (!timelineRef.current || sendbackTasks.length === 0) return;
+    if (targetTasks.length === 0) return;
+    const targetTask = targetTasks[0];
 
-    // Get timeline container for positioning
-    const timeline = timelineRef.current.querySelector('.flex-1');
-    if (!timeline) return;
+    // Try to get task elements from DOM
+    const sendbackEl = document.querySelector(`.task-row-${sendbackTask.funnel}-${sendbackTask.id} .task-segment`);
+    const targetEl = document.querySelector(`.task-row-${targetTask.funnel}-${targetTask.id} .task-segment`);
+
+    if (!sendbackEl || !targetEl) return;
+
+    // Get positions
+    const sendbackRect = sendbackEl.getBoundingClientRect();
+    const targetRect = targetEl.getBoundingClientRect();
+
+    // Calculate positions for the line
+    // Position the line at the center right of the sendback segment
+    const lineX = sendbackRect.right - timelineRect.left + timeline.scrollLeft;
+    const sendbackY = sendbackRect.top - timelineRect.top + timeline.scrollTop + (sendbackRect.height / 2);
     
-    const timelineRect = timeline.getBoundingClientRect();
+    // Position the end of the line at the center left of the target segment
+    const targetY = targetRect.top - timelineRect.top + timeline.scrollTop + (targetRect.height / 2);
+    const lineHeight = Math.abs(targetY - sendbackY);
+    const topY = Math.min(sendbackY, targetY);
 
-    // Create connections for each sendback task
-    sendbackTasks.forEach(sendbackTask => {
-      // Find the target task
-      const targetTasks = allTasks.filter(
-        task => task.id === sendbackTask.targetTaskId && !collapsedFunnels[task.funnel]
-      );
-  
-      if (targetTasks.length === 0) return;
-      const targetTask = targetTasks[0];
-  
-      // Try to get task elements from DOM
-      const sendbackEl = document.querySelector(`.task-row-${sendbackTask.funnel}-${sendbackTask.id} .task-segment`);
-      const targetEl = document.querySelector(`.task-row-${targetTask.funnel}-${targetTask.id} .task-segment`);
-  
-      if (!sendbackEl || !targetEl) return;
-  
-      // Get positions
-      const sendbackRect = sendbackEl.getBoundingClientRect();
-      const targetRect = targetEl.getBoundingClientRect();
-  
-      // Calculate positions for the line
-      // Move the line 5px to the right of the segment to avoid overlapping
-      const lineX = sendbackRect.right - timelineRect.left + timeline.scrollLeft + 5;
-      const sendbackY = sendbackRect.top - timelineRect.top + timeline.scrollTop + (sendbackRect.height / 2);
-      const targetY = targetRect.top - timelineRect.top + timeline.scrollTop + (targetRect.height / 2);
-      const lineHeight = Math.abs(targetY - sendbackY);
-      const topY = Math.min(sendbackY, targetY);
-  
-      // Create the connection line
-      const line = document.createElement('div');
-      line.className = 'sendback-connection-line';
-      line.style.position = 'absolute';
-      line.style.left = `${lineX}px`;
-      line.style.top = `${topY}px`;
-      line.style.width = '2px';
-      line.style.height = `${lineHeight}px`;
-      line.style.borderLeft = '2px dashed rgba(249, 115, 22, 0.7)'; // More transparent orange
-      line.style.zIndex = '5'; // Lower z-index to not overlap with segments
-  
-      // Create arrow
-      const arrow = document.createElement('div');
-      arrow.className = 'sendback-connection-arrow';
-      arrow.style.position = 'absolute';
-      arrow.style.left = `${lineX - 4}px`;
-      arrow.style.top = sendbackY < targetY ? `${targetY - 4}px` : `${targetY - 4}px`;
-      arrow.style.width = '0';
-      arrow.style.height = '0';
-      arrow.style.borderLeft = '5px solid transparent';
-      arrow.style.borderRight = '5px solid transparent';
-      arrow.style.borderTop = sendbackY < targetY ? '6px solid rgba(249, 115, 22, 0.7)' : 'none';
-      arrow.style.borderBottom = sendbackY > targetY ? '6px solid rgba(249, 115, 22, 0.7)' : 'none';
-      arrow.style.zIndex = '5';
-  
-      // Add elements to the timeline
-      timeline.appendChild(line);
-      timeline.appendChild(arrow);
-    });
-  }, [tasksByFunnel, collapsedFunnels, connectionKey]);
+    // Create the connection line with better positioning
+    const line = document.createElement('div');
+    line.className = 'sendback-connection-line';
+    line.style.position = 'absolute';
+    line.style.left = `${lineX}px`;
+    line.style.top = `${topY}px`;
+    line.style.width = '2px';
+    line.style.height = `${lineHeight}px`;
+    line.style.borderLeft = '2px dashed #f97316'; // Orange dashed line for sendback
+    line.style.zIndex = '5'; // Ensure proper z-index
+
+    // Create arrow with improved positioning
+    const arrow = document.createElement('div');
+    arrow.className = 'sendback-connection-arrow';
+    arrow.style.position = 'absolute';
+    arrow.style.left = `${lineX - 4}px`; // Center the arrow on the line
+    
+    // Position arrow at the end of the line
+    if (sendbackY < targetY) {
+      // Arrow pointing down
+      arrow.style.top = `${targetY - 5}px`;
+      arrow.style.borderTop = '6px solid #f97316';
+      arrow.style.borderBottom = 'none';
+    } else {
+      // Arrow pointing up
+      arrow.style.top = `${targetY - 1}px`;
+      arrow.style.borderBottom = '6px solid #f97316';
+      arrow.style.borderTop = 'none';
+    }
+    
+    arrow.style.width = '0';
+    arrow.style.height = '0';
+    arrow.style.borderLeft = '5px solid transparent';
+    arrow.style.borderRight = '5px solid transparent';
+    arrow.style.zIndex = '5';
+
+    // Add elements to the timeline
+    timeline.appendChild(line);
+    timeline.appendChild(arrow);
+  });
+}, [tasksByFunnel, collapsedFunnels, connectionKey]);
 
   // Track global mouse position to handle smooth hovering between elements
   useEffect(() => {
@@ -423,6 +567,24 @@ const TaskTimeline = ({ funnels, tasksByFunnel, timeRange, timeScale, compactVie
     }
   }, []);
 
+  // Format time gap
+  const formatTimeGap = useCallback((gapMs) => {
+    const seconds = Math.floor(gapMs / 1000);
+    
+    if (seconds < 60) {
+      return `${seconds}s`;
+    } else if (seconds < 3600) {
+      const minutes = Math.floor(seconds / 60);
+      return `${minutes}m`;
+    } else if (seconds < 86400) {
+      const hours = Math.floor(seconds / 3600);
+      return `${hours}h`;
+    } else {
+      const days = Math.floor(seconds / 86400);
+      return `${days}d`;
+    }
+  }, []);
+
   // Calculate task statistics
   const calculateTaskStats = useCallback((task) => {
     // Find the fastest and slowest segments
@@ -508,44 +670,68 @@ const TaskTimeline = ({ funnels, tasksByFunnel, timeRange, timeScale, compactVie
 
   return (
     <div className="flex flex-col" style={{ borderTop: '1px solid #e5e7eb' }}>
-      {/* Fixed zoom control */}
-      <div className="fixed top-4 right-4 z-40">
+      {/* Fixed zoom control and time mode toggle */}
+      <div className="fixed top-4 right-4 z-40 flex flex-col space-y-2">
         <div className="text-xs bg-white px-2 py-1 rounded-md shadow-sm border border-gray-200">
-          Zoom: {Math.round(zoomLevel * 100)}% | Ctrl+Wheel to zoom, Drag to pan
+          Zoom: {Math.round(zoomLevel * 100)}%
         </div>
+        <button 
+          className="text-xs bg-white px-2 py-1 rounded-md shadow-sm border border-gray-200 hover:bg-gray-50"
+          onClick={() => setShowDiscreteTime(prev => !prev)}
+        >
+          {showDiscreteTime ? "Linear Time" : "Discrete Time"}
+        </button>
       </div>
 
-      {/* Header row - Make this entire row sticky */}
-      <div className="sticky top-0 z-30 flex border-b border-gray-200" ref={headerRef}>
-        {/* Left sidebar header */}
-        <div className="w-48 flex-shrink-0 border-r border-gray-200">
-          <div className="h-10 bg-gray-50 flex items-center">
-            <span className="text-xs text-gray-500 ml-3">Task ID</span>
+      {/* Header row - Enhanced styling with increased height and better borders */}
+      <div className="sticky top-0 z-30 flex border-b-2 border-gray-300 bg-white shadow-sm" ref={headerRef}>
+        {/* Left sidebar header with improved styling */}
+        <div className="w-48 flex-shrink-0 border-r border-gray-300">
+          <div 
+            style={{ height: HEADER_HEIGHT }} 
+            className="bg-gray-100 flex items-center"
+          >
+            <span className="text-sm font-medium text-gray-600 ml-3">Task ID</span>
           </div>
         </div>
 
-        {/* Timeline header */}
+        {/* Timeline header with larger height for better time axis visibility */}
         <div className="flex-1 overflow-x-auto bg-gray-50" style={{ overflowY: 'hidden' }}>
-          <div className="relative min-width-content" style={{ width: `${100 * zoomLevel}%`, height: '40px' }}>
+          <div className="relative min-width-content" style={{ width: `${100 * zoomLevel}%`, height: HEADER_HEIGHT }}>
+            {/* Time ticks with improved styling and larger size */}
             {timeTicks.map((tick, i) => (
               <div
                 key={i}
-                className="absolute top-0 h-full flex items-center"
-                style={{ left: tick.position }}
+                className="absolute top-0 h-full flex flex-col items-center"
+                style={{ left: tick.position, zIndex: 2 }}
               >
-                <div className="text-xs text-gray-500">
+                <div className="h-8 border-l border-gray-300" style={{ width: '1px' }}></div>
+                <div 
+                  className="text-[13px] text-gray-700 transform -rotate-45 origin-top-left whitespace-nowrap font-medium" 
+                  style={{ marginTop: '10px', marginLeft: '4px' }}
+                >
                   {format(tick.time, 'HH:mm:ss')}
                 </div>
+                
+                {/* Improved jump indicator */}
+                {tick.hasJump && (
+                  <div 
+                    className="absolute text-[10px] text-purple-700 bg-purple-100 px-1.5 py-0.5 rounded-sm whitespace-nowrap"
+                    style={{ top: '34px', left: '4px', maxWidth: '80px', overflow: 'hidden', textOverflow: 'ellipsis' }}
+                  >
+                    ↔️ {formatTimeGap(discreteTimePoints[i+1] - tick.time)}
+                  </div>
+                )}
               </div>
             ))}
           </div>
         </div>
       </div>
 
-      {/* Main content area */}
-      <div className="flex flex-1" ref={timelineRef}>
+      {/* Main content area with fixed row heights */}
+      <div className="flex flex-1" ref={timelineRef} style={{ minHeight: '0' }}>
         {/* Left sidebar for task names */}
-        <div className="w-48 flex-shrink-0 border-r border-gray-200 overflow-y-auto">
+        <div className="w-48 flex-shrink-0 border-r border-gray-300 overflow-y-auto">
           {funnels.map((funnel, funnelIdx) => {
             const funnelTasks = tasksByFunnel[funnel] || [];
             const isCollapsed = collapsedFunnels[funnel];
@@ -553,8 +739,9 @@ const TaskTimeline = ({ funnels, tasksByFunnel, timeRange, timeScale, compactVie
             return (
               <div key={funnelIdx}>
                 <div 
-                  className="py-2 px-3 font-medium bg-gray-50 border-b border-gray-200 flex items-center justify-between cursor-pointer"
+                  className="py-2 px-3 font-medium bg-gray-100 border-b border-gray-200 flex items-center justify-between cursor-pointer"
                   onClick={() => toggleFunnel(funnel)}
+                  style={{ height: FUNNEL_HEADER_HEIGHT }}
                 >
                   <div className="flex items-center">
                     <div
@@ -578,7 +765,7 @@ const TaskTimeline = ({ funnels, tasksByFunnel, timeRange, timeScale, compactVie
 
                 {!isCollapsed && funnelTasks.map((task, idx) => (
                   <div key={idx} className="border-b border-gray-100">
-                    <div className={`flex items-center px-3 ${compactView ? 'h-6' : 'h-10'}`}>
+                    <div style={{ height: ROW_HEIGHT }} className="flex items-center px-3">
                       <span
                         className="text-sm truncate cursor-pointer hover:text-blue-600"
                         onClick={(e) => handleTaskClick(e, task, task.segments[0])}
@@ -608,11 +795,15 @@ const TaskTimeline = ({ funnels, tasksByFunnel, timeRange, timeScale, compactVie
           onMouseLeave={handleMouseLeave}
         >
           <div className="min-width-content relative" style={{ width: `${100 * zoomLevel}%` }}>
-            {/* Vertical grid lines */}
+            {/* Vertical grid lines with improved styling */}
             {timeTicks.map((tick, i) => (
               <div
                 key={`grid-line-${i}`}
-                className="absolute top-0 bottom-0 border-l border-gray-300"
+                className={`absolute top-0 bottom-0 ${
+                  tick.hasJump 
+                    ? 'border-l-2 border-purple-400 border-dotted' 
+                    : 'border-l border-gray-200'
+                }`}
                 style={{
                   left: tick.position,
                   height: '100%',
@@ -640,9 +831,9 @@ const TaskTimeline = ({ funnels, tasksByFunnel, timeRange, timeScale, compactVie
                   <div key={funnelIdx} className="relative">
                     {/* Funnel header with stats */}
                     <div 
-                      className="h-10 border-b border-gray-200 bg-gray-50 flex items-center justify-between"
+                      className="border-b border-gray-200 bg-gray-50 flex items-center justify-between"
                       onClick={() => toggleFunnel(funnel)}
-                      style={{ cursor: 'pointer' }}
+                      style={{ height: FUNNEL_HEADER_HEIGHT, cursor: 'pointer' }}
                     >
                       {/* Stats */}
                       <div className="flex items-center ml-3 space-x-4">
@@ -665,7 +856,7 @@ const TaskTimeline = ({ funnels, tasksByFunnel, timeRange, timeScale, compactVie
                       </svg>
                     </div>
 
-                    {/* Task rows */}
+                    {/* Task rows with fixed heights */}
                     {!isCollapsed && funnelTasks.map((task, taskIdx) => {
                       // Sort segments by start time for connector lines
                       const sortedSegments = [...task.segments].sort((a, b) => a.startTime - b.startTime);
@@ -675,9 +866,10 @@ const TaskTimeline = ({ funnels, tasksByFunnel, timeRange, timeScale, compactVie
                         <div
                           key={taskIdx}
                           className={`relative border-b border-gray-100 task-row-${funnel}-${task.id}`}
+                          style={{ height: ROW_HEIGHT }}
                         >
-                          <div className={`relative ${compactView ? 'h-6' : 'h-10'}`}>
-                            {/* Connector lines */}
+                          <div className="relative h-full">
+                            {/* Connector lines with more distinct styling */}
                             {sortedSegments.length > 1 && sortedSegments.slice(0, -1).map((segment, segIdx) => {
                               const nextSegment = sortedSegments[segIdx + 1];
                               const currentPos = getSegmentPosition(segment, timeRange);
@@ -690,8 +882,9 @@ const TaskTimeline = ({ funnels, tasksByFunnel, timeRange, timeScale, compactVie
                               return (
                                 <div
                                   key={`connector-${task.id}-${segIdx}`}
-                                  className="absolute border-t-2 border-dashed border-gray-400"
+                                  className="absolute border-t-2 border-dashed"
                                   style={{
+                                    borderColor: 'rgba(156, 163, 175, 0.5)', // Lighter gray
                                     left: `calc(${currentLeft}% + ${currentWidth}%)`,
                                     width: `calc(${nextLeft}% - ${currentLeft}% - ${currentWidth}%)`,
                                     top: '50%',
@@ -702,7 +895,7 @@ const TaskTimeline = ({ funnels, tasksByFunnel, timeRange, timeScale, compactVie
                               );
                             })}
                         
-                            {/* Task segments */}
+                            {/* Task segments with improved styling */}
                             {task.segments.map((segment, segmentIdx) => {
                               const position = getSegmentPosition(segment, timeRange);
                               const statusColor = statusColors[segment.status] || '#6B7280';
@@ -734,6 +927,7 @@ const TaskTimeline = ({ funnels, tasksByFunnel, timeRange, timeScale, compactVie
                                     top: '50%',
                                     transform: 'translateY(-50%)',
                                     backgroundColor: funnelColor,
+                                    boxShadow: '0 1px 2px rgba(0,0,0,0.1)',
                                     zIndex: 10,
                                     ...specialStyle
                                   }}
@@ -741,6 +935,7 @@ const TaskTimeline = ({ funnels, tasksByFunnel, timeRange, timeScale, compactVie
                                   onMouseEnter={(e) => handleTaskMouseEnter(e, task, segment)}
                                   onMouseLeave={handleTaskMouseLeave}
                                 >
+                                  {/* Only show duration text if segment is wide enough */}
                                   {!compactView && width > 5 && (
                                     <span className="text-xs text-white truncate px-1.5">
                                       {formatDuration(segment)}
@@ -759,7 +954,7 @@ const TaskTimeline = ({ funnels, tasksByFunnel, timeRange, timeScale, compactVie
                                   </div>
                               
                                   {/* Task indicators */}
-                                  {!compactView && isHighlighted && (
+                                  {!compactView && isHighlighted && width > 10 && (
                                     <div className="absolute top-0 left-0 transform -translate-y-full -translate-x-1/2">
                                       <span className={`text-xs px-1 py-0.5 rounded ${
                                         segment === taskStats.slowestSegment ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'
