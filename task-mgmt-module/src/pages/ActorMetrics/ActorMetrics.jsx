@@ -315,6 +315,7 @@ const AgentMetricsDashboard = () => {
               title="Task Duration Metrics"
               taskDurations={metrics.task_duration || {}}
               info={"Task duration metrics for the fastest and slowest tasks by an actor."}
+              formatTime={formatTime}
             />
 
             </Col>
