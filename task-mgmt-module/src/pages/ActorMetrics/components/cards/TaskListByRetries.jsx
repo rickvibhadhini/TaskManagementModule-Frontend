@@ -42,7 +42,7 @@ const TaskRetriesByCount = ({ tasksByRetries, info }) => {
 
   return (
     <Card
-      className="h-auto shadow-sm hover:shadow-lg transition-shadow"
+      className="h-[599px] shadow-sm hover:shadow-lg transition-shadow"
       title={
         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
           <div className="flex items-center mt-2">
