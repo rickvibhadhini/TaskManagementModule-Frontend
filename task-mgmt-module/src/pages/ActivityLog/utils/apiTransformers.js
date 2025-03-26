@@ -16,6 +16,7 @@ export const transformApiData = (data) => {
         name: formatTaskName(latestTask.taskId),
         currentStatus: latestTask.status,
         handledBy: latestTask.handledBy,
+        actorId: latestTask.actorId, // Include actorId
         duration: latestTask.duration,
         sendbacks: latestTask.sendbacks,
         visited: latestTask.visited,
@@ -45,6 +46,7 @@ export const transformApiData = (data) => {
           ? task.statusHistory[task.statusHistory.length - 1].status 
           : 'UNKNOWN',
         handledBy: task.handledBy,
+        actorId: task.actorId, // Include actorId
         duration: task.duration,
         sendbacks: task.sendbacks,
         visited: task.visited,
@@ -64,42 +66,45 @@ export const transformApiData = (data) => {
       });
     });
   }
-// Process sendback tasks
-if (data.sendbackTasks) {
-  Object.entries(data.sendbackTasks).forEach(([targetId, tasks]) => {
-    const transformedTasks = tasks.map(task => ({
-      id: `${task.taskId}-${task.createdAt}`,
-      name: formatTaskName(task.taskId),
-      currentStatus: task.statusHistory && task.statusHistory.length > 0 
-        ? task.statusHistory[task.statusHistory.length - 1].status 
-        : 'UNKNOWN',
-      handledBy: task.handledBy,
-      duration: task.duration,
-      sendbacks: task.sendbacks,
-      visited: task.visited,
-      statusHistory: task.statusHistory || [],
-      createdAt: task.createdAt,
-      targetTaskId: task.targetTaskId,
-      // Add these two fields from the API response
-      sourceLoanStage: task.sourceLoanStage,
-      sourceSubModule: task.sourceSubModule
-    }));
-    
-    const completedTasks = transformedTasks.filter(task => task.currentStatus === 'COMPLETED').length;
-    
-    result.push({
-      id: `sendback-${targetId}`,
-      name: targetId === 'UNKNOWN_REQUEST' ? 'Unknown Sendbacks' : `Sendbacks for ${formatTaskName(targetId)}`,
-      status: 'sendback',
-      progress: `${completedTasks}/${transformedTasks.length}`,
-      funnelDuration: 0,
-      tasks: transformedTasks
+  
+  // Process sendback tasks
+  if (data.sendbackTasks) {
+    Object.entries(data.sendbackTasks).forEach(([targetId, tasks]) => {
+      const transformedTasks = tasks.map(task => ({
+        id: `${task.taskId}-${task.createdAt}`,
+        name: formatTaskName(task.taskId),
+        currentStatus: task.statusHistory && task.statusHistory.length > 0 
+          ? task.statusHistory[task.statusHistory.length - 1].status 
+          : 'UNKNOWN',
+        handledBy: task.handledBy,
+        actorId: task.actorId, // Include actorId
+        duration: task.duration,
+        sendbacks: task.sendbacks,
+        visited: task.visited,
+        statusHistory: task.statusHistory || [],
+        createdAt: task.createdAt,
+        targetTaskId: task.targetTaskId,
+        // Add these two fields from the API response
+        sourceLoanStage: task.sourceLoanStage,
+        sourceSubModule: task.sourceSubModule
+      }));
+      
+      const completedTasks = transformedTasks.filter(task => task.currentStatus === 'COMPLETED').length;
+      
+      result.push({
+        id: `sendback-${targetId}`,
+        name: targetId === 'UNKNOWN_REQUEST' ? 'Unknown Sendbacks' : `Sendbacks for ${formatTaskName(targetId)}`,
+        status: 'sendback',
+        progress: `${completedTasks}/${transformedTasks.length}`,
+        funnelDuration: 0,
+        tasks: transformedTasks
+      });
     });
-  });
-}
+  }
 
-return result;
+  return result;
 };
+
 // Helper function to format task names
 const formatTaskName = (taskId) => {
   if (!taskId) return 'Unknown Task';

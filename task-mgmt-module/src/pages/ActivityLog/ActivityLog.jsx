@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom'; // Added useNavigate
 import axios from 'axios';
 import Header from './components/Layout/Header';
 import FilterPanel from './components/filters/FilterPanel';
@@ -12,6 +12,7 @@ import { fetchFunnelData as fetchFunnelDataFromApi } from './services/Applicatio
 
 function ActivityLog() {
   const location = useLocation();
+  const navigate = useNavigate(); // Added for navigation to agent metrics
   const [expandedFunnels, setExpandedFunnels] = useState({});
   const [expandedTasks, setExpandedTasks] = useState({});  // For tracking expanded tasks
   const [applicationId, setApplicationId] = useState('');
@@ -59,6 +60,14 @@ function ActivityLog() {
       }
     }, 100);
   };
+
+  // Function to navigate to the agent metrics dashboard
+  // Function to navigate to the agent metrics dashboard
+const navigateToActorDashboard = (actorId) => {
+  if (actorId && actorId !== 'N/A') {
+    navigate(`/actorMetrics?actorId=${actorId}`);
+  }
+};
 
   const stopPolling = () => {
     if (pollingInterval) {
@@ -326,6 +335,7 @@ function ActivityLog() {
           navigateToTask={navigateToTask}
           expandedTasks={expandedTasks}
           setExpandedTasks={setExpandedTasks}
+          navigateToActorDashboard={navigateToActorDashboard}
         />
       );
     } else {

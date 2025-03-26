@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import StatusTimeline from './StatusTimeline';
 import { getStatusDotColor, getStatusColor, formatDuration } from '../../utils/formatters';
-import { FaCheckCircle } from 'react-icons/fa'; // Importing an icon
-import Tooltip from './Tooltip'; // Import the Tooltip component
+import { FaCheckCircle } from 'react-icons/fa';
+import Tooltip from './Tooltip';
 
-function TaskGroup({ tasks, isSendback, sendbackMap = {}, expandedTasks = {}, setExpandedTasks }) {
+function TaskGroup({ tasks, isSendback, sendbackMap = {}, expandedTasks = {}, setExpandedTasks, navigateToActorDashboard }) {
   const [tooltipVisible, setTooltipVisible] = useState(false);
   const [tooltipContent, setTooltipContent] = useState('');
-  const [tooltipTaskId, setTooltipTaskId] = useState(null);  // Track which task has tooltip visible
+  const [tooltipTaskId, setTooltipTaskId] = useState(null);
 
   const toggleTaskTimeline = (taskId) => {
     if (setExpandedTasks) {
@@ -19,6 +19,12 @@ function TaskGroup({ tasks, isSendback, sendbackMap = {}, expandedTasks = {}, se
   };
 
   const sortedTasks = [...tasks].sort((a, b) => {
+    // Primary sort by order field if available
+    if (a?.order !== undefined && b?.order !== undefined) {
+      return a.order - b.order;
+    }
+    
+    // Fall back to createdAt
     if (a?.createdAt && b?.createdAt) {
       return new Date(a.createdAt) - new Date(b.createdAt);
     }
@@ -81,11 +87,15 @@ function TaskGroup({ tasks, isSendback, sendbackMap = {}, expandedTasks = {}, se
                   {task?.name || 'Unknown Task'}
                 </div>
                 
-                {/* Task ID is now hidden */}
-                
-                {/* Handled by information */}
+                {/* Handled by information - now using actorId for click navigation */}
                 <div className="text-sm text-gray-500 mt-1">
-                  <span className="font-medium">Handled by: </span>{task?.handledBy || 'N/A'}
+                  <span className="font-medium">Handled by: </span>
+                  <span 
+                    className="text-blue-600 hover:text-blue-800 hover:underline cursor-pointer"
+                    onClick={() => navigateToActorDashboard(task?.actorId)}
+                  >
+                    {task?.handledBy || 'N/A'}
+                  </span>
                 </div>
               </div>
               <div className="flex-1 flex justify-end">
@@ -127,22 +137,22 @@ function TaskGroup({ tasks, isSendback, sendbackMap = {}, expandedTasks = {}, se
                   )}
                   
                   <div className="text-sm text-gray-500 flex justify-end mb-1">
-    {task?.duration !== undefined && (
-      <span className="mr-4">
-        <span className="font-medium">Duration: </span>{formatDuration(task.duration)}
-      </span>
-    )}
-    {task?.sendbacks !== undefined && (
-      <span className="mr-4">
-        <span className="font-medium">Sendbacks: </span>{task.sendbacks}
-      </span>
-    )}
-    {task?.visited !== undefined && (
-      <span span className="mr-4">
-          <span className="font-medium">Retries: </span> {task.visited > 0 ? task.visited - 1 : task.visited}
-      </span>
-    )}
-</div>
+                    {task?.duration !== undefined && (
+                      <span className="mr-4">
+                        <span className="font-medium">Duration: </span>{formatDuration(task.duration)}
+                      </span>
+                    )}
+                    {task?.sendbacks !== undefined && (
+                      <span className="mr-4">
+                        <span className="font-medium">Sendbacks: </span>{task.sendbacks}
+                      </span>
+                    )}
+                    {task?.visited !== undefined && (
+                      <span span className="mr-4">
+                          <span className="font-medium">Retries: </span> {task.visited > 0 ? task.visited - 1 : task.visited}
+                      </span>
+                    )}
+                  </div>
                   <div 
                     className="text-xs text-blue-600 flex items-center justify-end mt-1 cursor-pointer"
                     onClick={() => toggleTaskTimeline(task?.id || index)}

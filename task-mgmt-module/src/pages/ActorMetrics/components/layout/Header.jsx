@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useState, useEffect} from 'react';
 import { Layout, Typography, Select, Input, Button } from 'antd';
 import { SearchOutlined } from '@ant-design/icons';
 import { cars24Logo } from "../../../../assets/index";
@@ -9,10 +9,15 @@ const { Title } = Typography;
 const { Option } = Select;
 
 const DashboardHeader = ({ agentId, setAgentId, handleAgentIdChange, timeFrame, handleTimeFrameChange }) => {
-
   const navigate = useNavigate(); 
+  const [tempAgentId, setTempAgentId] = useState(agentId || '');
 
-  const [tempAgentId, setTempAgentId] = useState('' || '');
+  // Sync tempAgentId with agentId prop when it changes
+  useEffect(() => {
+    if (agentId) {
+      setTempAgentId(agentId);
+    }
+  }, [agentId]);
 
   const handleClick = () => {
     navigate("/");
@@ -37,7 +42,6 @@ const DashboardHeader = ({ agentId, setAgentId, handleAgentIdChange, timeFrame, 
       </div>
       <div className="flex items-center space-x-4">
         <Input 
-
           placeholder="Enter Actor ID" 
           value={tempAgentId} 
           onChange={(e) => setTempAgentId(e.target.value)} 

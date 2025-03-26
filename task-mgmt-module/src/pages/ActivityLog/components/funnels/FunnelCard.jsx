@@ -5,7 +5,7 @@ import TaskGroup from './TaskGroup';
 import { createPortal } from 'react-dom';
 
 // SendbackCard Component
-const SendbackCard = ({ funnel, isExpanded, toggleFunnel }) => {
+const SendbackCard = ({ funnel, isExpanded, toggleFunnel, navigateToActorDashboard }) => {
   const [tooltipVisible, setTooltipVisible] = useState(false);
   const tooltipRef = useRef(null);
   const triggerRef = useRef(null);
@@ -32,7 +32,16 @@ const SendbackCard = ({ funnel, isExpanded, toggleFunnel }) => {
     task.statusHistory || []
   )?.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))?.[0]?.status || 'UNKNOWN';
 
-  const handlers = [...new Set(funnel.tasks?.map(task => task.handledBy) || [])].filter(Boolean).join(', ') || 'N/A';
+  // Group handlers with their corresponding actorIds
+  const handlersWithActorIds = funnel.tasks?.reduce((acc, task) => {
+    if (task.handledBy && !acc.some(h => h.email === task.handledBy)) {
+      acc.push({
+        email: task.handledBy,
+        actorId: task.actorId
+      });
+    }
+    return acc;
+  }, []) || [];
 
   const sendbackStatusHistory = funnel.tasks?.flatMap(task => 
     task.statusHistory?.map(status => ({
@@ -97,7 +106,18 @@ const SendbackCard = ({ funnel, isExpanded, toggleFunnel }) => {
             </div>
             <div>
               <span className="font-medium">Handled by: </span>
-              <span className="text-gray-800">{handlers}</span>
+              {/* Make handlers clickable with their actorIds */}
+              {handlersWithActorIds.map((handler, index) => (
+                <React.Fragment key={index}>
+                  {index > 0 && ', '}
+                  <span 
+                    className="text-blue-600 hover:text-blue-800 hover:underline cursor-pointer"
+                    onClick={() => navigateToActorDashboard(handler.actorId)}
+                  >
+                    {handler.email}
+                  </span>
+                </React.Fragment>
+              ))}
             </div>
           </div>
         </div>
@@ -154,7 +174,8 @@ const RegularFunnelCard = ({
   isBlue, 
   sendbackMap,
   expandedTasks,
-  setExpandedTasks
+  setExpandedTasks,
+  navigateToActorDashboard
 }) => {
   const headerBgColor = isLatestTask ? 'bg-yellow-50' : isBlue ? 'bg-blue-50' : 'bg-white';
   const statusColor = isLatestTask ? 'bg-yellow-100 text-yellow-800' : 
@@ -207,6 +228,7 @@ const RegularFunnelCard = ({
             sendbackMap={sendbackMap}
             expandedTasks={expandedTasks}
             setExpandedTasks={setExpandedTasks}
+            navigateToActorDashboard={navigateToActorDashboard}
           />
         </div>
       )}
@@ -224,10 +246,16 @@ const FunnelCard = ({
   isBlue, 
   sendbackMap,
   expandedTasks,
-  setExpandedTasks 
+  setExpandedTasks,
+  navigateToActorDashboard
 }) => {
   if (isSendback) {
-    return <SendbackCard funnel={funnel} isExpanded={isExpanded} toggleFunnel={toggleFunnel} />;
+    return <SendbackCard 
+      funnel={funnel} 
+      isExpanded={isExpanded} 
+      toggleFunnel={toggleFunnel}
+      navigateToActorDashboard={navigateToActorDashboard}
+    />;
   }
   
   return (
@@ -240,6 +268,7 @@ const FunnelCard = ({
       sendbackMap={sendbackMap}
       expandedTasks={expandedTasks}
       setExpandedTasks={setExpandedTasks}
+      navigateToActorDashboard={navigateToActorDashboard}
     />
   );
 };
