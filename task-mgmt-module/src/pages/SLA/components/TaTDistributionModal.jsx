@@ -6,6 +6,7 @@ const { TabPane } = Tabs;
 
 const TatDistributionModal = ({ visible, tatDistribution, onClose }) => {
   const [activeTab, setActiveTab] = useState('');
+  const [pageSize, setPageSize] = useState(25);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -25,7 +26,7 @@ const TatDistributionModal = ({ visible, tatDistribution, onClose }) => {
       render: (text) => (
         <span 
           style={{ cursor: 'pointer', color: '#1890ff', textDecoration: 'underline' }}
-          onClick={() => navigate('/activityLog', { state: { appId: text } })}
+          onClick={() => navigate('/activityLog', { state: { appId: text, taskId: text } })}
         >
           {text}
         </span>
@@ -70,7 +71,12 @@ const TatDistributionModal = ({ visible, tatDistribution, onClose }) => {
                     status: tatDistribution[bucket].applicationStatusMap[appId] || '',
                   }))
                 }
-                pagination={false}
+                pagination={{
+                  pageSize: pageSize,
+                  showSizeChanger: true,
+                  pageSizeOptions: ['25', '50', '75', '100'],
+                  showTotal: (total) => `Total ${total} applications`
+                }}
               />
             </TabPane>
           ))}
