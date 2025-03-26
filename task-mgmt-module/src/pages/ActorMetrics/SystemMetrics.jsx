@@ -314,8 +314,6 @@ const SystemMetricsDashboard = () => {
               taskDurations={metrics.task_duration || {}}
               info={"Task duration metrics for the fastest and slowest tasks per funnel, based on P90, P95, and P99 percentiles."}
               formatTime={formatTime}
-              info={"Task duration metrics for the fastest and slowest tasks by an actor."}
-              formatTime={formatTime}
             />
 
             </Col>
