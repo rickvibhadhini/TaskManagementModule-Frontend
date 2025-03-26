@@ -97,9 +97,16 @@ const ChartCard = ({ title, chartType, data, dataKeys, colors, height = 300, inf
             <YAxis 
               type="category" 
               dataKey="task" 
-              width={75}
-              tick={{ fontSize: 12 }}
-              tickMargin={5}
+              width={150}
+              tick={{ fontSize: 12 , angle:0,
+                style: {
+                  whiteSpace: 'nowrap', // Prevent wrapping
+                  overflow: 'hidden',    // Hide overflowing text
+                  textOverflow: 'clip'   // Clip overflowing text
+                }
+              }}
+              tickMargin={10}
+              interval={0}
             />
             {tooltipFormatter ? (
               <RechartsToolTip content={<CustomTooltip />} />
