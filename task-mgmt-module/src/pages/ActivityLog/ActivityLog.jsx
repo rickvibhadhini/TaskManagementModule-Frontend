@@ -39,11 +39,12 @@ function ActivityLog() {
   });
   const [showFilters, setShowFilters] = useState(false);
 
-  // When navigating from TaskDistributionTable, check for passed Application ID
-  useEffect(() => {
+   useEffect(() => {
     if (location.state && location.state.appId) {
-      setApplicationId(location.state.appId);
-      setInputApplicationId(location.state.appId);
+      const appId = location.state.appId;
+      setApplicationId(appId);
+      setInputApplicationId(appId);
+      setFilters(prev => ({ ...prev, taskId: appId }));
     }
   }, [location.state]);
 
