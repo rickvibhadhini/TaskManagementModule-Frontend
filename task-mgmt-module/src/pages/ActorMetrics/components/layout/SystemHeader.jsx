@@ -1,6 +1,6 @@
 import React, {useState} from 'react';
 import { Layout, Typography, Select, Input, Button } from 'antd';
-import { SearchOutlined } from '@ant-design/icons';
+import { SearchOutlined, UserOutlined } from '@ant-design/icons';
 import { cars24Logo } from "../../../../assets/index";
 import { Navigate, useNavigate } from 'react-router-dom';
 
@@ -29,6 +29,20 @@ const SystemHeader = ({ funnel, setFunnel, handleFunnelChange, timeFrame, handle
           <Title level={3} style={{ margin: 0, color: 'black' }}>System Metrics Dashboard</Title>
         </div>
         <div className="flex items-center space-x-4">
+        <Button 
+          type="default" 
+          icon={<UserOutlined />}
+          onClick={handleActorView} 
+          style={{ 
+            width: 180, 
+            marginRight: 8, 
+            borderColor: '#1890ff', 
+            color: '#1890ff',
+            fontWeight: 'bold'
+          }}
+        >
+          View Actor Metrics
+        </Button>
 
         <Select 
             placeholder="SYSTEM_METRICS" 
@@ -54,7 +68,7 @@ const SystemHeader = ({ funnel, setFunnel, handleFunnelChange, timeFrame, handle
               <Option value="90">Last 90 Days</Option>
           </Select>
 
-          <Button type="primary" onClick={handleActorView} style={{ width: 120, marginRight: 8} }>Actor Metrics</Button>
+          {/* <Button type="primary" onClick={handleActorView} style={{ width: 120, marginRight: 8} }>Actor Metrics</Button> */}
         </div>
       </Header>
     );
