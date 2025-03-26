@@ -46,8 +46,8 @@ const TaskRetriesByCount = ({ tasksByRetries, info }) => {
       title={
         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
           <div className="flex items-center mt-2">
-            <RetweetOutlined className="text-blue-500 mr-2" />
-            <Title level={5} className="m-0">Tasks Grouped by Retry Count</Title>
+            {/* <RetweetOutlined className="text-blue-500 mr-2" /> */}
+            <Title level={4} className="m-0 text-xl">Tasks Grouped by Retry Count</Title>
           </div>
           <Tooltip title={info}>
             <InfoCircleOutlined className="text-gray-400" />
@@ -63,11 +63,11 @@ const TaskRetriesByCount = ({ tasksByRetries, info }) => {
         className="mb-4"
       />
 
-      <div>
+      <div className="max-h-[400px] overflow-y-auto">
         {sortedCounts.length > 0 ? (
           sortedCounts.map((count, index) => {
             const expanded = expandedStates[count] || false;
-            const tasks = filteredTasks[count];
+            const tasks = filteredTasks[count]; 
             if (tasks.length === 0) return null;
 
             const visibleTasks = expanded ? tasks : tasks.slice(0, 4);

@@ -140,23 +140,24 @@ const ChartCard = ({ title, chartType, data, dataKeys, colors, height = 300, inf
 
   return (
     <Card
-      title={title}
-      className="h-full shadow-sm hover:shadow-lg transition-shadow"
-      extra={
-        <div className="flex items-center">
-          {info && (
-            <Tooltip title={info}>
-              <InfoCircleOutlined className="mr-2 text-gray-500" />
-            </Tooltip>
-          )}
-        </div>
-      }
-      bodyStyle={{ height: height + 30, padding: '12px' }}
-    >
-      <div className="chart-container">
-        {renderChart()}
-      </div>
-    </Card>
+  title={
+    <div className="flex items-center gap-2 text-xl">
+      <span>{title}</span>
+      {info && (
+        <Tooltip title={info}>
+          <InfoCircleOutlined className="text-gray-500" />
+        </Tooltip>
+      )}
+    </div>
+  }
+  className="h-full shadow-sm hover:shadow-lg transition-shadow"
+  bodyStyle={{ height: height + 30, padding: '12px' }}
+>
+  <div className="chart-container">
+    {renderChart()}
+  </div>
+</Card>
+
   );
 };
 

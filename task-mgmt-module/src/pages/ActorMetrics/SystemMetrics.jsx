@@ -257,7 +257,7 @@ const SystemMetricsDashboard = () => {
             prefix={<CheckCircleOutlined className="text-blue-500" />}
             valueStyle={{ color: '#1890ff' }}
             // badgeText="Tasks completed by the agent"
-            info="Total number of tasks the actor has completed successfully."
+            info="Total number of tasks the system has completed successfully."
           />
         </Col>
         <Col span={8}>
@@ -312,7 +312,8 @@ const SystemMetricsDashboard = () => {
             <MetricCard 
               title="Task Duration Metrics"
               taskDurations={metrics.task_duration || {}}
-              info={"Task duration metrics for the fastest and slowest tasks by an actor."}
+              info={"Task duration metrics for the fastest and slowest tasks per funnel, based on P90, P95, and P99 percentiles."}
+              formatTime={formatTime}
             />
 
             </Col>
@@ -325,7 +326,7 @@ const SystemMetricsDashboard = () => {
             </Col> */}
             <Col span={12}>
             <TaskListByRetries tasksByRetries={metrics.tasks_sorted_by_retries}
-            info="Tasks grouped by retry count"
+            info="Tasks categorized by the number of retries."
             />
             </Col>
           </Row>
@@ -341,7 +342,7 @@ const SystemMetricsDashboard = () => {
                 data={processedTaskTimeData}
                 dataKeys={taskTimeDataKeys}
                 colors={['#1890ff']} 
-                info={"Bar graph of actor's average task time across applications, with funnel average as threshold."}
+                info={"Bar graph of system's average task time across applications."}
                 tooltipFormatter={formatTime}
                 height={350}
               />
@@ -353,7 +354,7 @@ const SystemMetricsDashboard = () => {
                 data={processedRetriesData}
                 dataKeys={retryDataKeys}
                 colors={['#1890ff']}
-                info={"Bar graph of actor's average retries across applications, with funnel average as threshold."}
+                info={"Bar graph of system's average retries across applications"}
                 tooltipFormatter={(value) => Number(value).toFixed(2)}
                 height={350}
               />
