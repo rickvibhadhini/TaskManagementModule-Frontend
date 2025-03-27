@@ -153,14 +153,14 @@ const DashboardCharts = ({
     return 50;
   }, [getLineChartData]);
 
-  // Use threshold = 13 for deciding if horizontal scrolling is needed.
+
   const lineChartMinWidth = useMemo(() => {
     const tasksCount = getLineChartData.length;
-    // If tasks < 13, no horizontal scroll => minWidth = "100%"
+
     if (tasksCount < 13) {
       return "100%";
     }
-    // Otherwise, use e.g. 80px per task
+
     const perTaskWidth = 80;
     const computedWidth = tasksCount * perTaskWidth;
     return Math.max(computedWidth, 800);
