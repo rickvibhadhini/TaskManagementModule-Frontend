@@ -68,7 +68,7 @@ const MetricCard = ({ title, info, taskDurations, formatTime }) => {
   return (
     <Card
       title={
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }} className='text-xl'>
           {title}
           <Tooltip title={info}>
             <InfoCircleOutlined style={{ color: 'black', cursor: 'pointer' }} />
