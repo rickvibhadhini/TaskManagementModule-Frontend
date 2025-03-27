@@ -37,8 +37,8 @@ const StatCard = ({ title, value, prefix, suffix, valueStyle, showProgress, prog
     <Card className="h-full shadow-sm hover:shadow-lg transition-shadow">
       <Statistic
         title={
-          <div className="flex items-center gap-1">
-            <span style={{ color: 'black', fontWeight: 'bold' }}>{title}</span>
+          <div className="flex items-center gap-1 text-xl">
+            <span style={{ color: 'black' }}>{title}</span>
             {info && (
               <Tooltip title={info}>
                 <InfoCircleOutlined style={{ color: 'black', cursor: 'pointer', fontSize: '14px' }} />

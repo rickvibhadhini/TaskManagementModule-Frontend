@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Modal, Table, Radio, Typography, Space, Button } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import { CheckCircleFilled, WarningFilled, CloseCircleFilled } from '@ant-design/icons';
@@ -7,7 +7,7 @@ const { Title } = Typography;
 
 const TaskDistributionTable = ({ visible, onClose, data, performanceLevel, taskName }) => {
   const navigate = useNavigate();
-  const [pageSize, setPageSize] = React.useState(25);
+  const [pageSize, setPageSize] = useState(25);
 
   const columns = [
     {
@@ -15,19 +15,19 @@ const TaskDistributionTable = ({ visible, onClose, data, performanceLevel, taskN
       dataIndex: 'applicationId',
       key: 'applicationId',
       render: (text) => (
-        <span 
+        <span
           style={{ cursor: 'pointer', color: '#1890ff', textDecoration: 'underline' }}
-          onClick={() => navigate('/activityLog', { state: { appId: text } })}
+          onClick={() => navigate('/activityLog', { state: { appId: text, taskId: text } })}
         >
           {text}
         </span>
       ),
     },
     {
-      title: 'Status',
-      dataIndex: 'status',
-      key: 'status',
-      render: (text) => text || 'Pending'
+      // title: 'Status',
+      // dataIndex: 'status',
+      // key: 'status',
+      // render: (text) => text || 'Pending'
     }
   ];
 
@@ -38,7 +38,7 @@ const TaskDistributionTable = ({ visible, onClose, data, performanceLevel, taskN
     status: data.applicationStatusMap[appId] || 'Pending'
   })) || [];
 
-  // Title is always "Applications for {taskName}"
+  // Modal title remains constant.
   const modalTitle = (
     <Title level={4} style={{ margin: 0 }}>
       Applications for {taskName}

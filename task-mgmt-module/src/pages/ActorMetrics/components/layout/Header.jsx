@@ -1,6 +1,6 @@
 import React, {useState, useEffect} from 'react';
 import { Layout, Typography, Select, Input, Button } from 'antd';
-import { SearchOutlined } from '@ant-design/icons';
+import { SearchOutlined, DashboardOutlined } from '@ant-design/icons';
 import { cars24Logo } from "../../../../assets/index";
 import { Navigate, useNavigate } from 'react-router-dom';
 
@@ -41,6 +41,20 @@ const DashboardHeader = ({ agentId, setAgentId, handleAgentIdChange, timeFrame, 
         <Title level={3} style={{ margin: 0, color: 'black' }}>Actor Metrics Dashboard</Title>
       </div>
       <div className="flex items-center space-x-4">
+      <Button 
+        type="default" 
+        icon={<DashboardOutlined />}
+        onClick={handleSystemView} 
+        style={{ 
+          width: 180, 
+          marginRight: 8, 
+          borderColor: '#1890ff', 
+          color: '#1890ff',
+          fontWeight: 'bold'
+        }}
+      >
+        View System Analytics
+      </Button>
         <Input 
           placeholder="Enter Actor ID" 
           value={tempAgentId} 
@@ -60,7 +74,7 @@ const DashboardHeader = ({ agentId, setAgentId, handleAgentIdChange, timeFrame, 
           <Option value="90">Last 90 Days</Option>
         </Select>
 
-        <Button type="primary" onClick={handleSystemView} style={{ width: 120, marginRight: 8} }>System Metrics</Button>
+        {/* <Button type="primary" onClick={handleSystemView} style={{ width: 120, marginRight: 8} }>System Metrics</Button> */}
       </div>
     </Header>
   );

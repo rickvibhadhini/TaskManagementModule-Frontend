@@ -5,7 +5,7 @@ import { InfoCircleOutlined } from '@ant-design/icons';
 const { Title } = Typography;
 const { Search } = Input;
 
-const MetricCard = ({ title, info, taskDurations }) => {
+const MetricCard = ({ title, info, taskDurations, formatTime }) => {
   const [displayData, setDisplayData] = useState([]);
   const [filteredData, setFilteredData] = useState([]);
   const [activePercentile, setActivePercentile] = useState('P90');
@@ -22,8 +22,8 @@ const MetricCard = ({ title, info, taskDurations }) => {
 
     const formattedData = Object.entries(taskDurations).map(([task_name, durations]) => ({
       task_name,
-      slowest_time: durations[percentile],
-      fastest_time: durations[durations.length - 1],
+      slowest_time: formatTime((durations[percentile])/60000),
+      fastest_time: formatTime((durations[durations.length - 1])/60000),
     }));
 
     setDisplayData(formattedData);
@@ -68,7 +68,7 @@ const MetricCard = ({ title, info, taskDurations }) => {
   return (
     <Card
       title={
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }} className='text-xl'>
           {title}
           <Tooltip title={info}>
             <InfoCircleOutlined style={{ color: 'black', cursor: 'pointer' }} />
