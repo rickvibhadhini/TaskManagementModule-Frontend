@@ -18,6 +18,7 @@ const TaskTimeline = ({ funnels, tasksByFunnel, compactView }) => {
   const hoverIntentTimerRef = useRef(null);
   const currentHoveredTaskRef = useRef(null);
   const isDraggingTaskRef = useRef(false);
+  const initialScrollAppliedRef = useRef(false);
 
   // Constants for consistent sizing
   const ROW_HEIGHT = compactView ? 26 : 40;
@@ -215,7 +216,7 @@ const TaskTimeline = ({ funnels, tasksByFunnel, compactView }) => {
 
   // Format time for display
   const formatTimeLabel = useCallback((date) => {
-    return format(date, 'HH:mm:ss:SSS');
+    return format(date, 'HH:mm:ss.SSS');
   }, []);
 
   // Toggle funnel collapse
@@ -434,6 +435,89 @@ const TaskTimeline = ({ funnels, tasksByFunnel, compactView }) => {
       if (window.scrollTimer) clearTimeout(window.scrollTimer);
     };
   }, [synchronizeScroll]);
+
+  // Initial scroll to show latest tasks based on timestamp
+  useEffect(() => {
+    if (initialScrollAppliedRef.current || !discreteTimelineData.totalWidth) return;
+    
+    const scrollToLatest = () => {
+      const timelineContent = timelineRef.current?.querySelector('.flex-1');
+      const headerContent = headerRef.current?.querySelector('.flex-1');
+      
+      if (timelineContent) {
+        // Find the latest task segment based on end time
+        let latestSegment = null;
+        let latestTask = null;
+        let latestInstanceIndex = 0;
+        let latestSegmentIndex = 0;
+        let latestFunnel = '';
+        
+        // Iterate through all funnels and tasks to find the latest segment
+        Object.entries(discreteTimelineData.processedTasks).forEach(([funnel, tasks]) => {
+          tasks.forEach(task => {
+            task.instances.forEach((instance, instanceIdx) => {
+              instance.forEach((segment, segmentIdx) => {
+                if (!latestSegment || segment.endTime > latestSegment.endTime) {
+                  latestSegment = segment;
+                  latestTask = task;
+                  latestInstanceIndex = instanceIdx;
+                  latestSegmentIndex = segmentIdx;
+                  latestFunnel = funnel;
+                }
+              });
+            });
+          });
+        });
+        
+        if (latestSegment) {
+          // Find the DOM element of the latest segment
+          const segmentSelector = `.task-row-${latestFunnel}-${latestTask.id} .instance-${latestInstanceIndex}-segment-${latestSegmentIndex}`;
+          const latestSegmentEl = timelineContent.querySelector(segmentSelector);
+          
+          if (latestSegmentEl) {
+            // Get the position of the latest task
+            const segmentRect = latestSegmentEl.getBoundingClientRect();
+            const timelineRect = timelineContent.getBoundingClientRect();
+            
+            // Calculate scroll positions
+            // Scroll horizontally to show the latest segment (with some margin)
+            const horizontalOffset = latestSegment.endPosition * zoomLevel + 100;
+            const maxScroll = timelineContent.scrollWidth - timelineContent.clientWidth;
+            timelineContent.scrollLeft = Math.min(horizontalOffset, maxScroll);
+            
+            // Scroll vertically to center the latest task
+            const taskRow = timelineContent.querySelector(`.task-row-${latestFunnel}-${latestTask.id}`);
+            if (taskRow) {
+              const taskRect = taskRow.getBoundingClientRect();
+              const topOffset = taskRow.offsetTop - (timelineContent.clientHeight / 2) + (taskRect.height / 2);
+              timelineContent.scrollTop = Math.max(0, topOffset);
+            }
+            
+            // Synchronize header
+            if (headerContent) {
+              headerContent.scrollLeft = timelineContent.scrollLeft;
+            }
+          } else {
+            // Fallback to the previous method if the element isn't found
+            timelineContent.scrollLeft = timelineContent.scrollWidth;
+          }
+        } else {
+          // Fallback to the previous method if no latest segment found
+          timelineContent.scrollLeft = timelineContent.scrollWidth;
+        }
+        
+        initialScrollAppliedRef.current = true;
+        
+        // Redraw connections after scrolling
+        setTimeout(() => {
+          setConnectionKey(prev => prev + 1);
+        }, 100);
+      }
+    };
+    
+    // Wait for timeline to be fully rendered
+    setTimeout(scrollToLatest, 500);
+  }, [discreteTimelineData.totalWidth, zoomLevel]);
 
   // Format task display name
   const getTaskDisplayName = useCallback((task) => {
