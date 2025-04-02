@@ -1,6 +1,5 @@
-
 import React, { useState, useEffect } from 'react';
-import { Layout, Row, Col, Empty} from 'antd';
+import { Layout, Row, Col, Empty, message } from 'antd';
 import { 
   CheckCircleOutlined, 
   ClockCircleOutlined, 
@@ -12,27 +11,26 @@ import {
 
 import axios from 'axios';
 import ACTOR_METRICS_ENDPOINT from '../../api/ActorMetricsEndpoint';
+import { useLocation } from 'react-router-dom'; // Add this import
 
 import {DashboardHeader, AgentInfoCard, StatCard, MetricCard, ChartCard, PendingTasksTable, DashboardFooter, TaskListByRetries} from './components/index';
-import { data } from 'react-router-dom';
 
 const { Content } = Layout;
 
 const AgentMetricsDashboard = () => {
-
+  const location = useLocation(); // Get location for URL params
   const [timeFrame, setTimeFrame] = useState('30');
   const [actorId, setActorId] = useState('');
   const [agentType, setAgentType] = useState(''); 
 
-  // const formatDuration = (ms) => {
-  //   if (ms < 60000) {
-  //     return `${(ms / 1000).toFixed(2)} sec`;
-  //   } else if (ms < 3600000) {
-  //     return `${(ms / 60000).toFixed(2)} min`;
-  //   } else {
-  //     return `${(ms / 3600000).toFixed(2)} hr`;
-  //   }
-  // };
+  // Parse URL parameters on component mount
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const urlActorId = params.get('actorId');
+    if (urlActorId) {
+      setActorId(urlActorId);
+    }
+  }, [location.search]);
 
   const formatTime = (value) => {
     if (value === undefined || value === null) return 'N/A';
