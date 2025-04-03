@@ -20,7 +20,7 @@ const DashboardHeader = ({ agentId, setAgentId, handleAgentIdChange, timeFrame, 
   }, [agentId]);
 
   const handleClick = () => {
-    navigate("/");
+    navigate("/TMM");
   }
 
   const handleSearch = () => {

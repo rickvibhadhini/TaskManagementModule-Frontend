@@ -124,7 +124,7 @@ const SystemMetricsDashboard = () => {
       }
   
       const url = SYSTEM_METRICS_ENDPOINT.systemMetrics(funnel, timeFrame);
-      const response = await axios.get(url);
+      const response = await axios.get(url, { withCredentials: true });
       console.log("Response",response.data); 
       if (response.data.Error) {
         setErrorMessage(response.data.Error);
