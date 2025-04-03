@@ -47,6 +47,7 @@ export const transformApiData = (data) => {
         duration: task.duration,
         sendbacks: task.sendbacks,
         visited: task.visited,
+        actorId: task.actorId,
         statusHistory: task.statusHistory || [],
         createdAt: task.createdAt
       }));
@@ -80,6 +81,7 @@ export const transformApiData = (data) => {
           duration: task.duration,
           sendbacks: task.sendbacks,
           visited: task.visited,
+          actorId: task.actorId,
           statusHistory: task.statusHistory || [],
           createdAt: task.createdAt,
           targetTaskId: taskName, // Use the original taskName as targetTaskId
