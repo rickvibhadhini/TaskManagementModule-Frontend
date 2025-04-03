@@ -17,8 +17,8 @@ const TaskRetriesByCount = ({ tasksByRetries, info }) => {
 
   const groupedTasks = {};
   
-  if (tasksByRetries && Array.isArray(tasksByRetries)) {
-    tasksByRetries.forEach(task => {
+  if (tasksByRetries && Array.isArray(tasksByRetries.tasks)) {
+    tasksByRetries.tasks.forEach(task => {
       const count = task.visited;
       if (!groupedTasks[count]) {
         groupedTasks[count] = [];
@@ -40,6 +40,8 @@ const TaskRetriesByCount = ({ tasksByRetries, info }) => {
     );
   });
 
+  const numApplications = tasksByRetries?.number_of_applications || 0;
+
   return (
     <Card
       className="h-[599px] shadow-sm hover:shadow-lg transition-shadow"
@@ -47,7 +49,9 @@ const TaskRetriesByCount = ({ tasksByRetries, info }) => {
         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
           <div className="flex items-center mt-2">
             {/* <RetweetOutlined className="text-blue-500 mr-2" /> */}
-            <Title level={4} className="m-0 text-xl">Tasks Grouped by Retry Count</Title>
+            <Title level={4} className="m-0 text-xl">Tasks Grouped by Retry Count
+            {numApplications > 0 && <span className="text-base font-normal text-gray-500 ml-2">({numApplications} applications)</span>}
+            </Title>
           </div>
           <Tooltip title={info}>
             <InfoCircleOutlined className="text-gray-400" />

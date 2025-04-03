@@ -312,7 +312,7 @@ const AgentMetricsDashboard = () => {
             <MetricCard 
               title="Task Duration Metrics"
               taskDurations={metrics.task_duration || {}}
-              info={"Task duration metrics for the fastest and slowest tasks by an actor."}
+              info={"Detailed task duration metrics showing percentile performance across all tasks."}
               formatTime={formatTime}
             />
 
