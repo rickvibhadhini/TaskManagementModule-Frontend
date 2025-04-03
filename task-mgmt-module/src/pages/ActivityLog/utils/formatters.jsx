@@ -1,4 +1,3 @@
-
 export function formatTaskName(taskId) {
   if (!taskId) return 'Unknown Task';
   
@@ -39,6 +38,7 @@ export function getStatusDotColor(status) {
       return 'bg-gray-400';     
   }
 }
+
 export const formatDuration = (milliseconds) => {
   if (milliseconds === undefined || milliseconds === null || milliseconds === 0) {
     return '0 sec';
@@ -58,12 +58,34 @@ export const formatDuration = (milliseconds) => {
       : `${minutes} min`;
   }
   
-  const hours = Math.floor(seconds / 3600);
+  if (seconds < 86400) {
+    const hours = Math.floor(seconds / 3600);
+    const remainingMinutes = Math.floor((seconds % 3600) / 60);
+    const remainingSeconds = seconds % 60;
+    
+    return remainingSeconds > 0 
+      ? `${hours} hr ${remainingMinutes} min ${remainingSeconds} sec` 
+      : `${hours} hr ${remainingMinutes} min`;
+  }
+  
+  const days = Math.floor(seconds / 86400);
+  const remainingHours = Math.floor((seconds % 86400) / 3600);
   const remainingMinutes = Math.floor((seconds % 3600) / 60);
   const remainingSeconds = seconds % 60;
   
-  return remainingSeconds > 0 
-    ? `${hours} hr ${remainingMinutes} min ${remainingSeconds} sec` 
-    : `${hours} hr ${remainingMinutes} min`;
+  let result = `${days} day${days !== 1 ? 's' : ''}`;
+  
+  if (remainingHours > 0) {
+    result += ` ${remainingHours} hr`;
+  }
+  
+  if (remainingMinutes > 0) {
+    result += ` ${remainingMinutes} min`;
+  }
+  
+  if (remainingSeconds > 0) {
+    result += ` ${remainingSeconds} sec`;
+  }
+  
+  return result;
 };
-

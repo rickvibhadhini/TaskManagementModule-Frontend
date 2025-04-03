@@ -1,6 +1,6 @@
 import React from 'react';
 import { getStatusDotColor } from '../../utils/formatters';
-import { formatDuration } from '../../utils/dateUtils';
+import { formatDuration } from '../../utils/formatters';
 
 function StatusTimeline({ statusHistory }) {
   if (!statusHistory || statusHistory.length === 0) {
@@ -38,22 +38,17 @@ function StatusTimeline({ statusHistory }) {
       <div className="flex items-start gap-y-6 min-w-max mx-auto justify-center">
         {filteredStatusHistory.map((status, index) => {
           const isLast = index === filteredStatusHistory.length - 1;
-          const formattedTime = new Date(status.updatedAt).toLocaleString('en-US', {
+          
+          // Format the timestamp using the same pattern as in the image
+          const date = new Date(status.updatedAt);
+          const formattedTime = `${date.toLocaleString('en-US', {
             month: 'short',
-            day: 'numeric',
+            day: 'numeric'
+          })}, ${date.toLocaleString('en-US', {
             hour: 'numeric',
             minute: 'numeric',
             hour12: true
-          });
-
-          // Calculate duration if not the last item
-          let duration = null;
-          if (!isLast) {
-            const currentTime = new Date(status.updatedAt).getTime();
-            const nextTime = new Date(filteredStatusHistory[index + 1].updatedAt).getTime();
-            const durationMs = nextTime - currentTime;
-            duration = formatDuration(durationMs);
-          }
+          })}`;
 
           return (
             <React.Fragment key={index}>
@@ -63,7 +58,7 @@ function StatusTimeline({ statusHistory }) {
                   <div className="w-3.5 h-3.5 rounded-full bg-white"></div>
                 </div>
                 <div className="mt-1.5 text-center">
-                  <div className="font-medium text-xs text-gray-900">{status.status}</div>
+                  <div className="font-medium text-xs text-gray-900">{status.status.replace(/_/g, ' ')}</div>
                   <div className="text-xs text-gray-500 mt-0.5">{formattedTime}</div>
                 </div>
               </div>
@@ -76,11 +71,17 @@ function StatusTimeline({ statusHistory }) {
                     <div className="w-0 h-0 border-t-[4px] border-t-transparent border-l-[6px] border-l-gray-300 border-b-[4px] border-b-transparent">
                     </div>
                   </div>
-                  {duration && (
-                    <div className="text-[10px] text-gray-400 mt-1 text-center">
-                      {duration}
-                    </div>
-                  )}
+                  <div className="text-[10px] text-gray-400 mt-1 text-center">
+                    {(() => {
+                      // Get the duration in milliseconds
+                      const currentTime = new Date(status.updatedAt).getTime();
+                      const nextTime = new Date(filteredStatusHistory[index + 1].updatedAt).getTime();
+                      const durationMs = nextTime - currentTime;
+                      
+                      // Use the updated formatDuration function
+                      return formatDuration(durationMs);
+                    })()}
+                  </div>
                 </div>
               )}
             </React.Fragment>
