@@ -9,7 +9,8 @@ function FunnelView({
   sendbackMap, 
   navigateToTask,
   expandedTasks,
-  setExpandedTasks
+  setExpandedTasks,
+  navigateToActorDashboard
 }) {
   // Separate the data into three categories
   const latestTask = funnelData.find(funnel => funnel.id === 'latest-task');
@@ -65,9 +66,12 @@ function FunnelView({
               <div className="font-medium text-gray-900 uppercase">{latestTaskDetails.name || 'Unknown Task'}</div>
               
               <div className="flex justify-between items-center mt-2 text-sm">
-                {/* Added Handled By */}
+                {/* Added Handled By with clickable email using actorId */}
                 <div className="text-gray-500">
-                  <span className="font-medium">Handled by:</span> {latestTaskDetails.handledBy || 'N/A'}
+                  <span className="font-medium">Handled by: </span>
+                  
+                    {latestTaskDetails.handledBy || 'N/A'}
+                  
                 </div>
                 
                 {latestTaskDetails.duration !== undefined && (
@@ -81,45 +85,47 @@ function FunnelView({
         </div>
       )}
 
-   {/* Regular Funnels Section */}
-{/* Regular Funnels Section */}
-{regularFunnels.length > 0 && (
- <div className="mb-4 px-4 sm:px-6 max-w-4xl mx-auto">
-   <h3 className="text-lg font-medium text-gray-900 mb-2">Funnels</h3>
-   <div className="space-y-4">
-     {regularFunnels.map(funnel => (
-       <FunnelCard
-         key={funnel.id}
-         funnel={funnel}
-         isExpanded={expandedFunnels[funnel.id] || false}
-         toggleFunnel={() => toggleFunnel(funnel.id)}
-         isBlue={true}
-         sendbackMap={sendbackMap}
-         expandedTasks={expandedTasks}
-         setExpandedTasks={setExpandedTasks}
-       />
-     ))}
-   </div>
- </div>
-)}
+      {/* Regular Funnels Section */}
+      {regularFunnels.length > 0 && (
+        <div className="mb-6 ">
+          <h3 className="text-lg font-medium text-gray-900 mb-2">Funnels</h3>
+          <div className="space-y-4">
+            {regularFunnels.map(funnel => (
+              <FunnelCard
+                key={funnel.id}
+                funnel={funnel}
+                isExpanded={expandedFunnels[funnel.id] || false}
+                toggleFunnel={() => toggleFunnel(funnel.id)}
+                isBlue={true}
+                sendbackMap={sendbackMap}
+                expandedTasks={expandedTasks}
+                setExpandedTasks={setExpandedTasks}
+                navigateToActorDashboard={navigateToActorDashboard}
+              />
+            ))}
+          </div>
+        </div>
+      )}
 
-{/* Sendback Tasks Section */}
-{sendbackFunnels.length > 0 && (
- <div className="px-4 sm:px-6 max-w-4xl mx-auto">
-   <h3 className="text-lg font-medium text-gray-900 mb-2">Sendback Tasks</h3>
-   <div className="space-y-4">
-     {sendbackFunnels.map(funnel => (
-       <FunnelCard
-         key={funnel.id}
-         funnel={funnel}
-         isExpanded={expandedFunnels[funnel.id] || false}
-         toggleFunnel={() => toggleFunnel(funnel.id)}
-         isSendback={true}
-       />
-     ))}
-   </div>
- </div>
-)}
+      {/* Sendback Tasks Section */}
+      {sendbackFunnels.length > 0 && (
+        <div className="mb-6">
+          <h3 className="text-lg font-medium text-gray-900 mb-2">Sendback Tasks</h3>
+          <div className="space-y-4">
+            {sendbackFunnels.map(funnel => (
+              <FunnelCard
+                key={funnel.id}
+                funnel={funnel}
+                isExpanded={expandedFunnels[funnel.id] || false}
+                toggleFunnel={() => toggleFunnel(funnel.id)}
+                isSendback={true}
+                navigateToActorDashboard={navigateToActorDashboard}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+      
       {/* No data message */}
       {funnelData.length === 0 && (
         <div className="bg-white p-6 rounded-lg shadow text-center">
@@ -130,4 +136,4 @@ function FunnelView({
   );
 }
 
-export default FunnelView;
+export default FunnelView; //new code

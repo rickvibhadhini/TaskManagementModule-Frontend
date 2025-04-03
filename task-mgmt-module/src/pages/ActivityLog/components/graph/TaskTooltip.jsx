@@ -253,14 +253,14 @@ const TaskTooltip = ({ hoveredTask, tooltipPosition, onClose }) => {
               <div>
                 <p><span className="font-semibold">Start:</span> {format(segment.startTime, 'h:mm:ss a')}</p>
                 <p><span className="font-semibold">End:</span> {format(segment.endTime, 'h:mm:ss a')}</p>
-                <p>
+                {/* <p>
                   <span className="font-semibold">Duration:</span> {formatTime(segment.endTime - segment.startTime)}
-                </p>
+                </p> */}
               </div>
             </div>
             
             {/* Current segment details */}
-            <div className="mt-4 p-3 bg-gray-50 rounded-lg">
+            {/* <div className="mt-4 p-3 bg-gray-50 rounded-lg">
               <h5 className="font-medium mb-2">Current Segment Details</h5>
               <p className="text-sm">
                 This task has been in <span className="font-medium">{segment.status}</span> status 
@@ -268,7 +268,7 @@ const TaskTooltip = ({ hoveredTask, tooltipPosition, onClose }) => {
                 is {taskStats ? Math.round(((segment.endTime - segment.startTime) / taskStats.totalDuration) * 100) : 0}% 
                 of the total task duration.
               </p>
-            </div>
+            </div> */}
             
             {/* Quick status summary */}
             <div className="mt-4">
@@ -292,10 +292,10 @@ const TaskTooltip = ({ hoveredTask, tooltipPosition, onClose }) => {
         {/* Stats Tab */}
         {activeTab === 'stats' && taskStats && (
           <div>
-            <div className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-100">
+            {/* <div className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-100">
               <h5 className="font-medium text-blue-800 mb-1">Total Task Duration</h5>
               <p className="text-2xl font-bold text-blue-700">{formatTime(taskStats.totalDuration)}</p>
-            </div>
+            </div> */}
             
             {/* Time per status chart */}
             <h5 className="font-medium mb-2">Time Spent per Status</h5>

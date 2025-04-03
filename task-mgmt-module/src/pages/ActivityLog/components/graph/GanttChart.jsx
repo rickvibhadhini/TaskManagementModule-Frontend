@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import TaskTimeline from './TaskTimeline.jsx';
 import FunnelSummary from './FunnelSummary.jsx';
-import FilterPanel from './FilterPanel.jsx';
 import { processDataForChart, funnelColors, statusColors } from '../../utils/Ganntutils.js';
 
 const GanttChart = ({ data }) => {
@@ -9,12 +8,6 @@ const GanttChart = ({ data }) => {
   const [funnels, setFunnels] = useState([]);
   const [timeRange, setTimeRange] = useState({ start: null, end: null });
   const [activeTab, setActiveTab] = useState('timeline');
-  const [filters, setFilters] = useState({
-    status: '',
-    search: '',
-    dateRange: null,
-    funnels: []
-  });
   const [timeScale, setTimeScale] = useState(60 * 60 * 1000); // Default: 1 hour
   // Compact view is always on (no toggle)
   const compactView = true;
@@ -29,55 +22,19 @@ const GanttChart = ({ data }) => {
     setTimeRange(timeRange);
   }, [data]);
 
-  // Get all unique statuses for the legend and filters
+  // Get all unique statuses for the legend
   const allStatuses = [...new Set(tasks.flatMap(task => 
     task.statuses.map(status => status.status)
   ))];
 
-  // Filter tasks based on current filters
-  const filteredTasks = tasks.filter(task => {
-    // Status filter
-    if (filters.status && !task.statuses.some(s => s.status === filters.status)) {
-      return false;
-    }
-
-    // Search filter
-    if (filters.search && !task.id.toLowerCase().includes(filters.search.toLowerCase())) {
-      return false;
-    }
-
-    // Funnel filter
-    if (filters.funnels.length > 0 && !filters.funnels.includes(task.funnel)) {
-      return false;
-    }
-
-    // Date range filter
-    if (filters.dateRange) {
-      const { start, end } = filters.dateRange;
-      const taskStart = task.segments[0]?.startTime;
-      const taskEnd = task.segments[task.segments.length - 1]?.endTime;
-  
-      if (taskStart > end || taskEnd < start) {
-        return false;
-      }
-    }
-
-    return true;
-  });
-
-  // Group tasks by funnel
+  // Group tasks by funnel (without filtering)
   const tasksByFunnel = {};
-  filteredTasks.forEach(task => {
+  tasks.forEach(task => {
     if (!tasksByFunnel[task.funnel]) {
       tasksByFunnel[task.funnel] = [];
     }
     tasksByFunnel[task.funnel].push(task);
   });
-
-  // Handle filter changes
-  const handleFilterChange = (newFilters) => {
-    setFilters({ ...filters, ...newFilters });
-  };
 
   return (
     <div className="w-full bg-white rounded-lg shadow-lg p-6">
@@ -115,13 +72,6 @@ const GanttChart = ({ data }) => {
         </nav>
       </div>
   
-      {/* Filter Panel */}
-      <FilterPanel 
-        allStatuses={allStatuses} 
-        funnels={funnels} 
-        onFilterChange={handleFilterChange}
-      />
-  
       {/* Status legend */}
       {activeTab === 'timeline' && (
         <div className="mb-4">
@@ -130,11 +80,7 @@ const GanttChart = ({ data }) => {
             {allStatuses.map((status, idx) => (
               <div 
                 key={idx} 
-                className={`flex items-center px-3 py-1 rounded-full ${
-                  filters.status === status ? 'bg-blue-100 border border-blue-300' : 'bg-gray-100'
-                }`}
-                onClick={() => handleFilterChange({ status: filters.status === status ? '' : status })}
-                style={{ cursor: 'pointer' }}
+                className="flex items-center px-3 py-1 rounded-full bg-gray-100"
               >
                 <div 
                   className="w-4 h-4 rounded-full mr-2" 
@@ -157,8 +103,6 @@ const GanttChart = ({ data }) => {
             timeRange={timeRange}
             timeScale={timeScale}
             compactView={compactView}
-            filters={filters}
-            onFilterChange={handleFilterChange}
           />
         </>
       )}
@@ -168,7 +112,7 @@ const GanttChart = ({ data }) => {
           {/* Funnel Summary Component */}
           <FunnelSummary 
             funnels={funnels}
-            tasks={filteredTasks}
+            tasks={tasks}
             allTasks={tasks}
           />
         </>
