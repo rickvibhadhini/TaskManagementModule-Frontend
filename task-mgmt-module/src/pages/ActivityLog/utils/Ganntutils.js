@@ -91,6 +91,20 @@ export const processDataForChart = (funnelGroups) => {
       }
     });
   });
+  // Filter out tasks that only have NEW status
+Object.keys(taskMap).forEach(key => {
+  const task = taskMap[key];
+  
+  // Check if all status changes are NEW
+  const onlyNewStatus = task.statusChanges.every(change => 
+    change.status === 'NEW'
+  );
+  
+  // Remove tasks with only NEW status
+  if (onlyNewStatus) {
+    delete taskMap[key];
+  }
+});
   
   // Second pass: process status changes into segments
   Object.values(taskMap).forEach(task => {
