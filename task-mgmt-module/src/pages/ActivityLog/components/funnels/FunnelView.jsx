@@ -43,6 +43,16 @@ function FunnelView({
     }
   };
 
+  // Group sendback funnels by reason
+  const sendbacksByReason = {};
+  sendbackFunnels.forEach(funnel => {
+    const reason = funnel.sendbackReason || 'Unknown';
+    if (!sendbacksByReason[reason]) {
+      sendbacksByReason[reason] = [];
+    }
+    sendbacksByReason[reason].push(funnel);
+  });
+
   return (
     <div className="space-y-4">
       {/* Redesigned Latest Task Section - Compact and Centered with Handled By */}
@@ -81,45 +91,45 @@ function FunnelView({
         </div>
       )}
 
-   {/* Regular Funnels Section */}
-{/* Regular Funnels Section */}
-{regularFunnels.length > 0 && (
- <div className="mb-4 px-4 sm:px-6 max-w-4xl mx-auto">
-   <h3 className="text-lg font-medium text-gray-900 mb-2">Funnels</h3>
-   <div className="space-y-4">
-     {regularFunnels.map(funnel => (
-       <FunnelCard
-         key={funnel.id}
-         funnel={funnel}
-         isExpanded={expandedFunnels[funnel.id] || false}
-         toggleFunnel={() => toggleFunnel(funnel.id)}
-         isBlue={true}
-         sendbackMap={sendbackMap}
-         expandedTasks={expandedTasks}
-         setExpandedTasks={setExpandedTasks}
-       />
-     ))}
-   </div>
- </div>
-)}
+      {/* Regular Funnels Section */}
+      {regularFunnels.length > 0 && (
+        <div className="mb-4">
+          <h3 className="text-lg font-medium text-gray-900 mb-2">Funnels</h3>
+          <div className="space-y-4">
+            {regularFunnels.map(funnel => (
+              <FunnelCard
+                key={funnel.id}
+                funnel={funnel}
+                isExpanded={expandedFunnels[funnel.id] || false}
+                toggleFunnel={() => toggleFunnel(funnel.id)}
+                isBlue={true}
+                sendbackMap={sendbackMap}
+                expandedTasks={expandedTasks}
+                setExpandedTasks={setExpandedTasks}
+              />
+            ))}
+          </div>
+        </div>
+      )}
 
-{/* Sendback Tasks Section */}
-{sendbackFunnels.length > 0 && (
- <div className="px-4 sm:px-6 max-w-4xl mx-auto">
-   <h3 className="text-lg font-medium text-gray-900 mb-2">Sendback Tasks</h3>
-   <div className="space-y-4">
-     {sendbackFunnels.map(funnel => (
-       <FunnelCard
-         key={funnel.id}
-         funnel={funnel}
-         isExpanded={expandedFunnels[funnel.id] || false}
-         toggleFunnel={() => toggleFunnel(funnel.id)}
-         isSendback={true}
-       />
-     ))}
-   </div>
- </div>
-)}
+      {/* Sendback Tasks Section */}
+      {sendbackFunnels.length > 0 && (
+        <div>
+          <h3 className="text-lg font-medium text-gray-900 mb-2">Sendback Tasks</h3>
+          <div className="space-y-4">
+            {sendbackFunnels.map(funnel => (
+              <FunnelCard
+                key={funnel.id}
+                funnel={funnel}
+                isExpanded={expandedFunnels[funnel.id] || false}
+                toggleFunnel={() => toggleFunnel(funnel.id)}
+                isSendback={true}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* No data message */}
       {funnelData.length === 0 && (
         <div className="bg-white p-6 rounded-lg shadow text-center">

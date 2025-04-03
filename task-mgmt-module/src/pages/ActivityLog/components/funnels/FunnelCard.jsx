@@ -6,34 +6,28 @@ import { createPortal } from 'react-dom';
 
 // SendbackCard Component
 const SendbackCard = ({ funnel, isExpanded, toggleFunnel }) => {
-  const [tooltipVisible, setTooltipVisible] = useState(false);
-  const tooltipRef = useRef(null);
-  const triggerRef = useRef(null);
-  
   const firstTask = funnel?.tasks?.[0];
-  const sourceLoanStage = firstTask?.sourceLoanStage;
-  const sourceSubModule = firstTask?.sourceSubModule;
-  const targetTaskId = firstTask?.targetTaskId;
+  const sourceLoanStage = firstTask?.sourceLoanStage || 'N/A';
+  const sourceSubModule = firstTask?.sourceSubModule || 'N/A';
+  const reason = funnel.sendbackReason || 'Unknown';
+  const targetTaskId = firstTask?.targetTaskId || 'N/A';
   
-  const getTruncatedId = (id) => {
-    if (!id) return '';
-    return id.slice(-6);
-  };
   
-  const getRequestId = () => {
-    const match = funnel.name.match(/Sendbacks for (.+)$/);
-    return match ? match[1] : '';
-  };
+  // Format reason for display
+  const formattedReason = reason
+    .split('_')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(' ');
   
-  const requestId = getRequestId();
-  const truncatedId = getTruncatedId(requestId);
-  
+  // Get the most recent status
   const mostRecentStatus = funnel.tasks?.flatMap(task => 
     task.statusHistory || []
   )?.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))?.[0]?.status || 'UNKNOWN';
 
+  // Get unique handlers
   const handlers = [...new Set(funnel.tasks?.map(task => task.handledBy) || [])].filter(Boolean).join(', ') || 'N/A';
 
+  // Combine all status histories for timeline
   const sendbackStatusHistory = funnel.tasks?.flatMap(task => 
     task.statusHistory?.map(status => ({
       ...status,
@@ -42,53 +36,37 @@ const SendbackCard = ({ funnel, isExpanded, toggleFunnel }) => {
     })) || []
   ).sort((a, b) => new Date(a.updatedAt) - new Date(b.updatedAt)) || [];
 
-  useEffect(() => {
-    if (tooltipVisible && tooltipRef.current && triggerRef.current) {
-      const triggerRect = triggerRef.current.getBoundingClientRect();
-      const tooltipRect = tooltipRef.current.getBoundingClientRect();
-      
-      tooltipRef.current.style.top = `${triggerRect.top - tooltipRect.height - 10}px`;
-      tooltipRef.current.style.left = `${triggerRect.left - (tooltipRect.width / 2) + (triggerRect.width / 2)}px`;
-    }
-  }, [tooltipVisible]);
-
   return (
-    <div className="rounded-lg shadow overflow-hidden max-w-4xl mx-auto">
-      <div className="px-4 py-5 sm:px-5 bg-pink-50">
+    <div className="rounded-lg shadow overflow-hidden">
+      <div className="px-4 py-5 sm:px-6 bg-pink-50">
+        {/* Header with sendback badge and reason */}
         <div className="flex items-center space-x-3 mb-3">
           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
             Sendback
           </span>
           <span className="text-lg font-medium text-gray-900">
-            Sendback request Id: {' '}
-            <span 
-              ref={triggerRef}
-              className="cursor-help relative"
-              onMouseEnter={() => setTooltipVisible(true)}
-              onMouseLeave={() => setTooltipVisible(false)}
-            >
-              {truncatedId}
-            </span>
+            {formattedReason}
           </span>
         </div>
 
-        <div className="flex justify-between items-start text-sm text-gray-600">
+        {/* Info with right-aligned status */}
+        <div className="flex justify-between mb-2">
           <div className="space-y-1">
             <div>
+              <span className="font-medium">Target Task Id: </span>
+              <span className="text-gray-800">{targetTaskId}</span>
+            </div>
+            <div>
               <span className="font-medium">Source Stage: </span>
-              <span className="text-gray-800">{sourceLoanStage || 'N/A'}</span>
+              <span className="text-gray-800">{sourceLoanStage}</span>
             </div>
             <div>
               <span className="font-medium">Source Module: </span>
-              <span className="text-gray-800">{sourceSubModule || 'N/A'}</span>
+              <span className="text-gray-800">{sourceSubModule}</span>
             </div>
           </div>
-
+          
           <div className="text-right space-y-1">
-            <div>
-              <span className="font-medium">Target Task: </span>
-              <span className="text-gray-800">{targetTaskId || 'N/A'}</span>
-            </div>
             <div>
               <span className="font-medium">Status: </span>
               <span className={getStatusColor(mostRecentStatus)}>
@@ -99,88 +77,11 @@ const SendbackCard = ({ funnel, isExpanded, toggleFunnel }) => {
               <span className="font-medium">Handled by: </span>
               <span className="text-gray-800">{handlers}</span>
             </div>
+            
           </div>
         </div>
 
-        <div 
-          className="cursor-pointer flex items-center justify-end mt-2"
-          onClick={toggleFunnel}
-        >
-          <span className="text-sm text-blue-600">
-            {isExpanded ? 'Hide Timeline' : 'Show Timeline'}
-          </span>
-          <svg 
-            className={`h-5 w-5 ml-1 transform transition-transform ${isExpanded ? 'rotate-180' : ''}`}
-            xmlns="http://www.w3.org/2000/svg" 
-            viewBox="0 0 20 20" 
-            fill="currentColor"
-          >
-            <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
-          </svg>
-        </div>
-      </div>
-
-      {isExpanded && sendbackStatusHistory.length > 0 && (
-        <div className="px-4 py-5 sm:px-5 border-t border-pink-200 bg-white">
-          <StatusTimeline statusHistory={sendbackStatusHistory} />
-        </div>
-      )}
-      
-      {tooltipVisible && createPortal(
-        <div 
-          ref={tooltipRef}
-          className="fixed z-50 bg-white border border-gray-300 rounded shadow-lg p-3 text-sm pointer-events-none"
-          style={{
-            maxWidth: '300px',
-            minWidth: '200px',
-            transition: 'none'
-          }}
-        >
-          <div className="font-medium">Full Request ID:</div>
-          <div className="break-all">{requestId}</div>
-        </div>,
-        document.body
-      )}
-    </div>
-  );
-};
-
-// RegularFunnelCard Component
-const RegularFunnelCard = ({ 
-  funnel, 
-  isExpanded, 
-  toggleFunnel, 
-  isLatestTask, 
-  isBlue, 
-  sendbackMap,
-  expandedTasks,
-  setExpandedTasks
-}) => {
-  const headerBgColor = isLatestTask ? 'bg-yellow-50' : isBlue ? 'bg-blue-50' : 'bg-white';
-  const statusColor = isLatestTask ? 'bg-yellow-100 text-yellow-800' : 
-                     funnel.status === 'completed' ? 'bg-green-100 text-green-800' : 
-                     funnel.status === 'in-progress' ? 'bg-blue-100 text-blue-800' : 
-                     'bg-gray-100 text-gray-800';
-
-  return (
-    <div id={`funnel-${funnel.id}`} className={`rounded-lg shadow overflow-hidden max-w-4xl mx-auto ${isBlue ? 'border border-blue-200' : ''}`}>
-      <div className={`px-4 py-5 sm:px-5 ${headerBgColor}`}>
-        <div className="flex justify-between items-center">
-          <div className="flex items-center space-x-3">
-            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusColor}`}>
-              {isLatestTask ? 'Latest' : funnel.status}
-            </span>
-            <span className="text-lg font-medium text-gray-900">{funnel.name}</span>
-          </div>
-          
-          {funnel.funnelDuration !== undefined && (
-            <div className="text-sm text-gray-500">
-              <span className="font-medium">Duration: </span>
-              {formatDuration(funnel.funnelDuration)}
-            </div>
-          )}
-        </div>
-
+        {/* Hide/Show Details button */}
         <div 
           className="cursor-pointer flex items-center justify-end mt-2"
           onClick={toggleFunnel}
@@ -199,8 +100,84 @@ const RegularFunnelCard = ({
         </div>
       </div>
 
+      {/* Sendback History with timeline when expanded */}
       {isExpanded && (
-        <div className="px-4 py-5 sm:px-5 border-t border-gray-200 bg-white">
+        <div className="px-4 py-5 sm:px-6 border-t border-pink-200 bg-white">
+          <div className="mb-3">
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+              Sendback
+            </span>
+            <span className="ml-2 text-gray-900 font-medium">Sendback Timeline</span>
+          </div>
+          {sendbackStatusHistory.length > 0 ? (
+            <StatusTimeline statusHistory={sendbackStatusHistory} />
+          ) : (
+            <div className="text-gray-500 text-sm italic">No status history available</div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
+// RegularFunnelCard Component 
+const RegularFunnelCard = ({ 
+  funnel, 
+  isExpanded, 
+  toggleFunnel, 
+  isLatestTask, 
+  isBlue, 
+  sendbackMap,
+  expandedTasks,
+  setExpandedTasks
+}) => {
+  const headerBgColor = isLatestTask ? 'bg-yellow-50' : isBlue ? 'bg-blue-50' : 'bg-white';
+  const statusColor = isLatestTask ? 'bg-yellow-100 text-yellow-800' : 
+                     funnel.status === 'completed' ? 'bg-green-100 text-green-800' : 
+                     funnel.status === 'in-progress' ? 'bg-blue-100 text-blue-800' : 
+                     'bg-gray-100 text-gray-800';
+
+  return (
+    <div id={`funnel-${funnel.id}`} className={`rounded-lg shadow overflow-hidden ${isBlue ? 'border border-blue-200' : ''}`}>
+      <div className={`px-4 py-5 sm:px-6 ${headerBgColor}`}>
+        <div className="flex justify-between items-center">
+          <div className="flex items-center space-x-3">
+            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusColor}`}>
+              {isLatestTask ? 'Latest' : funnel.status}
+            </span>
+            <span className="text-lg font-medium text-gray-900">{funnel.name}</span>
+          </div>
+          
+          {funnel.funnelDuration !== undefined && (
+            <div className="text-sm text-gray-500">
+              <span className="font-medium">Duration: </span>
+              {formatDuration(funnel.funnelDuration)}
+            </div>
+          )}
+        </div>
+
+        {/* Expand/Collapse button */}
+        <div 
+          className="cursor-pointer flex items-center justify-end mt-2"
+          onClick={toggleFunnel}
+        >
+          <span className="text-sm text-blue-600">
+            {isExpanded ? 'Hide Details' : 'Show Details'}
+          </span>
+          <svg 
+            className={`h-5 w-5 ml-1 transform transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+            xmlns="http://www.w3.org/2000/svg" 
+            viewBox="0 0 20 20" 
+            fill="currentColor"
+          >
+            <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+          </svg>
+        </div>
+      </div>
+
+      {/* Expanded content */}
+      {isExpanded && (
+        <div className="px-4 py-5 sm:px-6 border-t border-gray-200 bg-white">
           <TaskGroup 
             tasks={funnel.tasks} 
             isSendback={false} 
@@ -214,7 +191,7 @@ const RegularFunnelCard = ({
   );
 };
 
-// Main FunnelCard Component
+// Main FunnelCard Component 
 const FunnelCard = ({ 
   funnel, 
   isExpanded, 
