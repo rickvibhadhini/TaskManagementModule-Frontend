@@ -59,28 +59,36 @@ const TatDistributionModal = ({ visible, tatDistribution, onClose }) => {
       width={600}
     >
       <Tabs activeKey={activeTab} onChange={setActiveTab}>
-        {tatDistribution &&
-          Object.keys(tatDistribution).map((bucket) => (
-            <TabPane tab={bucket} key={bucket}>
-              <Table
-                columns={columns}
-                dataSource={
-                  tatDistribution[bucket].applicationIds.map((appId) => ({
-                    key: appId,
-                    applicationId: appId,
-                    status: tatDistribution[bucket].applicationStatusMap[appId] || '',
-                  }))
-                }
-                pagination={{
-                  pageSize: pageSize,
-                  showSizeChanger: true,
-                  pageSizeOptions: ['25', '50', '75', '100'],
-                  showTotal: (total) => `Total ${total} applications`
-                }}
-              />
-            </TabPane>
-          ))}
-      </Tabs>
+  {tatDistribution &&
+    Object.keys(tatDistribution).map((bucket) => {
+      const totalApps = tatDistribution[bucket].applicationIds.length; // Get total applications
+      return (
+        <TabPane 
+          tab={
+            <span>
+              {bucket} <strong>({totalApps} applications)</strong>
+            </span>
+          } 
+          key={bucket}
+        >
+          <Table
+            columns={columns}
+            dataSource={tatDistribution[bucket].applicationIds.map((appId) => ({
+              key: appId,
+              applicationId: appId,
+              status: tatDistribution[bucket].applicationStatusMap[appId] || '',
+            }))}
+            pagination={{
+              pageSize: pageSize,
+              showSizeChanger: true,
+              pageSizeOptions: ['25', '50', '75', '100'],
+            }}
+          />
+        </TabPane>
+      );
+    })}
+</Tabs>
+
     </Modal>
   );
 };
