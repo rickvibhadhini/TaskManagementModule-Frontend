@@ -70,33 +70,33 @@ const navigateToActorDashboard = (actorId) => {
   }
 };
 
-  const stopPolling = () => {
-    if (pollingInterval) {
-      clearInterval(pollingInterval);
-      setPollingInterval(null);
-    }
-  };
+  // const stopPolling = () => {
+  //   if (pollingInterval) {
+  //     clearInterval(pollingInterval);
+  //     setPollingInterval(null);
+  //   }
+  // };
 
-  const startPolling = () => {
-    stopPolling(); 
-    fetchFunnelData(); 
-    console.log("Polling started at:", new Date().toLocaleTimeString());
-    const interval = setInterval(() => {
-      console.log("Polling triggered at:", new Date().toLocaleTimeString());
-      fetchFunnelData();
-    }, 10000 * 6 * 5); // Poll every 5 min
+  // const startPolling = () => {
+  //   stopPolling(); 
+  //   fetchFunnelData(); 
+  //   console.log("Polling started at:", new Date().toLocaleTimeString());
+  //   const interval = setInterval(() => {
+  //     console.log("Polling triggered at:", new Date().toLocaleTimeString());
+  //     fetchFunnelData();
+  //   }, 10000 * 6 * 5); // Poll every 5 min
   
-    setPollingInterval(interval);
-  };
+  //   setPollingInterval(interval);
+  // };
 
-  useEffect(() => {
-    if (applicationId) {
-      startPolling();      
-    } else {
-      stopPolling(); 
-    }
-    return () => stopPolling(); 
-  }, [applicationId]);
+  // useEffect(() => {
+  //   if (applicationId) {
+  //     startPolling();      
+  //   } else {
+  //     stopPolling(); 
+  //   }
+  //   return () => stopPolling(); 
+  // }, [applicationId]);
 
   useEffect(() => {
     if (applicationId) {
