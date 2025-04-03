@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import StatusTimeline from './StatusTimeline';
 import { getStatusDotColor, getStatusColor, formatDuration } from '../../utils/formatters';
 import { FaCheckCircle } from 'react-icons/fa';
@@ -8,6 +8,40 @@ function TaskGroup({ tasks, isSendback, sendbackMap = {}, expandedTasks = {}, se
   const [tooltipVisible, setTooltipVisible] = useState(false);
   const [tooltipContent, setTooltipContent] = useState('');
   const [tooltipTaskId, setTooltipTaskId] = useState(null);
+  const [sortedTasksState, setSortedTasksState] = useState([]);
+
+  // Process and sort tasks when the tasks prop changes
+  useEffect(() => {
+    if (!tasks || !Array.isArray(tasks)) {
+      console.error('Tasks is not an array:', tasks);
+      setSortedTasksState([]);
+      return;
+    }
+
+    console.log(`TaskGroup received ${tasks.length} tasks to display`);
+    
+    // Make a deep copy to avoid mutation issues
+    const tasksCopy = JSON.parse(JSON.stringify(tasks));
+    
+    // Sort the tasks
+    const sorted = tasksCopy.sort((a, b) => {
+      // Primary sort by order field if available
+      if (a?.order !== undefined && b?.order !== undefined) {
+        return a.order - b.order;
+      }
+      
+      // Fall back to createdAt
+      if (a?.createdAt && b?.createdAt) {
+        return new Date(a.createdAt) - new Date(b.createdAt);
+      }
+      // If only one has createdAt, put the one with createdAt first
+      if (a?.createdAt) return -1;
+      if (b?.createdAt) return 1;
+      return 0;
+    });
+    
+    setSortedTasksState(sorted);
+  }, [tasks]);
 
   const toggleTaskTimeline = (taskId) => {
     if (setExpandedTasks) {
@@ -18,23 +52,8 @@ function TaskGroup({ tasks, isSendback, sendbackMap = {}, expandedTasks = {}, se
     }
   };
 
-  const sortedTasks = [...tasks].sort((a, b) => {
-    // Primary sort by order field if available
-    if (a?.order !== undefined && b?.order !== undefined) {
-      return a.order - b.order;
-    }
-    
-    // Fall back to createdAt
-    if (a?.createdAt && b?.createdAt) {
-      return new Date(a.createdAt) - new Date(b.createdAt);
-    }
-    if (a?.createdAt) return 1;
-    if (b?.createdAt) return -1;
-    return 0;
-  });
-
   const sendbackStatusHistory = isSendback ? 
-    sortedTasks.flatMap(task => 
+    sortedTasksState.flatMap(task => 
       task.statusHistory && task.statusHistory.length > 0 
         ? task.statusHistory.map(status => ({
             ...status,
@@ -78,8 +97,9 @@ function TaskGroup({ tasks, isSendback, sendbackMap = {}, expandedTasks = {}, se
           </div>
         </div>
       ) : (
-        sortedTasks.map((task, index) => (
-          <div id={`task-${task?.id}`} key={task?.id || index} className="bg-gray-50 p-3 rounded-md relative">
+        // Render ALL tasks using the state array
+        sortedTasksState.map((task, index) => (
+          <div id={`task-${task?.id}`} key={task?.id || `task-${index}`} className="bg-gray-50 p-3 rounded-md relative">
             <div className="flex justify-between items-center">
               <div className="flex-1">
                 {/* Task name displayed in ALL CAPS */}
@@ -148,8 +168,8 @@ function TaskGroup({ tasks, isSendback, sendbackMap = {}, expandedTasks = {}, se
                       </span>
                     )}
                     {task?.visited !== undefined && (
-                      <span span className="mr-4">
-                          <span className="font-medium">Retries: </span> {task.visited > 0 ? task.visited - 1 : task.visited}
+                      <span className="mr-4">
+                        <span className="font-medium">Retries: </span>{task.visited > 0 ? task.visited - 1 : task.visited}
                       </span>
                     )}
                   </div>
@@ -179,6 +199,11 @@ function TaskGroup({ tasks, isSendback, sendbackMap = {}, expandedTasks = {}, se
           </div>
         ))
       )}
+
+      {/* Add a debug count to verify all tasks are rendered */}
+      <div className="text-xs text-gray-400 mt-1">
+        Displaying {sortedTasksState.length} tasks {tasks && Array.isArray(tasks) ? `(of ${tasks.length} received)` : ''}
+      </div>
     </div>
   );
 }

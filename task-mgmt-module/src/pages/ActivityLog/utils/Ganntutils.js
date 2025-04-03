@@ -205,6 +205,53 @@ export const processDataForChart = (funnelGroups) => {
     maxTime = new Date(maxTime.getTime() + smallBuffer);
   }
   
+  // Process tasks into funnel groups
+  const processedTasks = {};
+  allTasks.forEach(task => {
+    if (!processedTasks[task.funnel]) {
+      processedTasks[task.funnel] = [];
+    }
+    processedTasks[task.funnel].push(task);
+  });
+  
+  // Sort tasks within each funnel by earliest TODO or IN_PROGRESS status
+ // Sort tasks within each funnel by earliest TODO or IN_PROGRESS status
+Object.keys(processedTasks).forEach(funnel => {
+  if (processedTasks[funnel] && processedTasks[funnel].length > 0) {
+    processedTasks[funnel].sort((taskA, taskB) => {
+      // Find earliest TODO or IN_PROGRESS for each task
+      const getEarliestStatusTime = (task) => {
+        // Normalize status to handle TO DO vs TODO inconsistency
+        const normalizedChanges = task.statusChanges.map(change => ({
+          ...change,
+          status: change.status === 'TO DO' ? 'TODO' : change.status
+        }));
+        
+        // Find the first TODO and first IN_PROGRESS
+        const todoChange = normalizedChanges.find(change => change.status === 'TODO');
+        const inProgressChange = normalizedChanges.find(change => change.status === 'IN_PROGRESS');
+        
+        // Return the earliest of TODO or IN_PROGRESS, or the first status if neither exists
+        if (todoChange && inProgressChange) {
+          return todoChange.time < inProgressChange.time ? todoChange.time : inProgressChange.time;
+        } else if (todoChange) {
+          return todoChange.time;
+        } else if (inProgressChange) {
+          return inProgressChange.time;
+        } else {
+          return task.statusChanges[0]?.time || new Date();
+        }
+      };
+      
+      // Compare the earliest status times
+      const timeA = getEarliestStatusTime(taskA);
+      const timeB = getEarliestStatusTime(taskB);
+      
+      return timeA - timeB; // Earliest tasks at top
+    });
+  }
+});
+  
   return { 
     processedTasks: allTasks, 
     uniqueFunnels, 
