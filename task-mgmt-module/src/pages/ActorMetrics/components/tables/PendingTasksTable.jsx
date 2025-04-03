@@ -6,7 +6,6 @@ const { Option } = Select;
 
 const statusColors = {
   ALL: 'default',
-  NEW: 'blue',
   TODO: 'orange',
   IN_PROGRESS: 'green',
   FAILED: 'red'
