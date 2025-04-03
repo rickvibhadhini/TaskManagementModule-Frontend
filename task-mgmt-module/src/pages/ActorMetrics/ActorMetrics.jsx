@@ -126,7 +126,7 @@ const AgentMetricsDashboard = () => {
       }
   
       const url = ACTOR_METRICS_ENDPOINT.actorMetrics(actorId, timeFrame);
-      const response = await axios.get(url);
+      const response = await axios.get(url, { withCredentials: true });
   
       if (response.data.Error) {
         setErrorMessage(response.data.Error);

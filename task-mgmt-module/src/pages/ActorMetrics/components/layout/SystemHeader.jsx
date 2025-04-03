@@ -12,7 +12,7 @@ const SystemHeader = ({ funnel, setFunnel, handleFunnelChange, timeFrame, handle
     const navigate = useNavigate(); 
   
     const handleClick = () => {
-      navigate("/");
+      navigate("/TMM");
     };
 
     const handleActorView = () => {

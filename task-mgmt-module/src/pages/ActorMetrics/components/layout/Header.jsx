@@ -15,7 +15,7 @@ const DashboardHeader = ({ agentId, setAgentId, handleAgentIdChange, timeFrame, 
   const [tempAgentId, setTempAgentId] = useState('' || '');
 
   const handleClick = () => {
-    navigate("/");
+    navigate("/TMM");
   }
 
   const handleSearch = () => {
