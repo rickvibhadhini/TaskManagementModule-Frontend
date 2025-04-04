@@ -124,7 +124,7 @@ const AgentMetricsDashboard = () => {
       }
   
       const url = ACTOR_METRICS_ENDPOINT.actorMetrics(actorId, timeFrame);
-      const response = await axios.get(url);
+      const response = await axios.get(url, { withCredentials: true });
   
       if (response.data.Error) {
         setErrorMessage(response.data.Error);
@@ -312,7 +312,7 @@ const AgentMetricsDashboard = () => {
             <MetricCard 
               title="Task Duration Metrics"
               taskDurations={metrics.task_duration || {}}
-              info={"Task duration metrics for the fastest and slowest tasks by an actor."}
+              info={"Detailed task duration metrics showing percentile performance across all tasks."}
               formatTime={formatTime}
             />
 
