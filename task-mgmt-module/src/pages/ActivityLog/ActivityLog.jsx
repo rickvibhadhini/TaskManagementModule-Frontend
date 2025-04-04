@@ -45,7 +45,7 @@ function ActivityLog() {
       const appId = location.state.appId;
       setApplicationId(appId);
       setInputApplicationId(appId);
-      setFilters(prev => ({ ...prev, taskId: appId }));
+      //setFilters(prev => ({ ...prev, taskId: appId }));
     }
   }, [location.state]);
 
