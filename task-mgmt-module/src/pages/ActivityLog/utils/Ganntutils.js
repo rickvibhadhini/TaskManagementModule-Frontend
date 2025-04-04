@@ -26,16 +26,21 @@ export const processDataForChart = (funnelGroups) => {
   const uniqueFunnels = [];
   let minTime = null;
   let maxTime = null;
+
   // Create a global taskMap to ensure unique task IDs across all funnels
   const taskMap = {};
+
   // First pass: collect all status changes for each task
   funnelGroups.forEach((group) => {
     const funnelName = group.funnelName;
+
     if (!uniqueFunnels.includes(funnelName)) {
       uniqueFunnels.push(funnelName);
     }
+
     group.tasks.forEach(task => {
       const taskTime = new Date(task.createdAt || task.updatedAt);
+
       if (minTime === null || maxTime === null) {
         minTime = taskTime;
         maxTime = taskTime;
@@ -81,33 +86,67 @@ export const processDataForChart = (funnelGroups) => {
       }
     });
   });
+  
+  // Filter out tasks that only have NEW status
+  Object.keys(taskMap).forEach(key => {
+    const task = taskMap[key];
+
+    // Check if all status changes are NEW
+    const onlyNewStatus = task.statusChanges.every(change => 
+      change.status === 'NEW'
+    );
+
+    // Remove tasks with only NEW status
+    if (onlyNewStatus) {
+      delete taskMap[key];
+    }
+  });
+
   // Second pass: process status changes into segments
   Object.values(taskMap).forEach(task => {
     // Sort status changes chronologically
     task.statusChanges.sort((a, b) => a.time - b.time);
-    // Create statuses array for tooltip display
+
+    // Function to normalize status (handle TO DO vs TODO inconsistency)
+    const normalizeStatus = (status) => {
+      return status === 'TO DO' ? 'TODO' : status;
+    };
+
+    // Create statuses array for tooltip display (keep all statuses for the tooltip)
     task.statuses = task.statusChanges.map(change => ({
       status: change.status,
       time: change.time,
       color: statusColors[change.status] || '#6B7280'
     }));
+
     // Set final status
     task.finalStatus = task.statuses[task.statuses.length - 1];
+
+    // Filter out NEW status for segment creation
+    const filteredStatusChanges = task.statusChanges.filter(change => 
+      normalizeStatus(change.status) !== 'NEW'
+    );
+    
+    // If no non-NEW statuses, create no segments
+    if (filteredStatusChanges.length === 0) {
+      task.segments = [];
+      task.instances = [];
+      task.hasCycles = false;
+      return;
+    }
+
     // Process segments based on workflow cycles
     const segments = [];
     const instances = [];
-    // Function to normalize status (handle TO DO vs TODO inconsistency)
-    const normalizeStatus = (status) => {
-      return status === 'TO DO' ? 'TODO' : status;
-    };
-    // Track whether we've seen a TODO transition previously
-    let seenTodoTransition = false;
-    // Identify cycle boundaries
+
+    // Identify cycle boundaries using the filtered status changes
     const cycleBoundaries = [];
     let previousStatus = null;
     let seenStatuses = [];
-    for (let i = 0; i < task.statusChanges.length; i++) {
-      const currentStatus = normalizeStatus(task.statusChanges[i].status);
+
+    for (let i = 0; i < filteredStatusChanges.length; i++) {
+      const currentStatus = normalizeStatus(filteredStatusChanges[i].status);
+
       // Start a new cycle at the beginning
       if (i === 0) {
         cycleBoundaries.push(i);
@@ -117,13 +156,8 @@ export const processDataForChart = (funnelGroups) => {
       }
       // Handle the TODO state logic
       if (currentStatus === 'TODO') {
-        // For the first TODO in the initial sequence, don't create a new cycle
-        if (previousStatus === 'NEW' && !seenTodoTransition) {
-          // This is the first TODO after NEW, no new cycle
-          seenTodoTransition = true;
-        } else if (previousStatus !== 'TODO') {
-          // For any subsequent TODO after another state (not immediately after NEW),
-          // create a new cycle
+        // For any subsequent TODO after another state, create a new cycle
+        if (previousStatus !== 'TODO') {
           cycleBoundaries.push(i);
         }
       }
@@ -131,29 +165,58 @@ export const processDataForChart = (funnelGroups) => {
       seenStatuses.push(currentStatus);
       previousStatus = currentStatus;
     }
+
     // Add the end of the status changes as the final boundary
-    cycleBoundaries.push(task.statusChanges.length);
+    cycleBoundaries.push(filteredStatusChanges.length);
+
     // Create segments and instances based on cycle boundaries
     for (let i = 0; i < cycleBoundaries.length - 1; i++) {
       const startIdx = cycleBoundaries[i];
       const endIdx = cycleBoundaries[i + 1] - 1;
+
       if (startIdx > endIdx) continue; // Skip empty cycles
+
       const cycleSegments = [];
+
       // Create a segment covering this cycle
-      const cycleStart = task.statusChanges[startIdx].time;
-      const cycleEnd = task.statusChanges[endIdx].time;
+      const cycleStart = filteredStatusChanges[startIdx].time;
+      
+      // Find the end time - by default it's the last status in this cycle
+      let cycleEnd = filteredStatusChanges[endIdx].time;
+      
+      // Find the COMPLETED status in this cycle if it exists
+      const statusesInCycle = filteredStatusChanges.slice(startIdx, endIdx + 1);
+      const completedStatus = statusesInCycle.find(change => 
+        normalizeStatus(change.status) === 'COMPLETED'
+      );
+      
+      if (completedStatus) {
+        // Use the COMPLETED status time as the end time
+        cycleEnd = completedStatus.time;
+      }
+
       // Store the initial and final status for this cycle
-      const initialStatus = normalizeStatus(task.statusChanges[startIdx].status);
-      const finalStatus = normalizeStatus(task.statusChanges[endIdx].status);
+      const initialStatus = normalizeStatus(filteredStatusChanges[startIdx].status);
+      
+      // Determine final status - either COMPLETED or the last status in the cycle
+      let finalStatus;
+      if (completedStatus) {
+        finalStatus = 'COMPLETED';
+      } else {
+        finalStatus = normalizeStatus(filteredStatusChanges[endIdx].status);
+      }
+
       const segment = {
         startTime: cycleStart,
         endTime: cycleEnd,
-        status: finalStatus, // Use the final status for the segment
-        initialStatus: initialStatus, // Keep track of initial status too
-        cycleIndex: i // Keep track of which cycle this belongs to
+        status: finalStatus,
+        initialStatus: initialStatus,
+        cycleIndex: i
       };
+
       cycleSegments.push(segment);
       segments.push(segment);
+
       // Add this cycle as an instance
       if (cycleSegments.length > 0) {
         instances.push(cycleSegments);
@@ -164,7 +227,14 @@ export const processDataForChart = (funnelGroups) => {
     task.instances = instances;
     task.hasCycles = instances.length > 1;
   });
-  allTasks = Object.values(taskMap);
+
+  // Filter out tasks with empty segments or SKIPPED status
+  allTasks = Object.values(taskMap).filter(task => 
+    task.segments.length > 0 && 
+    task.finalStatus && 
+    task.finalStatus.status !== 'SKIPPED'
+  );
+
   // Add buffer to time range
   if (minTime && maxTime) {
     const timeRange = maxTime - minTime;
@@ -179,42 +249,47 @@ export const processDataForChart = (funnelGroups) => {
     }
     processedTasks[task.funnel].push(task);
   });
-  // Sort tasks within each funnel by earliest TODO or IN_PROGRESS status
- // Sort tasks within each funnel by earliest TODO or IN_PROGRESS status
-Object.keys(processedTasks).forEach(funnel => {
-  if (processedTasks[funnel] && processedTasks[funnel].length > 0) {
-    processedTasks[funnel].sort((taskA, taskB) => {
-      // Find earliest TODO or IN_PROGRESS for each task
-      const getEarliestStatusTime = (task) => {
-        // Normalize status to handle TO DO vs TODO inconsistency
-        const normalizedChanges = task.statusChanges.map(change => ({
-          ...change,
-          status: change.status === 'TO DO' ? 'TODO' : change.status
-        }));
-        // Find the first TODO and first IN_PROGRESS
-        const todoChange = normalizedChanges.find(change => change.status === 'TODO');
-        const inProgressChange = normalizedChanges.find(change => change.status === 'IN_PROGRESS');
-        // Return the earliest of TODO or IN_PROGRESS, or the first status if neither exists
-        if (todoChange && inProgressChange) {
-          return todoChange.time < inProgressChange.time ? todoChange.time : inProgressChange.time;
-        } else if (todoChange) {
-          return todoChange.time;
-        } else if (inProgressChange) {
-          return inProgressChange.time;
-        } else {
+
+  // Sort tasks within each funnel by priority time (TODO > IN_PROGRESS > NEW)
+  Object.keys(processedTasks).forEach(funnel => {
+    if (processedTasks[funnel] && processedTasks[funnel].length > 0) {
+      processedTasks[funnel].sort((taskA, taskB) => {
+        // Get priority time for sorting based on status hierarchy
+        const getPriorityTime = (task) => {
+          // Normalize status to handle TO DO vs TODO inconsistency
+          const normalizedChanges = task.statusChanges.map(change => ({
+            ...change,
+            status: change.status === 'TO DO' ? 'TODO' : change.status
+          }));
+
+          // Priority 1: Find the first TODO time
+          const todoChange = normalizedChanges.find(change => change.status === 'TODO');
+          if (todoChange) return todoChange.time;
+
+          // Priority 2: Find the first IN_PROGRESS time
+          const inProgressChange = normalizedChanges.find(change => change.status === 'IN_PROGRESS');
+          if (inProgressChange) return inProgressChange.time;
+
+          // Priority 3: Find the NEW status time
+          const newChange = normalizedChanges.find(change => change.status === 'COMPLETED');
+          if (newChange) return newChange.time;
+
+          // Fallback: use the first status time
           return task.statusChanges[0]?.time || new Date();
-        }
-      };
-      // Compare the earliest status times
-      const timeA = getEarliestStatusTime(taskA);
-      const timeB = getEarliestStatusTime(taskB);
-      return timeA - timeB; // Earliest tasks at top
-    });
-  }
-});
-  return {
-    processedTasks: allTasks,
-    uniqueFunnels,
-    timeRange: { start: minTime, end: maxTime }
+        };
+
+        // Compare the priority times
+        const timeA = getPriorityTime(taskA);
+        const timeB = getPriorityTime(taskB);
+
+        return timeA - timeB; // Oldest tasks at top
+      });
+    }
+  });
+  
+  return { 
+    processedTasks: allTasks, 
+    uniqueFunnels, 
+    timeRange: { start: minTime, end: maxTime } 
   };
 };

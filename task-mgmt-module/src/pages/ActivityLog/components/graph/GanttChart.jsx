@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 // import TaskTimeline from './timeline.jsx'
-import TaskTimeline from './TaskTimeline/index.jsx';
+import TaskTimeline from './TaskTimeline.jsx';
 import FunnelSummary from './FunnelSummary.jsx';
 import { processDataForChart, funnelColors, statusColors } from '../../utils/Ganntutils.js';
 
@@ -42,16 +42,7 @@ const GanttChart = ({ data }) => {
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-xl font-bold">Task Workflow Timeline</h2>
     
-        <select 
-          className="form-select text-sm border-gray-300 rounded-md"
-          value={timeScale}
-          onChange={(e) => setTimeScale(Number(e.target.value))}
-        >
-          <option value={60 * 60 * 1000}>Hour Scale</option>
-          <option value={30 * 60 * 1000}>30 Min Scale</option>
-          <option value={10 * 60 * 1000}>10 Min Scale</option>
-          <option value={60 * 1000}>Minute Scale</option>
-        </select>
+        
       </div>
   
       {/* Tabs - only timeline and summary */}

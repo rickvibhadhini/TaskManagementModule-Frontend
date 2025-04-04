@@ -20,7 +20,7 @@ const DashboardHeader = ({ agentId, setAgentId, handleAgentIdChange, timeFrame, 
   }, [agentId]);
 
   const handleClick = () => {
-    navigate("/");
+    navigate("/TMM");
   }
 
   const handleSearch = () => {
@@ -46,7 +46,7 @@ const DashboardHeader = ({ agentId, setAgentId, handleAgentIdChange, timeFrame, 
         icon={<DashboardOutlined />}
         onClick={handleSystemView} 
         style={{ 
-          width: 180, 
+          width: 190, 
           marginRight: 8, 
           borderColor: '#1890ff', 
           color: '#1890ff',

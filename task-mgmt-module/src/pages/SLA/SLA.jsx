@@ -54,7 +54,8 @@ const SLA = () => {
     try {
       // Updated API call with days and application status filter
       const response = await axios.get(
-        SLA_ENDPOINTS.getTimeByChannel(channelValue, daysFilter, appStatusFilter)
+        SLA_ENDPOINTS.getTimeByChannel(channelValue, daysFilter, appStatusFilter), 
+        { withCredentials: true }
       );
       if (!response.data || !response.data.funnels || Object.keys(response.data.funnels).length === 0) {
         setError(`No data available for channel ${channelValue}`);

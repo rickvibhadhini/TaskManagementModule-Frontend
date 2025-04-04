@@ -45,7 +45,7 @@ function ActivityLog() {
       const appId = location.state.appId;
       setApplicationId(appId);
       setInputApplicationId(appId);
-      setFilters(prev => ({ ...prev, taskId: appId }));
+      //setFilters(prev => ({ ...prev, taskId: appId }));
     }
   }, [location.state]);
 
@@ -70,33 +70,8 @@ const navigateToActorDashboard = (actorId) => {
   }
 };
 
-  const stopPolling = () => {
-    if (pollingInterval) {
-      clearInterval(pollingInterval);
-      setPollingInterval(null);
-    }
-  };
+ 
 
-  const startPolling = () => {
-    stopPolling(); 
-    fetchFunnelData(); 
-    console.log("Polling started at:", new Date().toLocaleTimeString());
-    const interval = setInterval(() => {
-      console.log("Polling triggered at:", new Date().toLocaleTimeString());
-      fetchFunnelData();
-    }, 10000 * 6 * 5); // Poll every 5 min
-  
-    setPollingInterval(interval);
-  };
-
-  useEffect(() => {
-    if (applicationId) {
-      startPolling();      
-    } else {
-      stopPolling(); 
-    }
-    return () => stopPolling(); 
-  }, [applicationId]);
 
   useEffect(() => {
     if (applicationId) {
@@ -107,7 +82,7 @@ const navigateToActorDashboard = (actorId) => {
   // Apply filters whenever filters or funnelData changes
   useEffect(() => {
     applyFilters();
-  }, [filters, funnelData, hideNewStatus]);
+  }, [filters, funnelData, hideNewStatus]); 
 
   // Create sendbackMap whenever funnelData changes
   useEffect(() => {
