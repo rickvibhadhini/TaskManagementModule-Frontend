@@ -91,6 +91,20 @@ export const processDataForChart = (funnelGroups) => {
       }
     });
   });
+  // Filter out tasks that only have NEW status
+Object.keys(taskMap).forEach(key => {
+  const task = taskMap[key];
+
+  // Check if all status changes are NEW
+  const onlyNewStatus = task.statusChanges.every(change => 
+    change.status === 'NEW'
+  );
+
+  // Remove tasks with only NEW status
+  if (onlyNewStatus) {
+    delete taskMap[key];
+  }
+});
 
   // Second pass: process status changes into segments
   Object.values(taskMap).forEach(task => {
@@ -196,7 +210,10 @@ export const processDataForChart = (funnelGroups) => {
     task.hasCycles = instances.length > 1;
   });
 
-  allTasks = Object.values(taskMap);
+  // Filter out tasks with last status as SKIPPED
+  allTasks = Object.values(taskMap).filter(task => 
+    task.finalStatus && task.finalStatus.status !== 'SKIPPED'
+  );
 
   // Add buffer to time range
   if (minTime && maxTime) {
@@ -215,44 +232,46 @@ export const processDataForChart = (funnelGroups) => {
   });
 
   // Sort tasks within each funnel by earliest TODO or IN_PROGRESS status
-  Object.keys(processedTasks).forEach(funnel => {
-    if (processedTasks[funnel] && processedTasks[funnel].length > 0) {
-      processedTasks[funnel].sort((taskA, taskB) => {
-        // Find earliest TODO or IN_PROGRESS for each task
-        const getEarliestStatusTime = (task) => {
-          // Normalize status to handle TO DO vs TODO inconsistency
-          const normalizedChanges = task.statusChanges.map(change => ({
-            ...change,
-            status: change.status === 'TO DO' ? 'TODO' : change.status
-          }));
+ // Sort tasks within each funnel by earliest TODO or IN_PROGRESS status
+// Sort tasks within each funnel by priority time (TODO > IN_PROGRESS > NEW)
+// Sort tasks within each funnel by priority time (TODO > IN_PROGRESS > NEW)
+Object.keys(processedTasks).forEach(funnel => {
+  if (processedTasks[funnel] && processedTasks[funnel].length > 0) {
+    processedTasks[funnel].sort((taskA, taskB) => {
+      // Get priority time for sorting based on status hierarchy
+      const getPriorityTime = (task) => {
+        // Normalize status to handle TO DO vs TODO inconsistency
+        const normalizedChanges = task.statusChanges.map(change => ({
+          ...change,
+          status: change.status === 'TO DO' ? 'TODO' : change.status
+        }));
 
-          // Find the first TODO and first IN_PROGRESS
-          const todoChange = normalizedChanges.find(change => change.status === 'TODO');
-          const inProgressChange = normalizedChanges.find(change => change.status === 'IN_PROGRESS');
+        // Priority 1: Find the first TODO time
+        const todoChange = normalizedChanges.find(change => change.status === 'TODO');
+        if (todoChange) return todoChange.time;
 
-          // Return the earliest of TODO or IN_PROGRESS, or the first status if neither exists
-          if (todoChange && inProgressChange) {
-            return todoChange.time < inProgressChange.time ? todoChange.time : inProgressChange.time;
-          } else if (todoChange) {
-            return todoChange.time;
-          } else if (inProgressChange) {
-            return inProgressChange.time;
-          } else {
-            return task.statusChanges[0]?.time || new Date();
-          }
-        };
+        // Priority 2: Find the first IN_PROGRESS time
+        const inProgressChange = normalizedChanges.find(change => change.status === 'IN_PROGRESS');
+        if (inProgressChange) return inProgressChange.time;
 
-        // Compare the earliest status times
-        const timeA = getEarliestStatusTime(taskA);
-        const timeB = getEarliestStatusTime(taskB);
+        // Priority 3: Find the NEW status time
+        const newChange = normalizedChanges.find(change => change.status === 'COMPLETED');
+        if (newChange) return newChange.time;
 
-        return timeA - timeB; // Earliest tasks at top
-      });
-    }
-  });
+        // Fallback: use the first status time
+        return task.statusChanges[0]?.time || new Date();
+      };
 
+      // Compare the priority times
+      const timeA = getPriorityTime(taskA);
+      const timeB = getPriorityTime(taskB);
+
+      return timeA - timeB; // Oldest tasks at top
+    });
+  }
+});
   return { 
-    processedTasks, 
+    processedTasks: allTasks, 
     uniqueFunnels, 
     timeRange: { start: minTime, end: maxTime } 
   };
