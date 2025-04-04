@@ -25,7 +25,7 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-      <Route path="/TMM" element={isAuthenticated ? <HomePage /> : <Navigate to="/" />} />
+      <Route path="/TMM" element={isAuthenticated ? <HomePage isAuthenticated={isAuthenticated}/> : <Navigate to="/" />} />
         <Route path="/activityLog" element={isAuthenticated ? <ActivityLog /> : <Navigate to="/" />} />
         <Route path="/actorMetrics" element={isAuthenticated ? <ActorMetrics /> : <Navigate to="/" />} />
         <Route path="/actorMetrics/system" element={isAuthenticated ? <SystemMetrics /> : <Navigate to="/" />} />
@@ -35,7 +35,7 @@ function App() {
         <Route path="/" element={<Login setIsAuthenticated={setIsAuthenticated} />} />
         
         {/* Default route - redirect to home page if authenticated, or login page if not */}
-        <Route path="/" element={isAuthenticated ? <HomePage /> : <Navigate to="/" />} />
+        <Route path="/" element={isAuthenticated ? <HomePage isAuthenticated={isAuthenticated}/> : <Navigate to="/" />} />
       </Routes>
     </BrowserRouter>
   );
