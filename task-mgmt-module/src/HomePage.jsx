@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from "react";
-import { Layout, Typography, Row, Col, Divider, Badge, Space } from "antd";
+import { Layout, Typography, Row, Col, Divider, Badge, Space, Button, message } from "antd";
+import { UserOutlined, LockOutlined, LogoutOutlined } from '@ant-design/icons';
 import ModuleCard from "./ModuleCard";
 import { ActivityLogPic, AgentPic, SlaPic } from "./assets/index";
 import { cars24Logo } from "./assets/index";
 import { AlignCenter } from "lucide-react";
+import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 const { Header, Content, Footer } = Layout;
 const { Title, Text, Paragraph } = Typography;
 
@@ -37,8 +40,16 @@ const GlobalStyles = () => {
   );
 };
 
-const HomePage = () => {
+const HomePage = (isAuthenticated) => {
   const [loaded, setLoaded] = useState(false);
+
+  const navigate = useNavigate(); 
+
+  const handleLogout = async () => {
+    isAuthenticated = false
+    navigate("/");
+  };
+  
 
   // Light theme values
   const themeValues = {
@@ -221,7 +232,14 @@ const HomePage = () => {
     
     
     <div style={{ flex: '0 0 auto' }}>
-    
+      <Button 
+      type="text" 
+      icon={<LogoutOutlined />} 
+      onClick={handleLogout}
+      style={{ color: themeValues.primaryText }}
+    >
+      Logout
+    </Button>
     </div>
   </div>
 </Header>
