@@ -6,28 +6,14 @@ export const funnelColors = {
   CONVERSION: '#8B4513',  // Brown
   FULFILLMENT: '#20B2AA', // Teal
   DISBURSAL: '#556B2F',   // Olive green
-<<<<<<< HEAD
-  RISK: '#2C3E50',        // Dark almost black
-  RTO: '#FF69B4',         // Pink
-  OTHERS: '#95A5A6',      // Grey
-=======
   RISK: '#2c3e50',        // Dark almost black
   RTO: '#FF69B4',  //Pink
   OTHERS: '#95a5a6',      // Grey
->>>>>>> d64b09c (working)
 };
 
 // Define status colors 
 export const statusColors = {
   NEW: '#FFCC00',         // Yellow
-<<<<<<< HEAD
-  'TO DO': '#EF4444',     // Red
-  TODO: '#EF4444',        // Red (alternative naming)
-  IN_PROGRESS: '#F97316', // Orange
-  COMPLETED: '#16A34A',   // Green
-  PENDING: '#F59E0B',     // Amber
-  FAILED: '#EF4444',      // Red
-=======
   'TO DO': '#ef4444',     // Red
   TODO: '#ef4444',        // Red (alternative naming)
   IN_PROGRESS: '#f97316', // Orange
@@ -35,7 +21,6 @@ export const statusColors = {
   PENDING: '#f59e0b',     // Amber
   FAILED: '#FF1493',      // dark ppink
   SENDBACK:'#8B4513',//BROWN
->>>>>>> d64b09c (working)
   INITIATED: '#3B82F6',   // Blue
   SENDBACK: '#FF6B6B',    // Bright red for sendback status
 };
