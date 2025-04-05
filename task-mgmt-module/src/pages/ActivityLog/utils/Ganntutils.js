@@ -1,4 +1,5 @@
 import { format } from 'date-fns';
+
 // Define funnel colors with the specific scheme requested
 export const funnelColors = {
   SOURCING: '#3498DB',    // Blue
@@ -10,6 +11,7 @@ export const funnelColors = {
   RTO: '#FF69B4',         // Pink
   OTHERS: '#95A5A6',      // Grey
 };
+
 // Define status colors with the specific scheme requested
 export const statusColors = {
   NEW: '#FFCC00',         // Yellow
@@ -20,7 +22,9 @@ export const statusColors = {
   PENDING: '#F59E0B',     // Amber
   FAILED: '#EF4444',      // Red
   INITIATED: '#3B82F6',   // Blue
+  SENDBACK: '#FF6B6B',    // Bright red for sendback status
 };
+
 export const processDataForChart = (funnelGroups) => {
   let allTasks = [];
   const uniqueFunnels = [];
@@ -48,6 +52,7 @@ export const processDataForChart = (funnelGroups) => {
         if (taskTime < minTime) minTime = taskTime;
         if (taskTime > maxTime) maxTime = taskTime;
       }
+      
       // Generate task key - special handling for sendback tasks
       let taskKey;
       if (task.taskId === "sendback") {
@@ -58,6 +63,7 @@ export const processDataForChart = (funnelGroups) => {
       } else {
         taskKey = `${task.funnel}:${task.taskId}`;
       }
+      
       // Initialize or update task entry
       if (!taskMap[taskKey]) {
         taskMap[taskKey] = {
@@ -72,7 +78,7 @@ export const processDataForChart = (funnelGroups) => {
           }],
           actorId: task.actorId,
           funnelColor: funnelColors[task.funnel] || '#95A5A6',
-          targetTaskId: task.targetTaskId,
+          targetTaskId: task.targetTaskId,  // Ensure targetTaskId is preserved
           sourceLoanStage: task.sourceLoanStage,
           sourceSubModule: task.sourceSubModule,
           metadata: task.metadata || {}
@@ -83,6 +89,20 @@ export const processDataForChart = (funnelGroups) => {
           status: task.status,
           time: taskTime
         });
+        
+        // Update targetTaskId if it exists in this task update and wasn't set before
+        if (task.targetTaskId && !taskMap[taskKey].targetTaskId) {
+          taskMap[taskKey].targetTaskId = task.targetTaskId;
+        }
+        
+        // Update source information if it exists in this task update
+        if (task.sourceLoanStage && !taskMap[taskKey].sourceLoanStage) {
+          taskMap[taskKey].sourceLoanStage = task.sourceLoanStage;
+        }
+        
+        if (task.sourceSubModule && !taskMap[taskKey].sourceSubModule) {
+          taskMap[taskKey].sourceSubModule = task.sourceSubModule;
+        }
       }
     });
   });
@@ -261,27 +281,27 @@ export const processDataForChart = (funnelGroups) => {
             ...change,
             status: change.status === 'TO DO' ? 'TODO' : change.status
           }));
-
+          
           // Priority 1: Find the first TODO time
           const todoChange = normalizedChanges.find(change => change.status === 'TODO');
           if (todoChange) return todoChange.time;
-
+          
           // Priority 2: Find the first IN_PROGRESS time
           const inProgressChange = normalizedChanges.find(change => change.status === 'IN_PROGRESS');
           if (inProgressChange) return inProgressChange.time;
-
+          
           // Priority 3: Find the NEW status time
           const newChange = normalizedChanges.find(change => change.status === 'COMPLETED');
           if (newChange) return newChange.time;
-
+          
           // Fallback: use the first status time
           return task.statusChanges[0]?.time || new Date();
         };
-
+        
         // Compare the priority times
         const timeA = getPriorityTime(taskA);
         const timeB = getPriorityTime(taskB);
-
+        
         return timeA - timeB; // Oldest tasks at top
       });
     }
