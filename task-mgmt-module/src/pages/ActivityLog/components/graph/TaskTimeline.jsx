@@ -197,6 +197,42 @@ const TaskTimeline = ({ funnels, tasksByFunnel, compactView }) => {
     
     // Sort time points chronologically
     timePoints.sort((a, b) => a.time - b.time);
+    // Sort tasks within each funnel by priority time (TODO > IN_PROGRESS > NEW)
+Object.keys(processedTasks).forEach(funnel => {
+  if (processedTasks[funnel] && processedTasks[funnel].length > 0) {
+    processedTasks[funnel].sort((taskA, taskB) => {
+      // Get priority time for sorting based on status hierarchy
+      const getPriorityTime = (task) => {
+        // Normalize status to handle TO DO vs TODO inconsistency
+        const normalizedChanges = task.statusChanges.map(change => ({
+          ...change,
+          status: change.status === 'TO DO' ? 'TODO' : change.status
+        }));
+        
+        // Priority 1: Find the first TODO time
+        const todoChange = normalizedChanges.find(change => change.status === 'TODO');
+        if (todoChange) return todoChange.time;
+        
+        // Priority 2: Find the first IN_PROGRESS time
+        const inProgressChange = normalizedChanges.find(change => change.status === 'IN_PROGRESS');
+        if (inProgressChange) return inProgressChange.time;
+        
+        // Priority 3: Find the NEW status time
+        const newChange = normalizedChanges.find(change => change.status === 'COMPLETED');
+        if (newChange) return newChange.time;
+        
+        // Fallback: use the first status time
+        return task.statusChanges[0]?.time || new Date();
+      };
+      
+      // Compare the priority times
+      const timeA = getPriorityTime(taskA);
+      const timeB = getPriorityTime(taskB);
+      
+      return timeA - timeB; // Oldest tasks at top
+    });
+  }
+});
     
     return {
       timeMap,
