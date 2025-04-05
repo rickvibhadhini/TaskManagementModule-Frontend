@@ -142,11 +142,11 @@ function TaskGroup({ tasks, isSendback, sendbackMap = {}, expandedTasks = {}, se
                         <span className="font-medium">Duration: </span>{formatDuration(task.duration)}
                       </span>
                     )}
-                    {task?.sendbacks !== undefined && (
+                    {/* {task?.sendbacks !== undefined && (
                       <span className="mr-4">
                         <span className="font-medium">Sendbacks: </span>{task.sendbacks}
                       </span>
-                    )}
+                    )} */}
                     {task?.visited !== undefined && (
                       <span span className="mr-4">
                           <span className="font-medium">Retries: </span> {task.visited > 0 ? task.visited - 1 : task.visited}

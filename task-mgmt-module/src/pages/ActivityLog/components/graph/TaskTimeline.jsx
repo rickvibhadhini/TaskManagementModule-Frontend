@@ -325,107 +325,125 @@ Object.keys(processedTasks).forEach(funnel => {
   }, [discreteTimelineData.processedTasks, collapsedFunnels, getSegmentPosition, zoomLevel]);
 
   // Draw connections between sendback tasks and their targets
-  const drawTaskConnections = useCallback(() => {
-    // First remove any existing connection lines
-    const existingLines = document.querySelectorAll('.sendback-connection-line, .sendback-connection-arrow');
-    existingLines.forEach(line => line.remove());
+  // Draw connections between tasks and their targets
+// Draw connections between tasks and their targets
+const drawTaskConnections = useCallback(() => {
+  // First remove any existing connection lines
+  const existingLines = document.querySelectorAll('.sendback-connection-line, .sendback-connection-arrow');
+  existingLines.forEach(line => line.remove());
 
-    if (!timelineRef.current) return;
+  if (!timelineRef.current) return;
+  
+  // Find all tasks with targetTaskId
+  const tasksWithTargets = [];
+  Object.entries(discreteTimelineData.processedTasks).forEach(([funnel, tasks]) => {
+    if (collapsedFunnels[funnel]) return;
     
-    // Find all sendback tasks
-    const sendbackTasks = [];
-    Object.entries(discreteTimelineData.processedTasks).forEach(([funnel, tasks]) => {
-      if (collapsedFunnels[funnel]) return;
-      
-      tasks.forEach(task => {
-        if (task.originalTaskId === 'sendback' && task.targetTaskId) {
-          // Find the first segment of the first instance
-          if (task.instances && task.instances.length > 0 && task.instances[0].length > 0) {
-            sendbackTasks.push({
-              ...task,
-              segment: task.instances[0][0]
-            });
-          }
+    tasks.forEach(task => {
+      // Check if task has a targetTaskId
+      if (task.targetTaskId) {
+        // Find the exact time when the task status was SENDBACK
+        const sendbackStatus = task.statuses?.find(status => status.status === 'SENDBACK');
+        
+        if (sendbackStatus && task.instances && task.instances.length > 0 && task.instances[0].length > 0) {
+          tasksWithTargets.push({
+            ...task,
+            sendbackTime: sendbackStatus.time,
+            segment: task.instances[0][0]
+          });
         }
-      });
-    });
-
-    if (sendbackTasks.length === 0) return;
-
-    // Get timeline container for positioning
-    const timeline = timelineRef.current.querySelector('.flex-1');
-    if (!timeline) return;
-    
-    const timelineRect = timeline.getBoundingClientRect();
-
-    // Create connections for each sendback task
-    sendbackTasks.forEach(sendbackTask => {
-      // Find the target task
-      const targetFunnel = Object.entries(discreteTimelineData.processedTasks).find(([_, tasks]) => {
-        return tasks.some(task => task.id === sendbackTask.targetTaskId);
-      });
-      
-      if (!targetFunnel) return;
-      
-      const targetTask = targetFunnel[1].find(task => task.id === sendbackTask.targetTaskId);
-      if (!targetTask) return;
-
-      // Try to get task elements from DOM
-      const sendbackEl = document.querySelector(`.task-row-${sendbackTask.funnel}-${sendbackTask.id} .instance-0-segment-0`);
-      const targetEl = document.querySelector(`.task-row-${targetTask.funnel}-${targetTask.id} .instance-0-segment-0`);
-
-      if (!sendbackEl || !targetEl) return;
-
-      // Get positions
-      const sendbackRect = sendbackEl.getBoundingClientRect();
-      const targetRect = targetEl.getBoundingClientRect();
-
-      // Calculate positions for the line
-      const lineX = sendbackRect.right - timelineRect.left + timeline.scrollLeft;
-      const sendbackY = sendbackRect.top - timelineRect.top + timeline.scrollTop + (sendbackRect.height / 2);
-      const targetY = targetRect.top - timelineRect.top + timeline.scrollTop + (targetRect.height / 2);
-      const lineHeight = Math.abs(targetY - sendbackY);
-      const topY = Math.min(sendbackY, targetY);
-
-      // Create the connection line
-      const line = document.createElement('div');
-      line.className = 'sendback-connection-line';
-      line.style.position = 'absolute';
-      line.style.left = `${lineX}px`;
-      line.style.top = `${topY}px`;
-      line.style.width = '2px';
-      line.style.height = `${lineHeight}px`;
-      line.style.borderLeft = '2px dashed #f97316'; // Orange dashed line
-      line.style.zIndex = '5';
-
-      // Create arrow
-      const arrow = document.createElement('div');
-      arrow.className = 'sendback-connection-arrow';
-      arrow.style.position = 'absolute';
-      arrow.style.left = `${lineX - 4}px`;
-      
-      if (sendbackY < targetY) {
-        arrow.style.top = `${targetY - 5}px`;
-        arrow.style.borderTop = '6px solid #f97316';
-        arrow.style.borderBottom = 'none';
-      } else {
-        arrow.style.top = `${targetY - 1}px`;
-        arrow.style.borderBottom = '6px solid #f97316';
-        arrow.style.borderTop = 'none';
       }
-      
-      arrow.style.width = '0';
-      arrow.style.height = '0';
-      arrow.style.borderLeft = '5px solid transparent';
-      arrow.style.borderRight = '5px solid transparent';
-      arrow.style.zIndex = '5';
-
-      // Add elements to the timeline
-      timeline.appendChild(line);
-      timeline.appendChild(arrow);
     });
-  }, [discreteTimelineData.processedTasks, collapsedFunnels]);
+  });
 
+  if (tasksWithTargets.length === 0) return;
+
+  // Get timeline container for positioning
+  const timeline = timelineRef.current.querySelector('.flex-1');
+  if (!timeline) return;
+  
+  const timelineRect = timeline.getBoundingClientRect();
+  
+  // Create connections for each task with a target
+  tasksWithTargets.forEach(sourceTask => {
+    // Find the target task
+    const targetFunnel = Object.entries(discreteTimelineData.processedTasks).find(([_, tasks]) => {
+      return tasks.some(task => task.id === sourceTask.targetTaskId);
+    });
+    
+    if (!targetFunnel) return;
+    
+    const targetTask = targetFunnel[1].find(task => task.id === sourceTask.targetTaskId);
+    if (!targetTask) return;
+
+    // Try to get task elements from DOM
+    const sourceEl = document.querySelector(`.task-row-${sourceTask.funnel}-${sourceTask.id} .instance-0-segment-0`);
+    const targetEl = document.querySelector(`.task-row-${targetTask.funnel}-${targetTask.id} .instance-0-segment-0`);
+
+    if (!sourceEl || !targetEl) return;
+
+    // Get positions
+    const sourceRect = sourceEl.getBoundingClientRect();
+    const targetRect = targetEl.getBoundingClientRect();
+
+    // Calculate the position based on sendback time
+    // First get the width of the task bar
+    const taskStartTime = sourceTask.segment.startTime;
+    const taskEndTime = sourceTask.segment.endTime;
+    const taskDuration = taskEndTime - taskStartTime;
+    
+    // Calculate the position ratio based on when the sendback happened
+    const sendbackOffset = sourceTask.sendbackTime - taskStartTime;
+    const sendbackRatio = sendbackOffset / taskDuration;
+    
+    // Calculate the x position by interpolating along the task bar's width
+    const taskBarWidth = sourceRect.width;
+    const sendbackX = sourceRect.left + (taskBarWidth * sendbackRatio);
+    const lineX = sendbackX - timelineRect.left + timeline.scrollLeft;
+    
+    const sourceY = sourceRect.top - timelineRect.top + timeline.scrollTop + (sourceRect.height / 2);
+    const targetY = targetRect.top - timelineRect.top + timeline.scrollTop + (targetRect.height / 2);
+    const lineHeight = Math.abs(targetY - sourceY);
+    const topY = Math.min(sourceY, targetY);
+
+    // Create the connection line
+    const line = document.createElement('div');
+    line.className = 'sendback-connection-line';
+    line.style.position = 'absolute';
+    line.style.left = `${lineX}px`;
+    line.style.top = `${topY}px`;
+    line.style.width = '2px';
+    line.style.height = `${lineHeight}px`;
+    line.style.borderLeft = '2px dashed #f97316'; // Orange dashed line
+    line.style.zIndex = '5';
+
+    // Create arrow
+    const arrow = document.createElement('div');
+    arrow.className = 'sendback-connection-arrow';
+    arrow.style.position = 'absolute';
+    arrow.style.left = `${lineX - 4}px`;
+    
+    if (sourceY < targetY) {
+      arrow.style.top = `${targetY - 5}px`;
+      arrow.style.borderTop = '6px solid #f97316';
+      arrow.style.borderBottom = 'none';
+    } else {
+      arrow.style.top = `${targetY - 1}px`;
+      arrow.style.borderBottom = '6px solid #f97316';
+      arrow.style.borderTop = 'none';
+    }
+    
+    arrow.style.width = '0';
+    arrow.style.height = '0';
+    arrow.style.borderLeft = '5px solid transparent';
+    arrow.style.borderRight = '5px solid transparent';
+    arrow.style.zIndex = '5';
+
+    // Add elements to the timeline
+    timeline.appendChild(line);
+    timeline.appendChild(arrow);
+  });
+}, [discreteTimelineData.processedTasks, collapsedFunnels]);
   // Synchronize header and timeline scrolling
   const synchronizeScroll = useCallback((source, force = false) => {
     if (!headerRef.current || !timelineRef.current) return;

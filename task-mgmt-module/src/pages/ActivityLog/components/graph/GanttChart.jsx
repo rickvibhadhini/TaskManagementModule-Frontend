@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+// import TaskTimeline from './timeline.jsx'
 import TaskTimeline from './TaskTimeline.jsx';
 import FunnelSummary from './FunnelSummary.jsx';
 import { processDataForChart, funnelColors, statusColors } from '../../utils/Ganntutils.js';
