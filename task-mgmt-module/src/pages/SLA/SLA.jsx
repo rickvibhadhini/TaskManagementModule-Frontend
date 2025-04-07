@@ -23,12 +23,10 @@ const SLA = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [showTable, setShowTable] = useState(false);
-
-  // New filter states with default values: days as 30 and application status as "Approved"
   const [daysFilter, setDaysFilter] = useState(30);
   const [appStatusFilter, setAppStatusFilter] = useState("Approved");
-
-  // New state to control the TAT Distribution modal visibility.
+  // Global task status filter with default value "all"
+  const [taskStatusFilter, setTaskStatusFilter] = useState("all");
   const [tatDistributionModalVisible, setTatDistributionModalVisible] = useState(false);
 
   const tableRef = useRef(null);
@@ -52,7 +50,6 @@ const SLA = () => {
     setSelectedTask(null);
 
     try {
-      // Updated API call with days and application status filter
       const response = await axios.get(
         SLA_ENDPOINTS.getTimeByChannel(channelValue, daysFilter, appStatusFilter), 
         { withCredentials: true }
@@ -76,7 +73,7 @@ const SLA = () => {
   }, []);
 
   return (
-    <Layout style={{ height: '100vh', width: '100vw' , display: 'flex', flexDirection: 'column', overflowX: 'hidden'}}>
+    <Layout style={{ height: '100vh', width: '100vw', display: 'flex', flexDirection: 'column', overflowX: 'hidden' }}>
       <DashboardHeader
         channel={channel}
         onChannelChange={(value) => {
@@ -89,12 +86,14 @@ const SLA = () => {
         loading={loading}
         daysFilter={daysFilter}
         appStatusFilter={appStatusFilter}
-        onDaysFilterChange={(value) => setDaysFilter(value)}
-        onAppStatusFilterChange={(value) => setAppStatusFilter(value)}
+        onDaysFilterChange={setDaysFilter}
+        onAppStatusFilterChange={setAppStatusFilter}
+        taskStatusFilter={taskStatusFilter}
+        onTaskStatusFilterChange={setTaskStatusFilter}
       />
       <Content ref={contentRef} style={{ padding: '24px', background: '#f0f2f5', flex: '1 0 auto', overflowY: 'auto', overflowX: 'hidden' }}>
         {!data ? (
-          <Card style={{ textAlign: 'center', marginTop: 48 }}>
+          <Card style={{ textAlign: 'center', marginTop: 48 }} styles={{ body: { padding: 24 } }}>
             <Space direction="vertical" size="large" style={{ width: '100%' }}>
               <Title level={4}>Welcome to SLA Monitoring Dashboard</Title>
               <Typography.Text type="secondary">
@@ -126,6 +125,8 @@ const SLA = () => {
                 setShowDetailModal={setShowDetailModal}
                 toggleView={toggleView}
                 getButtonColor={getButtonColor}
+                statusFilter={taskStatusFilter}
+                taskDistributionData={data ? data.taskDistribution : null}
               />
             ) : (
               <DashboardTable 
@@ -139,16 +140,21 @@ const SLA = () => {
                 toggleView={toggleView}
                 getButtonColor={getButtonColor}
                 tableRef={tableRef}
+                statusFilter={taskStatusFilter}
+                taskDistributionData={data ? data.taskDistribution : null}
               />
             )}
-            {/* Now passing the complete data prop to TaskDetailModal */}
+
             <TaskDetailModal
               selectedTask={selectedTask}
               showDetailModal={showDetailModal}
               setShowDetailModal={setShowDetailModal}
               funnelColors={funnelColors}
+              taskDistributionData={data ? data.taskDistribution : null}
+              statusFilter={taskStatusFilter}
               data={data}
             />
+
             <TatDistributionModal
               visible={tatDistributionModalVisible}
               tatDistribution={data.tatDistribution}
