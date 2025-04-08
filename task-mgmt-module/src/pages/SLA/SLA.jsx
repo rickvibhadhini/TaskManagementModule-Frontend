@@ -11,7 +11,7 @@ import DashboardHeader from './Layout/Header.jsx';
 import axios from 'axios';
 
 const { Content } = Layout;
-const { Title } = Typography;
+const { Title, Text } = Typography;
 
 const SLA = () => {
   const { token } = theme.useToken();
@@ -23,10 +23,12 @@ const SLA = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [showTable, setShowTable] = useState(false);
+
+  // New filter states with default values: days as 30 and application status as "Approved"
   const [daysFilter, setDaysFilter] = useState(30);
   const [appStatusFilter, setAppStatusFilter] = useState("Approved");
-  // Global task status filter with default value "all"
-  const [taskStatusFilter, setTaskStatusFilter] = useState("all");
+
+  // New state to control the TAT Distribution modal visibility.
   const [tatDistributionModalVisible, setTatDistributionModalVisible] = useState(false);
 
   const tableRef = useRef(null);
@@ -50,6 +52,7 @@ const SLA = () => {
     setSelectedTask(null);
 
     try {
+      // Updated API call with days and application status filter
       const response = await axios.get(
         SLA_ENDPOINTS.getTimeByChannel(channelValue, daysFilter, appStatusFilter), 
         { withCredentials: true }
@@ -66,6 +69,13 @@ const SLA = () => {
       setLoading(false);
     }
   };
+
+  // Compute total applications from tatDistribution if available.
+  const totalTATCount = data && data.tatDistribution
+    ? Object.keys(data.tatDistribution).reduce((total, bucket) => {
+        return total + data.tatDistribution[bucket].applicationIds.length;
+      }, 0)
+    : 0;
 
   // Fetch default data on mount.
   useEffect(() => {
@@ -86,14 +96,12 @@ const SLA = () => {
         loading={loading}
         daysFilter={daysFilter}
         appStatusFilter={appStatusFilter}
-        onDaysFilterChange={setDaysFilter}
-        onAppStatusFilterChange={setAppStatusFilter}
-        taskStatusFilter={taskStatusFilter}
-        onTaskStatusFilterChange={setTaskStatusFilter}
+        onDaysFilterChange={(value) => setDaysFilter(value)}
+        onAppStatusFilterChange={(value) => setAppStatusFilter(value)}
       />
       <Content ref={contentRef} style={{ padding: '24px', background: '#f0f2f5', flex: '1 0 auto', overflowY: 'auto', overflowX: 'hidden' }}>
         {!data ? (
-          <Card style={{ textAlign: 'center', marginTop: 48 }} styles={{ body: { padding: 24 } }}>
+          <Card style={{ textAlign: 'center', marginTop: 48 }}>
             <Space direction="vertical" size="large" style={{ width: '100%' }}>
               <Title level={4}>Welcome to SLA Monitoring Dashboard</Title>
               <Typography.Text type="secondary">
@@ -109,6 +117,12 @@ const SLA = () => {
           </Card>
         ) : (
           <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+            {/* Display total TAT count outside the TAT Distribution component */}
+            {data.tatDistribution && (
+              <Text strong style={{ fontSize: 16 }}>
+                Total Applications: {totalTATCount}
+              </Text>
+            )}
             {data.tatDistribution && (
               <Button type="link" onClick={() => setTatDistributionModalVisible(true)}>
                 View TAT Distribution Details
@@ -125,8 +139,6 @@ const SLA = () => {
                 setShowDetailModal={setShowDetailModal}
                 toggleView={toggleView}
                 getButtonColor={getButtonColor}
-                statusFilter={taskStatusFilter}
-                taskDistributionData={data ? data.taskDistribution : null}
               />
             ) : (
               <DashboardTable 
@@ -140,21 +152,15 @@ const SLA = () => {
                 toggleView={toggleView}
                 getButtonColor={getButtonColor}
                 tableRef={tableRef}
-                statusFilter={taskStatusFilter}
-                taskDistributionData={data ? data.taskDistribution : null}
               />
             )}
-
             <TaskDetailModal
               selectedTask={selectedTask}
               showDetailModal={showDetailModal}
               setShowDetailModal={setShowDetailModal}
               funnelColors={funnelColors}
-              taskDistributionData={data ? data.taskDistribution : null}
-              statusFilter={taskStatusFilter}
               data={data}
             />
-
             <TatDistributionModal
               visible={tatDistributionModalVisible}
               tatDistribution={data.tatDistribution}

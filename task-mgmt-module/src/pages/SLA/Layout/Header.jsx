@@ -1,14 +1,14 @@
 // src/components/Layout/Header.jsx
 import React from 'react';
-import { Row, Col, Select, Button, Typography, Space, Card, Alert } from 'antd';
+import { Layout, Typography, Button, Card, Space, Alert, Select, Row, Col } from 'antd';
 import { ClockCircleOutlined } from '@ant-design/icons';
 import { Link } from 'react-router-dom';
 import { cars24Logo } from "../../../assets/index";
 
-const { Option } = Select;
+const { Header } = Layout;
 const { Title, Text } = Typography;
 
-const DashboardHeader = ({  
+const DashboardHeader = ({ 
   channel, 
   onChannelChange, 
   onLoadData, 
@@ -18,17 +18,13 @@ const DashboardHeader = ({
   daysFilter,
   appStatusFilter,
   onDaysFilterChange,
-  onAppStatusFilterChange,
-  // Global Task Status Filter props
-  taskStatusFilter,
-  onTaskStatusFilterChange
+  onAppStatusFilterChange
 }) => {
   return (
-    <Card style={{ borderRadius: 0, marginBottom: 16 }}>
-      {/* Main Row with Logo, Title, and Main Filters */}
-      <Row justify="space-between" align="middle" style={{ width: '100%' }}>
+    <Header style={{ background: '#fff', padding: '0 24px', boxShadow: '0 1px 4px rgba(0,21,41,.08)' }}>
+      <Row justify="space-between" align="middle">
         <Col>
-          <Link to="/TMM">
+          <Link to="/">
             <img 
               src={cars24Logo} 
               alt="Cars24 Logo" 
@@ -36,55 +32,60 @@ const DashboardHeader = ({
             />
           </Link>
         </Col>
+        
         <Col>
           <Title level={3} style={{ margin: '16px 0' }}>SLA Monitoring Dashboard</Title>
         </Col>
+        
         <Col>
           <Space size="large">
             <Space>
-              {/* Channel Select */}
               <Select
                 placeholder="Select channel"
                 value={channel || undefined}
                 onChange={onChannelChange}
                 style={{ width: 120, display: 'inline-block' }}
+                options={[
+                  { value: 'ALL', label: 'ALL' },
+                  { value: 'D2C', label: 'D2C' },
+                  { value: 'C2C', label: 'C2C' },
+                  { value: 'DCF', label: 'DCF' },
+                  { value: 'BT', label: 'BT' },
+                  { value: 'LAC', label: 'LAC' },
+                ]}
                 allowClear
-              >
-                <Option value="D2C">D2C</Option>
-                <Option value="C2C">C2C</Option>
-                <Option value="DCF">DCF</Option>
-                <Option value="BT">BT</Option>
-                <Option value="LAC">LAC</Option>
-              </Select>
+              />
               
-              {/* Days and Application Status Filters */}
+              {/* New Days and Application Status filters */}
               <Space size="small">
                 <Select
                   placeholder="Select Days"
                   value={daysFilter}
                   onChange={onDaysFilterChange}
                   style={{ width: 140 }}
-                >
-                  <Option value={7}>Last 7 days</Option>
-                  <Option value={15}>Last 15 days</Option>
-                  <Option value={30}>Last 30 days</Option>
-                </Select>
+                  options={[
+                    { value: 7, label: 'Last 7 days' },
+                    { value: 15, label: 'Last 15 days' },
+                    { value: 30, label: 'Last 30 days' },
+                  ]}
+                />
                 
                 <Select
                   placeholder="Application Status"
                   value={appStatusFilter}
                   onChange={onAppStatusFilterChange}
                   style={{ width: 140 }}
-                >
-                  <Option value="Pending">Pending</Option>
-                  <Option value="Rejected">Rejected</Option>
-                  <Option value="Approved">Approved</Option>
-                </Select>
-                
-                <Button type="primary" onClick={onLoadData} loading={loading}>
-                  Apply Filters
-                </Button>
+                  options={[
+                    { value: 'Pending', label: 'Pending' },
+                    { value: 'Rejected', label: 'Rejected' },
+                    { value: 'Approved', label: 'Approved' },
+                  ]}
+                />
               </Space>
+              
+              <Button type="primary" onClick={onLoadData} loading={loading}>
+                Apply Filters
+              </Button>
             </Space>
 
             {data && (
@@ -99,27 +100,6 @@ const DashboardHeader = ({
           </Space>
         </Col>
       </Row>
-
-      {/* New Row for the Global Task Status Filter */}
-      <Row style={{ marginTop: 8, marginBottom: 8 }}>
-        <Col>
-          <Space>
-            <Text strong>Task Status:</Text>
-            <Select
-              placeholder="Task Status"
-              value={taskStatusFilter}
-              onChange={onTaskStatusFilterChange}
-              style={{ width: 150 }}
-            >
-              <Option value="all">All</Option>
-              <Option value="todo">Todo</Option>
-              <Option value="in_progress">In Progress</Option>
-              <Option value="completed">Completed</Option>
-            </Select>
-          </Space>
-        </Col>
-      </Row>
-
       {error && (
         <Alert
           message={error}
@@ -128,7 +108,7 @@ const DashboardHeader = ({
           style={{ marginTop: 16 }}
         />
       )}
-    </Card>
+    </Header>
   );
 };
 
