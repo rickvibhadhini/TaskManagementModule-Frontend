@@ -46,6 +46,7 @@ const DashboardHeader = ({
                 onChange={onChannelChange}
                 style={{ width: 120, display: 'inline-block' }}
                 options={[
+                  { value: 'ALL', label: 'ALL' },
                   { value: 'D2C', label: 'D2C' },
                   { value: 'C2C', label: 'C2C' },
                   { value: 'DCF', label: 'DCF' },
