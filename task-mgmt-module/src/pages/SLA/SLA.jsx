@@ -1,4 +1,3 @@
-// src/pages/SLA.jsx
 import React, { useState, useRef, useEffect } from 'react';
 import { Layout, Typography, Card, Space, Alert, theme, Button } from 'antd';
 import { BarChartOutlined } from '@ant-design/icons';
@@ -9,10 +8,8 @@ import { funnelColors, funnelOrder, getButtonColor } from './components/Constant
 import DashboardFooter from './Layout/Footer.jsx';
 import DashboardHeader from './Layout/Header.jsx';
 import axios from 'axios';
-
 const { Content } = Layout;
-const { Title } = Typography;
-
+const { Title, Text } = Typography;
 const SLA = () => {
   const { token } = theme.useToken();
   const [selectedFunnel, setSelectedFunnel] = useState('all');
@@ -23,17 +20,13 @@ const SLA = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [showTable, setShowTable] = useState(false);
-
   // New filter states with default values: days as 30 and application status as "Approved"
   const [daysFilter, setDaysFilter] = useState(30);
   const [appStatusFilter, setAppStatusFilter] = useState("Approved");
-
   // New state to control the TAT Distribution modal visibility.
   const [tatDistributionModalVisible, setTatDistributionModalVisible] = useState(false);
-
   const tableRef = useRef(null);
   const contentRef = useRef(null);
-
   const toggleView = () => {
     setShowTable(!showTable);
     if (!showTable && tableRef.current) {
@@ -42,7 +35,6 @@ const SLA = () => {
       }, 100);
     }
   };
-
   const fetchData = async (channelValue) => {
     if (!channelValue) return;
     setLoading(true);
@@ -50,11 +42,10 @@ const SLA = () => {
     setData(null);
     setShowTable(false);
     setSelectedTask(null);
-
     try {
       // Updated API call with days and application status filter
       const response = await axios.get(
-        SLA_ENDPOINTS.getTimeByChannel(channelValue, daysFilter, appStatusFilter), 
+        SLA_ENDPOINTS.getTimeByChannel(channelValue, daysFilter, appStatusFilter),
         { withCredentials: true }
       );
       if (!response.data || !response.data.funnels || Object.keys(response.data.funnels).length === 0) {
@@ -69,14 +60,18 @@ const SLA = () => {
       setLoading(false);
     }
   };
-
+  // Compute total applications from tatDistribution if available.
+  const totalTATCount = data && data.tatDistribution
+    ? Object.keys(data.tatDistribution).reduce((total, bucket) => {
+        return total + data.tatDistribution[bucket].applicationIds.length;
+      }, 0)
+    : 0;
   // Fetch default data on mount.
   useEffect(() => {
     fetchData("D2C");
   }, []);
-
   return (
-    <Layout style={{ height: '100vh', width: '100vw' , display: 'flex', flexDirection: 'column', overflowX: 'hidden'}}>
+    <Layout style={{ height: '100vh', width: '100vw', display: 'flex', flexDirection: 'column', overflowX: 'hidden' }}>
       <DashboardHeader
         channel={channel}
         onChannelChange={(value) => {
@@ -92,7 +87,7 @@ const SLA = () => {
         onDaysFilterChange={(value) => setDaysFilter(value)}
         onAppStatusFilterChange={(value) => setAppStatusFilter(value)}
       />
-      <Content ref={contentRef} style={{ padding: '24px', background: '#f0f2f5', flex: '1 0 auto', overflowY: 'auto', overflowX: 'hidden' }}>
+      <Content ref={contentRef} style={{ padding: '24px', background: '#F0F2F5', flex: '1 0 auto', overflowY: 'auto', overflowX: 'hidden' }}>
         {!data ? (
           <Card style={{ textAlign: 'center', marginTop: 48 }}>
             <Space direction="vertical" size="large" style={{ width: '100%' }}>
@@ -100,9 +95,9 @@ const SLA = () => {
               <Typography.Text type="secondary">
                 Select a channel to load SLA monitoring data.
               </Typography.Text>
-              <div style={{ padding: 32, background: '#f9f9f9', borderRadius: 8 }}>
-                <BarChartOutlined style={{ fontSize: 64, color: '#d9d9d9' }} />
-                <div style={{ marginTop: 16, color: '#8c8c8c' }}>
+              <div style={{ padding: 32, background: '#F9F9F9', borderRadius: 8 }}>
+                <BarChartOutlined style={{ fontSize: 64, color: '#D9D9D9' }} />
+                <div style={{ marginTop: 16, color: '#8C8C8C' }}>
                   Data visualization will appear here
                 </div>
               </div>
@@ -110,14 +105,20 @@ const SLA = () => {
           </Card>
         ) : (
           <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+            {/* Display total TAT count outside the TAT Distribution component */}
+            {data.tatDistribution && (
+              <Text strong style={{ fontSize: 16 }}>
+                Total Applications: {totalTATCount}
+              </Text>
+            )}
             {data.tatDistribution && (
               <Button type="link" onClick={() => setTatDistributionModalVisible(true)}>
                 View TAT Distribution Details
               </Button>
             )}
             {!showTable ? (
-              <DashboardCharts 
-                data={data} 
+              <DashboardCharts
+                data={data}
                 selectedFunnel={selectedFunnel}
                 setSelectedFunnel={setSelectedFunnel}
                 funnelColors={funnelColors}
@@ -128,7 +129,7 @@ const SLA = () => {
                 getButtonColor={getButtonColor}
               />
             ) : (
-              <DashboardTable 
+              <DashboardTable
                 data={data}
                 selectedFunnel={selectedFunnel}
                 setSelectedFunnel={setSelectedFunnel}
@@ -141,7 +142,6 @@ const SLA = () => {
                 tableRef={tableRef}
               />
             )}
-            {/* Now passing the complete data prop to TaskDetailModal */}
             <TaskDetailModal
               selectedTask={selectedTask}
               showDetailModal={showDetailModal}
@@ -161,5 +161,4 @@ const SLA = () => {
     </Layout>
   );
 };
-
 export default SLA;
