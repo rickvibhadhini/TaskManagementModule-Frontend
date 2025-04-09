@@ -872,29 +872,28 @@ const TaskTimeline = ({ funnels, tasksByFunnel, compactView }) => {
       line.style.zIndex = '5';
       
       // Create arrow
-      // Create arrow
-const arrow = document.createElement('div');
-arrow.className = 'sendback-connection-arrow';
-arrow.style.position = 'absolute';
-arrow.style.left = `${lineX - 6}px`; // Wider positioning
-arrow.style.zIndex = '10'; // Higher z-index to appear above bars
+      const arrow = document.createElement('div');
+      arrow.className = 'sendback-connection-arrow';
+      arrow.style.position = 'absolute';
+      arrow.style.left = `${lineX - 6}px`; // Wider positioning
+      arrow.style.zIndex = '10'; // Higher z-index to appear above bars
 
-if (sourceY < targetY) {
-  // Arrow pointing down (source above target)
-  arrow.style.top = `${targetY - 10}px`; // Position further from target
-  arrow.style.borderTop = '10px solid #f97316'; // Bigger arrowhead
-  arrow.style.borderBottom = 'none';
-} else {
-  // Arrow pointing up (source below target)
-  arrow.style.top = `${targetY - 0}px`; // Position slightly higher
-  arrow.style.borderBottom = '10px solid #f97316'; // Bigger arrowhead
-  arrow.style.borderTop = 'none';
-}
+      if (sourceY < targetY) {
+        // Arrow pointing down (source above target)
+        arrow.style.top = `${targetY - 10}px`; // Position further from target
+        arrow.style.borderTop = '10px solid #f97316'; // Bigger arrowhead
+        arrow.style.borderBottom = 'none';
+      } else {
+        // Arrow pointing up (source below target)
+        arrow.style.top = `${targetY - 0}px`; // Position slightly higher
+        arrow.style.borderBottom = '10px solid #f97316'; // Bigger arrowhead
+        arrow.style.borderTop = 'none';
+      }
 
-arrow.style.width = '0';
-arrow.style.height = '0';
-arrow.style.borderLeft = '8px solid transparent'; // Wider arrow base
-arrow.style.borderRight = '8px solid transparent'; // Wider arrow base
+      arrow.style.width = '0';
+      arrow.style.height = '0';
+      arrow.style.borderLeft = '8px solid transparent'; // Wider arrow base
+      arrow.style.borderRight = '8px solid transparent'; // Wider arrow base
       arrow.style.zIndex = '5';
       
       // Add elements to DOM

@@ -63,19 +63,7 @@ function Header({
 
 
 
-                <button
-                  onClick={toggleFilters}
-                  className={`ml-3 inline-flex items-center px-4 py-2 border ${
-                    showFilters 
-                      ? 'border-indigo-500 bg-indigo-50 text-indigo-700' 
-                      : 'border-gray-300 bg-white text-gray-700'
-                  } rounded-md shadow-sm text-sm font-medium hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500`}
-                >
-                  {showFilters ? 'Hide Filters' : 'Show Filters'}
-                </button>
 
-
-                
               </>
             )}
           </div>
