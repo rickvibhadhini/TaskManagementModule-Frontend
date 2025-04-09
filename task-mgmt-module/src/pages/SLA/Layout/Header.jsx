@@ -24,7 +24,7 @@ const DashboardHeader = ({
     <Header style={{ background: '#fff', padding: '0 24px', boxShadow: '0 1px 4px rgba(0,21,41,.08)' }}>
       <Row justify="space-between" align="middle">
         <Col>
-          <Link to="/TMM">
+          <Link to="/">
             <img 
               src={cars24Logo} 
               alt="Cars24 Logo" 
