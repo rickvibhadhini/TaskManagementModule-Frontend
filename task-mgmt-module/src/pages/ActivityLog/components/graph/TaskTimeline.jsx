@@ -699,85 +699,168 @@ const TaskTimeline = ({ funnels, tasksByFunnel, compactView }) => {
 
   // Draw connections between tasks and their targets
   const drawTaskConnections = useCallback(() => {
-    // First remove any existing connection lines
+    console.log("Drawing task connections");
+    // Clear existing connections
     const existingLines = document.querySelectorAll('.sendback-connection-line, .sendback-connection-arrow');
     existingLines.forEach(line => line.remove());
-
+  
     if (!timelineRef.current) return;
+  
+    // Collect ALL SENDBACK events with targetTaskId
+    const sendbackEvents = [];
     
-    // Find all tasks with targetTaskId
-    const tasksWithTargets = [];
-    Object.entries(timelineData.processedTasks).forEach(([funnel, tasks]) => {
-      if (collapsedFunnels[funnel]) return;
+    // Flatten all tasks across all funnels for processing
+    const allTasks = Object.entries(timelineData.processedTasks)
+      .filter(([funnel]) => !collapsedFunnels[funnel])
+      .flatMap(([funnel, tasks]) => tasks);
+  
+    // For debugging, count all SENDBACK statuses
+    const allSendbacks = allTasks.flatMap(task => 
+      task.statuses?.filter(s => s.status === 'SENDBACK') || []
+    );
+    console.log(`Found ${allSendbacks.length} total SENDBACK statuses`);
+    
+    // Process each task to extract SENDBACK events
+    allTasks.forEach(task => {
+      // Get only SENDBACK statuses with valid targetTaskId
+      const sendbacks = task.statuses?.filter(status => 
+        status.status === 'SENDBACK' && status.targetTaskId
+      ) || [];
       
-      tasks.forEach(task => {
-        // Check if task has a targetTaskId
-        if (task.targetTaskId) {
-          // Find the exact time when the task status was SENDBACK
-          const sendbackStatus = task.statuses?.find(status => status.status === 'SENDBACK');
-          
-          if (sendbackStatus && task.instances && task.instances.length > 0 && task.instances[0].length > 0) {
-            tasksWithTargets.push({
-              ...task,
-              sendbackTime: sendbackStatus.time,
-              segment: task.instances[0][0]
-            });
+      if (sendbacks.length === 0) return;
+      console.log(`Task ${task.id} has ${sendbacks.length} valid SENDBACK events`);
+      
+      // For each SENDBACK status, create a separate event
+      sendbacks.forEach(status => {
+        // Find the segment that contains this SENDBACK time
+        const statusTime = status.time;
+        let bestInstanceIndex = 0;
+        let bestSegmentIndex = 0;
+        let bestSegment = null;
+        let smallestTimeDiff = Infinity;
+        
+        // Search all instances/segments for the one containing this status time
+        if (task.instances) {
+          for (let i = 0; i < task.instances.length; i++) {
+            const instance = task.instances[i];
+            for (let j = 0; j < instance.length; j++) {
+              const segment = instance[j];
+              
+              // Check if status time falls within this segment
+              if (statusTime >= segment.startTime && statusTime <= segment.endTime) {
+                bestInstanceIndex = i;
+                bestSegmentIndex = j;
+                bestSegment = segment;
+                smallestTimeDiff = 0; // Perfect match
+                break;
+              }
+              
+              // If not a match, find closest segment
+              const startDiff = Math.abs(statusTime - segment.startTime);
+              const endDiff = Math.abs(statusTime - segment.endTime);
+              const minDiff = Math.min(startDiff, endDiff);
+              
+              if (minDiff < smallestTimeDiff) {
+                smallestTimeDiff = minDiff;
+                bestInstanceIndex = i;
+                bestSegmentIndex = j;
+                bestSegment = segment;
+              }
+            }
+            if (smallestTimeDiff === 0) break; // Found perfect match
           }
+        }
+        
+        // Only add if we found a segment
+        if (bestSegment) {
+          sendbackEvents.push({
+            sourceTaskId: task.id,
+            sourceFunnel: task.funnel,
+            sendbackTime: statusTime,
+            targetTaskId: status.targetTaskId,
+            segmentStart: bestSegment.startTime,
+            segmentEnd: bestSegment.endTime,
+            instanceIndex: bestInstanceIndex,
+            segmentIndex: bestSegmentIndex
+          });
+          
+          console.log(`Added SENDBACK event: ${task.id} -> ${status.targetTaskId} at ${statusTime}`);
         }
       });
     });
-
-    if (tasksWithTargets.length === 0) return;
-
-    // Get timeline container for positioning
+  
+    console.log(`Processing ${sendbackEvents.length} total SENDBACK connections`);
+    if (sendbackEvents.length === 0) return;
+  
+    // Get timeline container
     const timeline = timelineRef.current.querySelector('.flex-1');
     if (!timeline) return;
-    
     const timelineRect = timeline.getBoundingClientRect();
     
-    // Create connections for each task with a target
-    tasksWithTargets.forEach(sourceTask => {
-      // Find the target task
-      const targetFunnel = Object.entries(timelineData.processedTasks).find(([_, tasks]) => {
-        return tasks.some(task => task.id === sourceTask.targetTaskId);
-      });
+    // Draw connections for each SENDBACK event
+    sendbackEvents.forEach((event, idx) => {
+      // Find source and target elements in DOM
+      const sourceSelector = `.task-row-${event.sourceFunnel}-${event.sourceTaskId}`;
+      const sourceSegSelector = `${sourceSelector} .instance-${event.instanceIndex}-segment-${event.segmentIndex}`;
+      const sourceEl = document.querySelector(sourceSegSelector);
       
-      if (!targetFunnel) return;
+      // If source element not found, try a more general selector as fallback
+      const sourceFallbackSelector = `${sourceSelector} .instance-${event.instanceIndex}-segment-0`;
+      const sourceElementToUse = sourceEl || document.querySelector(sourceFallbackSelector);
       
-      const targetTask = targetFunnel[1].find(task => task.id === sourceTask.targetTaskId);
-      if (!targetTask) return;
-
-      // Try to get task elements from DOM
-      const sourceEl = document.querySelector(`.task-row-${sourceTask.funnel}-${sourceTask.id} .instance-0-segment-0`);
-      const targetEl = document.querySelector(`.task-row-${targetTask.funnel}-${targetTask.id} .instance-0-segment-0`);
-
-      if (!sourceEl || !targetEl) return;
-
-      // Get positions
-      const sourceRect = sourceEl.getBoundingClientRect();
+      if (!sourceElementToUse) {
+        console.log(`Source element not found: ${sourceSegSelector} or ${sourceFallbackSelector}`);
+        return;
+      }
+      
+      // Find target task
+      const targetTask = allTasks.find(t => t.id === event.targetTaskId);
+      if (!targetTask) {
+        console.log(`Target task not found: ${event.targetTaskId}`);
+        return;
+      }
+      
+      // Find target element
+      const targetSelector = `.task-row-${targetTask.funnel}-${targetTask.id}`;
+      const targetEl = document.querySelector(`${targetSelector} .instance-0-segment-0`);
+      if (!targetEl) {
+        console.log(`Target element not found: ${targetSelector}`);
+        return;
+      }
+      
+      // Get bounding rectangles
+      const sourceRect = sourceElementToUse.getBoundingClientRect();
       const targetRect = targetEl.getBoundingClientRect();
-
-      // Calculate the position based on sendback time
-      // First get the width of the task bar
-      const taskStartTime = sourceTask.segment.startTime;
-      const taskEndTime = sourceTask.segment.endTime;
-      const taskDuration = taskEndTime - taskStartTime;
       
-      // Calculate the position ratio based on when the sendback happened
-      const sendbackOffset = sourceTask.sendbackTime - taskStartTime;
-      const sendbackRatio = sendbackOffset / taskDuration;
+      // Calculate position ratio within the source segment
+      let positionRatio;
+      const sendbackTimeMS = event.sendbackTime.getTime();
+      const segmentStartMS = event.segmentStart.getTime();
+      const segmentEndMS = event.segmentEnd.getTime();
+      const segmentDuration = segmentEndMS - segmentStartMS;
       
-      // Calculate the x position by interpolating along the task bar's width
-      const taskBarWidth = sourceRect.width;
-      const sendbackX = sourceRect.left + (taskBarWidth * sendbackRatio);
-      const lineX = sendbackX - timelineRect.left + timeline.scrollLeft;
+      if (sendbackTimeMS <= segmentStartMS) {
+        positionRatio = 0;
+      } else if (sendbackTimeMS >= segmentEndMS) {
+        positionRatio = 1;
+      } else if (segmentDuration <= 0) {
+        positionRatio = 0.5; // Fallback if segment has zero duration
+      } else {
+        positionRatio = (sendbackTimeMS - segmentStartMS) / segmentDuration;
+      }
+      
+      console.log(`Event ${idx}: Ratio=${positionRatio.toFixed(3)} for time ${event.sendbackTime}`);
+      
+      // Calculate position coordinates
+      const sourceX = sourceRect.left + (sourceRect.width * positionRatio);
+      const lineX = sourceX - timelineRect.left + timeline.scrollLeft;
       
       const sourceY = sourceRect.top - timelineRect.top + timeline.scrollTop + (sourceRect.height / 2);
       const targetY = targetRect.top - timelineRect.top + timeline.scrollTop + (targetRect.height / 2);
       const lineHeight = Math.abs(targetY - sourceY);
       const topY = Math.min(sourceY, targetY);
-
-      // Create the connection line
+      
+      // Create line
       const line = document.createElement('div');
       line.className = 'sendback-connection-line';
       line.style.position = 'absolute';
@@ -785,34 +868,40 @@ const TaskTimeline = ({ funnels, tasksByFunnel, compactView }) => {
       line.style.top = `${topY}px`;
       line.style.width = '2px';
       line.style.height = `${lineHeight}px`;
-      line.style.borderLeft = '2px dashed #f97316'; // Orange dashed line
+      line.style.borderLeft = '2px dashed #f97316';
       line.style.zIndex = '5';
-
+      
       // Create arrow
-      const arrow = document.createElement('div');
-      arrow.className = 'sendback-connection-arrow';
-      arrow.style.position = 'absolute';
-      arrow.style.left = `${lineX - 4}px`;
-      
-      if (sourceY < targetY) {
-        arrow.style.top = `${targetY - 5}px`;
-        arrow.style.borderTop = '6px solid #f97316';
-        arrow.style.borderBottom = 'none';
-      } else {
-        arrow.style.top = `${targetY - 1}px`;
-        arrow.style.borderBottom = '6px solid #f97316';
-        arrow.style.borderTop = 'none';
-      }
-      
-      arrow.style.width = '0';
-      arrow.style.height = '0';
-      arrow.style.borderLeft = '5px solid transparent';
-      arrow.style.borderRight = '5px solid transparent';
-      arrow.style.zIndex = '5';
+      // Create arrow
+const arrow = document.createElement('div');
+arrow.className = 'sendback-connection-arrow';
+arrow.style.position = 'absolute';
+arrow.style.left = `${lineX - 6}px`; // Wider positioning
+arrow.style.zIndex = '10'; // Higher z-index to appear above bars
 
-      // Add elements to the timeline
+if (sourceY < targetY) {
+  // Arrow pointing down (source above target)
+  arrow.style.top = `${targetY - 10}px`; // Position further from target
+  arrow.style.borderTop = '10px solid #f97316'; // Bigger arrowhead
+  arrow.style.borderBottom = 'none';
+} else {
+  // Arrow pointing up (source below target)
+  arrow.style.top = `${targetY - 0}px`; // Position slightly higher
+  arrow.style.borderBottom = '10px solid #f97316'; // Bigger arrowhead
+  arrow.style.borderTop = 'none';
+}
+
+arrow.style.width = '0';
+arrow.style.height = '0';
+arrow.style.borderLeft = '8px solid transparent'; // Wider arrow base
+arrow.style.borderRight = '8px solid transparent'; // Wider arrow base
+      arrow.style.zIndex = '5';
+      
+      // Add elements to DOM
       timeline.appendChild(line);
       timeline.appendChild(arrow);
+      
+      console.log(`Created connection: ${event.sourceTaskId} -> ${event.targetTaskId}`);
     });
   }, [timelineData, collapsedFunnels]);
   

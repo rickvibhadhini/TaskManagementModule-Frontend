@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom'; // Added useNavigat
 import axios from 'axios';
 import Header from './components/Layout/Header';
 import FilterPanel from './components/filters/FilterPanel';
-import Dashboard from './Dashboard';
+import Dashboard from './GanntChart';
 import TabNavigation from './components/Layout/TabNavigation';
 import FunnelView from './components/funnels/FunnelView';
 import { transformApiData } from './utils/apiTransformers';

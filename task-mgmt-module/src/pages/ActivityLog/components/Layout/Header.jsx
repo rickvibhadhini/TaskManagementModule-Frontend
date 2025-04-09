@@ -60,6 +60,9 @@ function Header({
                 >
                   Refresh
                 </button>
+
+
+
                 <button
                   onClick={toggleFilters}
                   className={`ml-3 inline-flex items-center px-4 py-2 border ${
@@ -70,6 +73,9 @@ function Header({
                 >
                   {showFilters ? 'Hide Filters' : 'Show Filters'}
                 </button>
+
+
+                
               </>
             )}
           </div>
