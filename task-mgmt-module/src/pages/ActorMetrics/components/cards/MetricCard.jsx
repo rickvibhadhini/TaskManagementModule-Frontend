@@ -49,7 +49,7 @@ const MetricCard = ({ title, info, taskDurations, formatTime }) => {
   };
 
   const formatTimeValue = (time, rawTime) => {
-    if (rawTime === 0) return '-';
+    // if (rawTime === 0) return '-';
     return time;
   };
 

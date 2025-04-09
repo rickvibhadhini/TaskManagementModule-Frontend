@@ -9,6 +9,7 @@ const TaskTimeline = ({ funnels, tasksByFunnel, compactView }) => {
   const [collapsedFunnels, setCollapsedFunnels] = useState({});
   const [zoomLevel, setZoomLevel] = useState(1);
   const [connectionKey, setConnectionKey] = useState(0);
+  const [timelineMode, setTimelineMode] = useState('discrete'); // 'discrete' or 'fixed'
   
   const timelineRef = useRef(null);
   const headerRef = useRef(null);
@@ -25,6 +26,8 @@ const TaskTimeline = ({ funnels, tasksByFunnel, compactView }) => {
   const HEADER_HEIGHT = 60;
   const FUNNEL_HEADER_HEIGHT = 40;
   const TIMELINE_PADDING = 40; // Padding between events
+  const FIFTEEN_MINUTES = 15 * 60 * 1000;
+  const TEN_MINUTES = 10 * 60 * 1000;
   
   // Generate discrete timeline points
   const discreteTimelineData = useMemo(() => {
@@ -197,42 +200,43 @@ const TaskTimeline = ({ funnels, tasksByFunnel, compactView }) => {
     
     // Sort time points chronologically
     timePoints.sort((a, b) => a.time - b.time);
+    
     // Sort tasks within each funnel by priority time (TODO > IN_PROGRESS > NEW)
-Object.keys(processedTasks).forEach(funnel => {
-  if (processedTasks[funnel] && processedTasks[funnel].length > 0) {
-    processedTasks[funnel].sort((taskA, taskB) => {
-      // Get priority time for sorting based on status hierarchy
-      const getPriorityTime = (task) => {
-        // Normalize status to handle TO DO vs TODO inconsistency
-        const normalizedChanges = task.statusChanges.map(change => ({
-          ...change,
-          status: change.status === 'TO DO' ? 'TODO' : change.status
-        }));
-        
-        // Priority 1: Find the first TODO time
-        const todoChange = normalizedChanges.find(change => change.status === 'TODO');
-        if (todoChange) return todoChange.time;
-        
-        // Priority 2: Find the first IN_PROGRESS time
-        const inProgressChange = normalizedChanges.find(change => change.status === 'IN_PROGRESS');
-        if (inProgressChange) return inProgressChange.time;
-        
-        // Priority 3: Find the NEW status time
-        const newChange = normalizedChanges.find(change => change.status === 'COMPLETED');
-        if (newChange) return newChange.time;
-        
-        // Fallback: use the first status time
-        return task.statusChanges[0]?.time || new Date();
-      };
-      
-      // Compare the priority times
-      const timeA = getPriorityTime(taskA);
-      const timeB = getPriorityTime(taskB);
-      
-      return timeA - timeB; // Oldest tasks at top
+    Object.keys(processedTasks).forEach(funnel => {
+      if (processedTasks[funnel] && processedTasks[funnel].length > 0) {
+        processedTasks[funnel].sort((taskA, taskB) => {
+          // Get priority time for sorting based on status hierarchy
+          const getPriorityTime = (task) => {
+            // Normalize status to handle TO DO vs TODO inconsistency
+            const normalizedChanges = task.statusChanges.map(change => ({
+              ...change,
+              status: change.status === 'TO DO' ? 'TODO' : change.status
+            }));
+            
+            // Priority 1: Find the first TODO time
+            const todoChange = normalizedChanges.find(change => change.status === 'TODO');
+            if (todoChange) return todoChange.time;
+            
+            // Priority 2: Find the first IN_PROGRESS time
+            const inProgressChange = normalizedChanges.find(change => change.status === 'IN_PROGRESS');
+            if (inProgressChange) return inProgressChange.time;
+            
+            // Priority 3: Find the NEW status time
+            const newChange = normalizedChanges.find(change => change.status === 'COMPLETED');
+            if (newChange) return newChange.time;
+            
+            // Fallback: use the first status time
+            return task.statusChanges[0]?.time || new Date();
+          };
+          
+          // Compare the priority times
+          const timeA = getPriorityTime(taskA);
+          const timeB = getPriorityTime(taskB);
+          
+          return timeA - timeB; // Oldest tasks at top
+        });
+      }
     });
-  }
-});
     
     return {
       timeMap,
@@ -241,6 +245,375 @@ Object.keys(processedTasks).forEach(funnel => {
       timePoints
     };
   }, [tasksByFunnel, TIMELINE_PADDING]);
+  
+  // Generate fixed timeline with 5-minute intervals
+  const fixedTimelineData = useMemo(() => {
+    if (timelineMode !== 'fixed') return null;
+    console.log('Processing tasks for fixed timeline');
+    
+    // Find earliest and latest timestamps across all tasks
+    let earliestTime = Infinity;
+    let latestTime = -Infinity;
+    
+    Object.values(tasksByFunnel).flat().forEach(task => {
+      task.segments.forEach(segment => {
+        earliestTime = Math.min(earliestTime, segment.startTime.getTime());
+        latestTime = Math.max(latestTime, segment.endTime.getTime());
+      });
+    });
+    
+    // Handle empty data case
+    if (earliestTime === Infinity || latestTime === -Infinity) {
+      return {
+        timePoints: [],
+        compressionPoints: [],
+        processedTasks: {},
+        totalWidth: 0
+      };
+    }
+    
+    // Round to nearest 5 minute intervals
+    const startTime = Math.floor(earliestTime / FIFTEEN_MINUTES) * FIFTEEN_MINUTES;
+    const endTime = Math.ceil(latestTime / FIFTEEN_MINUTES) * FIFTEEN_MINUTES;
+    
+    // Generate all potential time points
+    const allTimePoints = [];
+    for (let time = startTime; time <= endTime; time += FIFTEEN_MINUTES) {
+      allTimePoints.push(time);
+    }
+    
+    // Find periods of activity
+    const activityPeriods = [];
+    
+    for (let i = 0; i < allTimePoints.length; i++) {
+      const currentTime = allTimePoints[i];
+      const nextTime = allTimePoints[i + 1] || (currentTime + FIFTEEN_MINUTES);
+      
+      // Check if there's any task activity in this interval
+      const hasActivity = Object.values(tasksByFunnel).flat().some(task => 
+        task.segments.some(segment => {
+          const segStart = segment.startTime.getTime();
+          const segEnd = segment.endTime.getTime();
+          return (segStart <= nextTime && segEnd >= currentTime);
+        })
+      );
+      
+      if (hasActivity) {
+        // If we have an existing period that's close enough, extend it
+        if (activityPeriods.length > 0) {
+          const lastPeriod = activityPeriods[activityPeriods.length - 1];
+          if (currentTime - lastPeriod.end <= TEN_MINUTES) {
+            lastPeriod.end = nextTime;
+            continue;
+          }
+        }
+        
+        // Otherwise start a new activity period
+        activityPeriods.push({
+          start: currentTime,
+          end: nextTime
+        });
+      }
+    }
+    
+    // Merge adjacent activity periods
+    for (let i = 0; i < activityPeriods.length - 1; i++) {
+      if (activityPeriods[i + 1].start - activityPeriods[i].end <= TEN_MINUTES) {
+        activityPeriods[i].end = activityPeriods[i + 1].end;
+        activityPeriods.splice(i + 1, 1);
+        i--; // Check this position again
+      }
+    }
+    
+    // Generate time points with compression
+    const timePoints = [];
+    const compressionPoints = [];
+    let position = 0;
+    
+    // Create points for start of timeline
+    timePoints.push({
+      time: new Date(startTime),
+      position: position,
+      compressed: false,
+      isCompressedStart: false,
+      isCompressedEnd: false
+    });
+    
+    let lastTime = startTime;
+    
+    // Process each activity period with compressed gaps
+    activityPeriods.forEach((period, index) => {
+      // If there's a gap before this period, compress it
+      if (period.start - lastTime > TEN_MINUTES) {
+        // Mark compressed section
+        compressionPoints.push({
+          startTime: lastTime,
+          endTime: period.start,
+          startPosition: position,
+          compressionRatio: 0.2 // 80% compression
+        });
+        
+        // Add compressed indicator points
+        timePoints.push({
+          time: new Date(lastTime + FIFTEEN_MINUTES),
+          position: position + TIMELINE_PADDING * 0.2,
+          compressed: true,
+          isCompressedStart: true,
+          isCompressedEnd: false
+        });
+        
+        timePoints.push({
+          time: new Date(period.start - FIFTEEN_MINUTES),
+          position: position + TIMELINE_PADDING * 0.4,
+          compressed: true,
+          isCompressedStart: false,
+          isCompressedEnd: true
+        });
+        
+        // Update position after compression
+        position += TIMELINE_PADDING * 0.5;
+      }
+      
+      // Add all time points within this activity period
+      for (let time = period.start; time <= period.end; time += FIFTEEN_MINUTES) {
+        if (time > lastTime) { // Avoid duplicates
+          timePoints.push({
+            time: new Date(time),
+            position: position,
+            compressed: false,
+            isCompressedStart: false,
+            isCompressedEnd: false
+          });
+          position += TIMELINE_PADDING;
+          lastTime = time;
+        }
+      }
+    });
+    
+    // Process tasks with fixed timeline positions
+    const processedTasks = {};
+    
+    Object.entries(tasksByFunnel).forEach(([funnel, tasks]) => {
+      processedTasks[funnel] = [];
+      
+      // Group tasks by ID similar to discrete timeline
+      const taskGroupsByID = {};
+      tasks.forEach(task => {
+        if (!taskGroupsByID[task.id]) {
+          taskGroupsByID[task.id] = [];
+        }
+        taskGroupsByID[task.id].push(task);
+      });
+      
+      // Process each task group
+      Object.entries(taskGroupsByID).forEach(([taskId, taskGroup]) => {
+        // Combine all segments from all tasks with the same ID
+        let allSegments = [];
+        taskGroup.forEach(task => {
+          allSegments = allSegments.concat(task.segments.map(seg => ({
+            ...seg,
+            taskId: task.id,
+            funnel: task.funnel,
+            originalTaskId: task.originalTaskId,
+            targetTaskId: task.targetTaskId,
+            sourceLoanStage: task.sourceLoanStage,
+            finalStatus: task.finalStatus
+          })));
+        });
+        
+        // Sort all segments chronologically
+        allSegments.sort((a, b) => a.startTime.getTime() - b.startTime.getTime());
+        
+        // Add position data to segments based on fixed timeline
+        allSegments = allSegments.map(segment => {
+          // Find positions for start and end times
+          const startTime = segment.startTime.getTime();
+          const endTime = segment.endTime.getTime();
+          
+          // Find the nearest time points
+          let startPosition = null;
+          let endPosition = null;
+          
+          // Check for compressed sections that contain the start/end times
+          const startCompression = compressionPoints.find(cp => 
+            startTime >= cp.startTime && startTime <= cp.endTime
+          );
+          
+          const endCompression = compressionPoints.find(cp => 
+            endTime >= cp.startTime && endTime <= cp.endTime
+          );
+          
+          if (startCompression) {
+            // Interpolate position within compressed section
+            const ratio = (startTime - startCompression.startTime) / 
+                         (startCompression.endTime - startCompression.startTime);
+            const compressedWidth = TIMELINE_PADDING * 0.5;
+            startPosition = startCompression.startPosition + (ratio * compressedWidth);
+          } else {
+            // Find nearest time point before or at start time
+            for (let i = 0; i < timePoints.length; i++) {
+              const point = timePoints[i];
+              if (point.time.getTime() <= startTime) {
+                startPosition = point.position;
+              } else {
+                // Interpolate between time points if needed
+                if (i > 0 && !point.compressed && !timePoints[i-1].compressed) {
+                  const prevPoint = timePoints[i-1];
+                  const ratio = (startTime - prevPoint.time.getTime()) /
+                               (point.time.getTime() - prevPoint.time.getTime());
+                  startPosition = prevPoint.position + 
+                                 (ratio * (point.position - prevPoint.position));
+                }
+                break;
+              }
+            }
+          }
+          
+          if (endCompression) {
+            // Interpolate position within compressed section
+            const ratio = (endTime - endCompression.startTime) / 
+                         (endCompression.endTime - endCompression.startTime);
+            const compressedWidth = TIMELINE_PADDING * 0.5;
+            endPosition = endCompression.startPosition + (ratio * compressedWidth);
+          } else {
+            // Find nearest time point after or at end time
+            for (let i = timePoints.length - 1; i >= 0; i--) {
+              const point = timePoints[i];
+              if (point.time.getTime() >= endTime) {
+                endPosition = point.position;
+              } else {
+                // Interpolate between time points if needed
+                if (i < timePoints.length - 1 && !point.compressed && !timePoints[i+1].compressed) {
+                  const nextPoint = timePoints[i+1];
+                  const ratio = (endTime - point.time.getTime()) /
+                               (nextPoint.time.getTime() - point.time.getTime());
+                  endPosition = point.position + 
+                               (ratio * (nextPoint.position - point.position));
+                }
+                break;
+              }
+            }
+          }
+          
+          // Fallback to first/last position if needed
+          if (startPosition === null) startPosition = timePoints[0].position;
+          if (endPosition === null) endPosition = timePoints[timePoints.length - 1].position;
+          
+          return {
+            ...segment,
+            startPosition: startPosition,
+            endPosition: endPosition
+          };
+        });
+        
+        // Use same instance creation logic as discrete timeline
+        let hasTodoTransition = false;
+        let previousStates = [];
+        
+        for (let i = 0; i < allSegments.length; i++) {
+          if (allSegments[i].status === 'TODO' && i > 0) {
+            const previousTodoIndex = previousStates.lastIndexOf('TODO');
+            if (previousTodoIndex !== -1 && previousTodoIndex < previousStates.length - 1) {
+              hasTodoTransition = true;
+              break;
+            }
+          }
+          previousStates.push(allSegments[i].status);
+        }
+        
+        if (!hasTodoTransition) {
+          const baseTask = taskGroup[0];
+          processedTasks[funnel].push({
+            ...baseTask,
+            id: taskId,
+            instances: [allSegments],
+            hasCycles: false
+          });
+          return;
+        }
+        
+        let instances = [];
+        let currentInstance = [];
+        let seenStatuses = [];
+        
+        allSegments.forEach((segment, index) => {
+          if (index === 0) {
+            currentInstance.push(segment);
+            seenStatuses.push(segment.status);
+            return;
+          }
+          
+          if (segment.status === 'TODO') {
+            const previousTodoIndex = seenStatuses.lastIndexOf('TODO');
+            if (previousTodoIndex !== -1 && previousTodoIndex < seenStatuses.length - 1) {
+              if (currentInstance.length > 0) {
+                instances.push([...currentInstance]);
+                currentInstance = [];
+                seenStatuses = [];
+              }
+            }
+          }
+          
+          currentInstance.push(segment);
+          seenStatuses.push(segment.status);
+        });
+        
+        if (currentInstance.length > 0) {
+          instances.push(currentInstance);
+        }
+        
+        if (instances.length > 0) {
+          const baseTask = taskGroup[0];
+          processedTasks[funnel].push({
+            ...baseTask,
+            id: taskId,
+            instances: instances,
+            hasCycles: instances.length > 1
+          });
+        }
+      });
+    });
+    
+    // Sort tasks using same logic as discrete timeline
+    Object.keys(processedTasks).forEach(funnel => {
+      if (processedTasks[funnel] && processedTasks[funnel].length > 0) {
+        processedTasks[funnel].sort((taskA, taskB) => {
+          const getPriorityTime = (task) => {
+            const normalizedChanges = task.statusChanges.map(change => ({
+              ...change,
+              status: change.status === 'TO DO' ? 'TODO' : change.status
+            }));
+            
+            const todoChange = normalizedChanges.find(change => change.status === 'TODO');
+            if (todoChange) return todoChange.time;
+            
+            const inProgressChange = normalizedChanges.find(change => change.status === 'IN_PROGRESS');
+            if (inProgressChange) return inProgressChange.time;
+            
+            const newChange = normalizedChanges.find(change => change.status === 'COMPLETED');
+            if (newChange) return newChange.time;
+            
+            return task.statusChanges[0]?.time || new Date();
+          };
+          
+          const timeA = getPriorityTime(taskA);
+          const timeB = getPriorityTime(taskB);
+          
+          return timeA - timeB;
+        });
+      }
+    });
+    
+    return {
+      timePoints,
+      compressionPoints,
+      processedTasks,
+      totalWidth: position
+    };
+  }, [tasksByFunnel, timelineMode, FIFTEEN_MINUTES, TEN_MINUTES, TIMELINE_PADDING]);
+  
+  // Choose the timeline data based on current mode
+  const timelineData = timelineMode === 'discrete' ? discreteTimelineData : fixedTimelineData;
   
   // Function to get segment position
   const getSegmentPosition = useCallback((segment) => {
@@ -276,7 +649,7 @@ Object.keys(processedTasks).forEach(funnel => {
     const timelineRect = timeline.getBoundingClientRect();
 
     // Process each funnel
-    Object.entries(discreteTimelineData.processedTasks).forEach(([funnel, tasks]) => {
+    Object.entries(timelineData.processedTasks).forEach(([funnel, tasks]) => {
       if (collapsedFunnels[funnel]) return;
       
       // Process each task in the funnel
@@ -322,143 +695,215 @@ Object.keys(processedTasks).forEach(funnel => {
         }
       });
     });
-  }, [discreteTimelineData.processedTasks, collapsedFunnels, getSegmentPosition, zoomLevel]);
+  }, [timelineData, collapsedFunnels, getSegmentPosition, zoomLevel]);
 
-  // Draw connections between sendback tasks and their targets
-  //----------------------------------------------------------------
+  // Draw connections between tasks and their targets
   const drawTaskConnections = useCallback(() => {
-    // First remove any existing connection lines and arrows
+    console.log("Drawing task connections");
+    // Clear existing connections
     const existingLines = document.querySelectorAll('.sendback-connection-line, .sendback-connection-arrow');
     existingLines.forEach(line => line.remove());
-
+  
     if (!timelineRef.current) return;
-
-    const tasksWithTargets = [];
-    Object.entries(discreteTimelineData.processedTasks).forEach(([funnel, tasks]) => {
-        if (collapsedFunnels[funnel]) return;
-
-        tasks.forEach(task => {
-            if (task.targetTaskId) {
-                // Find the status object where the status is 'SENDBACK'
-                const sendbackStatus = task.statuses?.find(status => status.status === 'SENDBACK');
-
-                // Ensure we found a 'SENDBACK' status
-                if (sendbackStatus) {
-                    // Find the segment that contains the sendback time
-                    let relevantSegment = null;
-                    if (task.segments && task.segments.length > 0) {
-                        // Find the segment that contains the sendback time
-                        relevantSegment = task.segments.find(segment => 
-                            sendbackStatus.time >= segment.startTime && 
-                            sendbackStatus.time <= segment.endTime
-                        );
-                        
-                        // If no segment contains the sendback time, use the closest one
-                        if (!relevantSegment && task.segments.length > 0) {
-                            relevantSegment = task.segments.reduce((closest, segment) => {
-                                const currentDiff = Math.abs(sendbackStatus.time - segment.startTime);
-                                const closestDiff = Math.abs(sendbackStatus.time - closest.startTime);
-                                return currentDiff < closestDiff ? segment : closest;
-                            }, task.segments[0]);
-                        }
-                    }
-
-                    tasksWithTargets.push({
-                        ...task,
-                        sendbackTime: sendbackStatus.time, // Use the actual sendback status time
-                        segment: relevantSegment || (task.instances[0] && task.instances[0][0])
-                    });
-                }
+  
+    // Collect ALL SENDBACK events with targetTaskId
+    const sendbackEvents = [];
+    
+    // Flatten all tasks across all funnels for processing
+    const allTasks = Object.entries(timelineData.processedTasks)
+      .filter(([funnel]) => !collapsedFunnels[funnel])
+      .flatMap(([funnel, tasks]) => tasks);
+  
+    // For debugging, count all SENDBACK statuses
+    const allSendbacks = allTasks.flatMap(task => 
+      task.statuses?.filter(s => s.status === 'SENDBACK') || []
+    );
+    console.log(`Found ${allSendbacks.length} total SENDBACK statuses`);
+    
+    // Process each task to extract SENDBACK events
+    allTasks.forEach(task => {
+      // Get only SENDBACK statuses with valid targetTaskId
+      const sendbacks = task.statuses?.filter(status => 
+        status.status === 'SENDBACK' && status.targetTaskId
+      ) || [];
+      
+      if (sendbacks.length === 0) return;
+      console.log(`Task ${task.id} has ${sendbacks.length} valid SENDBACK events`);
+      
+      // For each SENDBACK status, create a separate event
+      sendbacks.forEach(status => {
+        // Find the segment that contains this SENDBACK time
+        const statusTime = status.time;
+        let bestInstanceIndex = 0;
+        let bestSegmentIndex = 0;
+        let bestSegment = null;
+        let smallestTimeDiff = Infinity;
+        
+        // Search all instances/segments for the one containing this status time
+        if (task.instances) {
+          for (let i = 0; i < task.instances.length; i++) {
+            const instance = task.instances[i];
+            for (let j = 0; j < instance.length; j++) {
+              const segment = instance[j];
+              
+              // Check if status time falls within this segment
+              if (statusTime >= segment.startTime && statusTime <= segment.endTime) {
+                bestInstanceIndex = i;
+                bestSegmentIndex = j;
+                bestSegment = segment;
+                smallestTimeDiff = 0; // Perfect match
+                break;
+              }
+              
+              // If not a match, find closest segment
+              const startDiff = Math.abs(statusTime - segment.startTime);
+              const endDiff = Math.abs(statusTime - segment.endTime);
+              const minDiff = Math.min(startDiff, endDiff);
+              
+              if (minDiff < smallestTimeDiff) {
+                smallestTimeDiff = minDiff;
+                bestInstanceIndex = i;
+                bestSegmentIndex = j;
+                bestSegment = segment;
+              }
             }
-        });
+            if (smallestTimeDiff === 0) break; // Found perfect match
+          }
+        }
+        
+        // Only add if we found a segment
+        if (bestSegment) {
+          sendbackEvents.push({
+            sourceTaskId: task.id,
+            sourceFunnel: task.funnel,
+            sendbackTime: statusTime,
+            targetTaskId: status.targetTaskId,
+            segmentStart: bestSegment.startTime,
+            segmentEnd: bestSegment.endTime,
+            instanceIndex: bestInstanceIndex,
+            segmentIndex: bestSegmentIndex
+          });
+          
+          console.log(`Added SENDBACK event: ${task.id} -> ${status.targetTaskId} at ${statusTime}`);
+        }
+      });
     });
-
-    if (tasksWithTargets.length === 0) return;
-
+  
+    console.log(`Processing ${sendbackEvents.length} total SENDBACK connections`);
+    if (sendbackEvents.length === 0) return;
+  
+    // Get timeline container
     const timeline = timelineRef.current.querySelector('.flex-1');
     if (!timeline) return;
-
     const timelineRect = timeline.getBoundingClientRect();
+    
+    // Draw connections for each SENDBACK event
+    sendbackEvents.forEach((event, idx) => {
+      // Find source and target elements in DOM
+      const sourceSelector = `.task-row-${event.sourceFunnel}-${event.sourceTaskId}`;
+      const sourceSegSelector = `${sourceSelector} .instance-${event.instanceIndex}-segment-${event.segmentIndex}`;
+      const sourceEl = document.querySelector(sourceSegSelector);
+      
+      // If source element not found, try a more general selector as fallback
+      const sourceFallbackSelector = `${sourceSelector} .instance-${event.instanceIndex}-segment-0`;
+      const sourceElementToUse = sourceEl || document.querySelector(sourceFallbackSelector);
+      
+      if (!sourceElementToUse) {
+        console.log(`Source element not found: ${sourceSegSelector} or ${sourceFallbackSelector}`);
+        return;
+      }
+      
+      // Find target task
+      const targetTask = allTasks.find(t => t.id === event.targetTaskId);
+      if (!targetTask) {
+        console.log(`Target task not found: ${event.targetTaskId}`);
+        return;
+      }
+      
+      // Find target element
+      const targetSelector = `.task-row-${targetTask.funnel}-${targetTask.id}`;
+      const targetEl = document.querySelector(`${targetSelector} .instance-0-segment-0`);
+      if (!targetEl) {
+        console.log(`Target element not found: ${targetSelector}`);
+        return;
+      }
+      
+      // Get bounding rectangles
+      const sourceRect = sourceElementToUse.getBoundingClientRect();
+      const targetRect = targetEl.getBoundingClientRect();
+      
+      // Calculate position ratio within the source segment
+      let positionRatio;
+      const sendbackTimeMS = event.sendbackTime.getTime();
+      const segmentStartMS = event.segmentStart.getTime();
+      const segmentEndMS = event.segmentEnd.getTime();
+      const segmentDuration = segmentEndMS - segmentStartMS;
+      
+      if (sendbackTimeMS <= segmentStartMS) {
+        positionRatio = 0;
+      } else if (sendbackTimeMS >= segmentEndMS) {
+        positionRatio = 1;
+      } else if (segmentDuration <= 0) {
+        positionRatio = 0.5; // Fallback if segment has zero duration
+      } else {
+        positionRatio = (sendbackTimeMS - segmentStartMS) / segmentDuration;
+      }
+      
+      console.log(`Event ${idx}: Ratio=${positionRatio.toFixed(3)} for time ${event.sendbackTime}`);
+      
+      // Calculate position coordinates
+      const sourceX = sourceRect.left + (sourceRect.width * positionRatio);
+      const lineX = sourceX - timelineRect.left + timeline.scrollLeft;
+      
+      const sourceY = sourceRect.top - timelineRect.top + timeline.scrollTop + (sourceRect.height / 2);
+      const targetY = targetRect.top - timelineRect.top + timeline.scrollTop + (targetRect.height / 2);
+      const lineHeight = Math.abs(targetY - sourceY);
+      const topY = Math.min(sourceY, targetY);
+      
+      // Create line
+      const line = document.createElement('div');
+      line.className = 'sendback-connection-line';
+      line.style.position = 'absolute';
+      line.style.left = `${lineX}px`;
+      line.style.top = `${topY}px`;
+      line.style.width = '2px';
+      line.style.height = `${lineHeight}px`;
+      line.style.borderLeft = '2px dashed #f97316';
+      line.style.zIndex = '5';
+      
+      // Create arrow
+      const arrow = document.createElement('div');
+      arrow.className = 'sendback-connection-arrow';
+      arrow.style.position = 'absolute';
+      arrow.style.left = `${lineX - 6}px`; // Wider positioning
+      arrow.style.zIndex = '10'; // Higher z-index to appear above bars
 
-    tasksWithTargets.forEach(sourceTask => {
-        // Find the target task
-        const targetFunnel = Object.entries(discreteTimelineData.processedTasks).find(([_, tasks]) => {
-            return tasks.some(task => task.id === sourceTask.targetTaskId);
-        });
+      if (sourceY < targetY) {
+        // Arrow pointing down (source above target)
+        arrow.style.top = `${targetY - 10}px`; // Position further from target
+        arrow.style.borderTop = '10px solid #f97316'; // Bigger arrowhead
+        arrow.style.borderBottom = 'none';
+      } else {
+        // Arrow pointing up (source below target)
+        arrow.style.top = `${targetY - 0}px`; // Position slightly higher
+        arrow.style.borderBottom = '10px solid #f97316'; // Bigger arrowhead
+        arrow.style.borderTop = 'none';
+      }
 
-        if (!targetFunnel) return;
-
-        const targetTask = targetFunnel[1].find(task => task.id === sourceTask.targetTaskId);
-        if (!targetTask) return;
-
-        // Find the DOM elements for source and target tasks
-        const sourceEl = document.querySelector(`.task-row-${sourceTask.funnel}-${sourceTask.id} .instance-0-segment-0`);
-        const targetEl = document.querySelector(`.task-row-${targetTask.funnel}-${targetTask.id} .instance-0-segment-0`);
-
-        if (!sourceEl || !targetEl) return;
-
-        const sourceRect = sourceEl.getBoundingClientRect();
-        const targetRect = targetEl.getBoundingClientRect();
-
-        // Calculate the position based on sendback time
-        const taskStartTime = sourceTask.segment.startTime;
-        const taskEndTime = sourceTask.segment.endTime;
-        const taskDuration = taskEndTime - taskStartTime;
-
-        // Calculate where in the segment the sendback occurred
-        const sendbackOffset = sourceTask.sendbackTime - taskStartTime;
-        const sendbackRatio = Math.max(0, Math.min(1, sendbackOffset / taskDuration)); // Clamp between 0 and 1
-
-        const taskBarWidth = sourceRect.width;
-        const sendbackX = sourceRect.left + (taskBarWidth * sendbackRatio);
-        const lineX = sendbackX - timelineRect.left + timeline.scrollLeft;
-
-        const sourceY = sourceRect.top - timelineRect.top + timeline.scrollTop + (sourceRect.height / 2);
-        const targetY = targetRect.top - timelineRect.top + timeline.scrollTop + (targetRect.height / 2);
-        const lineHeight = Math.abs(targetY - sourceY);
-        const topY = Math.min(sourceY, targetY);
-
-        // Create the connection line
-        const line = document.createElement('div');
-        line.className = 'sendback-connection-line';
-        line.style.position = 'absolute';
-        line.style.left = `${lineX}px`;
-        line.style.top = `${topY}px`;
-        line.style.width = '2px';
-        line.style.height = `${lineHeight}px`;
-        line.style.borderLeft = `2px dashed ${statusColors.SENDBACK || '#8B4513'}`; // Use your SENDBACK color
-        line.style.zIndex = '5';
-
-        // Create arrow
-        const arrow = document.createElement('div');
-        arrow.className = 'sendback-connection-arrow';
-        arrow.style.position = 'absolute';
-        arrow.style.left = `${lineX - 4}px`;
-
-        const arrowColor = statusColors.SENDBACK || '#8B4513';
-
-        if (sourceY < targetY) {
-            arrow.style.top = `${targetY - 5}px`;
-            arrow.style.borderTop = `6px solid ${arrowColor}`;
-            arrow.style.borderBottom = 'none';
-        } else {
-            arrow.style.top = `${targetY - 1}px`;
-            arrow.style.borderBottom = `6px solid ${arrowColor}`;
-            arrow.style.borderTop = 'none';
-        }
-
-        arrow.style.width = '0';
-        arrow.style.height = '0';
-        arrow.style.borderLeft = '5px solid transparent';
-        arrow.style.borderRight = '5px solid transparent';
-        arrow.style.zIndex = '5';
-
-        // Add elements to the timeline
-        timeline.appendChild(line);
-        timeline.appendChild(arrow);
+      arrow.style.width = '0';
+      arrow.style.height = '0';
+      arrow.style.borderLeft = '8px solid transparent'; // Wider arrow base
+      arrow.style.borderRight = '8px solid transparent'; // Wider arrow base
+      arrow.style.zIndex = '5';
+      
+      // Add elements to DOM
+      timeline.appendChild(line);
+      timeline.appendChild(arrow);
+      
+      console.log(`Created connection: ${event.sourceTaskId} -> ${event.targetTaskId}`);
     });
-}, [discreteTimelineData.processedTasks, collapsedFunnels]);
-  //----------------------------------------------------------------
+  }, [timelineData, collapsedFunnels]);
+  
   // Synchronize header and timeline scrolling
   const synchronizeScroll = useCallback((source, force = false) => {
     if (!headerRef.current || !timelineRef.current) return;
@@ -507,7 +952,7 @@ Object.keys(processedTasks).forEach(funnel => {
 
   // Initial scroll to show latest tasks based on timestamp
   useEffect(() => {
-    if (initialScrollAppliedRef.current || !discreteTimelineData.totalWidth) return;
+    if (initialScrollAppliedRef.current || !timelineData?.totalWidth) return;
     
     const scrollToLatest = () => {
       const timelineContent = timelineRef.current?.querySelector('.flex-1');
@@ -522,7 +967,7 @@ Object.keys(processedTasks).forEach(funnel => {
         let latestFunnel = '';
         
         // Iterate through all funnels and tasks to find the latest segment
-        Object.entries(discreteTimelineData.processedTasks).forEach(([funnel, tasks]) => {
+        Object.entries(timelineData.processedTasks).forEach(([funnel, tasks]) => {
           tasks.forEach(task => {
             task.instances.forEach((instance, instanceIdx) => {
               instance.forEach((segment, segmentIdx) => {
@@ -586,7 +1031,7 @@ Object.keys(processedTasks).forEach(funnel => {
     
     // Wait for timeline to be fully rendered
     setTimeout(scrollToLatest, 500);
-  }, [discreteTimelineData.totalWidth, zoomLevel]);
+  }, [timelineData, zoomLevel]);
 
   // Format task display name
   const getTaskDisplayName = useCallback((task) => {
@@ -791,7 +1236,7 @@ Object.keys(processedTasks).forEach(funnel => {
     }, 200); // Ensure DOM is ready
 
     return () => clearTimeout(timer);
-  }, [drawTaskConnections, drawInstanceConnections, connectionKey, zoomLevel]);
+  }, [drawTaskConnections, drawInstanceConnections, connectionKey, zoomLevel, timelineMode]);
 
   // Update connections on window scroll
   useEffect(() => {
@@ -837,10 +1282,29 @@ Object.keys(processedTasks).forEach(funnel => {
 
   return (
     <div className="flex flex-col" style={{ borderTop: '1px solid #e5e7eb' }}>
-      {/* Fixed zoom control */}
-      <div className="fixed top-4 right-4 z-50 flex flex-col space-y-2">
-        <div className="text-xs bg-white px-2 py-1 rounded-md shadow-sm border border-gray-200">
-          Zoom: {Math.round(zoomLevel * 100)}%
+      {/* Fixed zoom control and timeline mode toggle */}
+      <div className="fixed top-20 right-4 z-50 flex flex-col space-y-2">
+        <div className="text-xs bg-white px-3 py-2 rounded-md shadow-sm border border-gray-200 flex items-center space-x-3">
+          <div>
+            <span className="text-gray-500 mr-2">Mode:</span>
+            <button 
+              className={`px-2 py-1 text-xs rounded-md ${timelineMode === 'discrete' ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
+              onClick={() => setTimelineMode('discrete')}
+            >
+              Discrete
+            </button>
+            <button 
+              className={`px-2 py-1 text-xs rounded-md ml-1 ${timelineMode === 'fixed' ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
+              onClick={() => setTimelineMode('fixed')}
+            >
+              Fixed (15min)
+            </button>
+          </div>
+          <div className="w-px h-4 bg-gray-300"></div>
+          <div>
+            <span className="text-gray-500 mr-2">Zoom:</span>
+            <span className="font-medium">{Math.round(zoomLevel * 100)}%</span>
+          </div>
         </div>
       </div>
 
@@ -856,32 +1320,72 @@ Object.keys(processedTasks).forEach(funnel => {
           </div>
         </div>
 
-        {/* Discrete timeline header with scrollable container */}
+        {/* Timeline header with scrollable container */}
         <div className="flex-1 overflow-x-auto bg-gray-50" style={{ overflowY: 'hidden' }}>
           <div 
             className="relative" 
             style={{ 
-              width: `${discreteTimelineData.totalWidth * zoomLevel}px`, 
+              width: `${timelineData?.totalWidth * zoomLevel}px` || '100%', 
               height: HEADER_HEIGHT,
               minWidth: '100%'
             }}
           >
             {/* Time ticks */}
-            {discreteTimelineData.timePoints.map((point, i) => (
+            {timelineData?.timePoints.map((point, i) => (
               <div
                 key={i}
-                className="absolute top-0 h-full flex flex-col items-center"
+                className={`absolute top-0 h-full flex flex-col items-center ${
+                  point.compressed ? 'opacity-50' : ''
+                }`}
                 style={{ 
                   left: `${point.position * zoomLevel}px`, 
                   zIndex: 2 
                 }}
               >
-                <div className="h-8 border-l border-gray-300" style={{ width: '1px' }}></div>
+                <div className={`h-8 border-l ${
+                  point.isCompressedStart ? 'border-yellow-400 border-dashed border-l-2' : 
+                  point.isCompressedEnd ? 'border-yellow-400 border-dashed border-l-2' : 
+                  point.compressed ? 'border-gray-200 border-dashed' : 'border-gray-300'
+                }`} style={{ width: '1px' }}></div>
+                
+                {/* Time label with special styling for compressed sections */}
+                {(!point.compressed || point.isCompressedStart || point.isCompressedEnd) && (
+                  <div 
+                    className={`text-[11px] transform -rotate-45 origin-top-left whitespace-nowrap font-medium ${
+                      point.isCompressedStart || point.isCompressedEnd
+                        ? 'text-yellow-600'
+                        : 'text-gray-700'
+                    }`}
+                    style={{ marginTop: '10px', marginLeft: '4px' }}
+                  >
+                    {formatTimeLabel(point.time)}
+                    {(point.isCompressedStart || point.isCompressedEnd) && (
+                      <span className="ml-1 text-yellow-600">
+                        {point.isCompressedStart ? '(gap start)' : '(gap end)'}
+                      </span>
+                    )}
+                  </div>
+                )}
+              </div>
+            ))}
+            
+            {/* Compression indicators for fixed mode */}
+            {timelineMode === 'fixed' && timelineData?.compressionPoints.map((cp, i) => (
+              <div
+                key={`compression-${i}`}
+                className="absolute top-0 h-full flex items-center justify-center"
+                style={{
+                  left: `${cp.startPosition * zoomLevel}px`,
+                  width: `${(cp.endPosition - cp.startPosition) * zoomLevel}px`,
+                  background: 'repeating-linear-gradient(45deg, rgba(250, 204, 21, 0.1), rgba(250, 204, 21, 0.1) 5px, rgba(234, 179, 8, 0.2) 5px, rgba(234, 179, 8, 0.2) 10px)',
+                  zIndex: 1
+                }}
+              >
                 <div 
-                  className="text-[11px] text-gray-700 transform -rotate-45 origin-top-left whitespace-nowrap font-medium" 
-                  style={{ marginTop: '10px', marginLeft: '4px' }}
+                  className="text-[10px] text-yellow-600 font-medium bg-white/80 px-1 py-0.5 rounded shadow-sm"
+                  style={{ transform: 'rotate(-45deg)' }}
                 >
-                  {formatTimeLabel(point.time)}
+                  Compressed gap
                 </div>
               </div>
             ))}
@@ -894,7 +1398,7 @@ Object.keys(processedTasks).forEach(funnel => {
         {/* Left sidebar for task names */}
         <div className="w-48 flex-shrink-0 border-r border-gray-300 overflow-y-auto">
           {funnels.map((funnel, funnelIdx) => {
-            const funnelTasks = discreteTimelineData.processedTasks[funnel] || [];
+            const funnelTasks = timelineData?.processedTasks[funnel] || [];
             const isCollapsed = collapsedFunnels[funnel];
         
             return (
@@ -986,15 +1490,19 @@ Object.keys(processedTasks).forEach(funnel => {
           <div 
             className="relative" 
             style={{ 
-              width: `${discreteTimelineData.totalWidth * zoomLevel}px`,
+              width: `${timelineData?.totalWidth * zoomLevel}px` || '100%',
               minWidth: '100%'
             }}
           >
             {/* Vertical grid lines */}
-            {discreteTimelineData.timePoints.map((point, i) => (
+            {timelineData?.timePoints.map((point, i) => (
               <div
                 key={`grid-line-${i}`}
-                className="absolute top-0 bottom-0 border-l border-gray-200"
+                className={`absolute top-0 bottom-0 ${
+                  point.isCompressedStart ? 'border-l-2 border-yellow-400 border-dashed' :
+                  point.isCompressedEnd ? 'border-l-2 border-yellow-400 border-dashed' :
+                  point.compressed ? 'border-l border-gray-200 border-dashed' : 'border-l border-gray-200'
+                }`}
                 style={{
                   left: `${point.position * zoomLevel}px`,
                   height: '100%',
@@ -1002,11 +1510,26 @@ Object.keys(processedTasks).forEach(funnel => {
                 }}
               />
             ))}
+            
+            {/* Compression background areas for fixed mode */}
+            {timelineMode === 'fixed' && timelineData?.compressionPoints.map((cp, i) => (
+              <div
+                key={`compression-bg-${i}`}
+                className="absolute top-0 bottom-0"
+                style={{
+                  left: `${cp.startPosition * zoomLevel}px`,
+                  width: `${(cp.endPosition - cp.startPosition) * zoomLevel}px`,
+                  height: '100%',
+                  background: 'repeating-linear-gradient(45deg, rgba(250, 204, 21, 0.1), rgba(250, 204, 21, 0.1) 5px, rgba(234, 179, 8, 0.2) 5px, rgba(234, 179, 8, 0.2) 10px)',
+                  zIndex: 0
+                }}
+              />
+            ))}
 
             {/* Funnel timelines */}
             <div className="relative">
               {funnels.map((funnel, funnelIdx) => {
-                const funnelTasks = discreteTimelineData.processedTasks[funnel] || [];
+                const funnelTasks = timelineData?.processedTasks[funnel] || [];
                 const funnelColor = funnelColors[funnel] || '#95a5a6';
                 const isCollapsed = collapsedFunnels[funnel];
 

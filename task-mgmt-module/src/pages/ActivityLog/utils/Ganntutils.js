@@ -74,28 +74,33 @@ export const processDataForChart = (funnelGroups) => {
           funnel: task.funnel,
           statusChanges: [{
             status: task.status,
-            time: taskTime
+            time: taskTime,
+            targetTaskId: task.targetTaskId, // Store with each status change
+            sourceLoanStage: task.sourceLoanStage,
+            sourceSubModule: task.sourceSubModule
           }],
           actorId: task.actorId,
           funnelColor: funnelColors[task.funnel] || '#95A5A6',
-          targetTaskId: task.targetTaskId,  // Ensure targetTaskId is preserved
+          targetTaskId: task.targetTaskId,  // Keep this for backward compatibility
           sourceLoanStage: task.sourceLoanStage,
           sourceSubModule: task.sourceSubModule,
           metadata: task.metadata || {}
         };
       } else {
-        // Add this status change
+        // Add this status change with its specific targetTaskId
         taskMap[taskKey].statusChanges.push({
           status: task.status,
-          time: taskTime
+          time: taskTime,
+          targetTaskId: task.targetTaskId, // Store with each status change
+          sourceLoanStage: task.sourceLoanStage,
+          sourceSubModule: task.sourceSubModule
         });
         
-        // Update targetTaskId if it exists in this task update and wasn't set before
+        // Keep updating these for backward compatibility
         if (task.targetTaskId && !taskMap[taskKey].targetTaskId) {
           taskMap[taskKey].targetTaskId = task.targetTaskId;
         }
         
-        // Update source information if it exists in this task update
         if (task.sourceLoanStage && !taskMap[taskKey].sourceLoanStage) {
           taskMap[taskKey].sourceLoanStage = task.sourceLoanStage;
         }
@@ -136,6 +141,9 @@ export const processDataForChart = (funnelGroups) => {
     task.statuses = task.statusChanges.map(change => ({
       status: change.status,
       time: change.time,
+      targetTaskId: change.targetTaskId, // Include specific targetTaskId with each status
+      sourceLoanStage: change.sourceLoanStage,
+      sourceSubModule: change.sourceSubModule,
       color: statusColors[change.status] || '#6B7280'
     }));
 

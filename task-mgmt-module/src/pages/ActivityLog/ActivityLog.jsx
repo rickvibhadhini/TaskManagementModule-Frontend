@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom'; // Added useNavigat
 import axios from 'axios';
 import Header from './components/Layout/Header';
 import FilterPanel from './components/filters/FilterPanel';
-import Dashboard from './Dashboard';
+import Dashboard from './GanntChart';
 import TabNavigation from './components/Layout/TabNavigation';
 import FunnelView from './components/funnels/FunnelView';
 import { transformApiData } from './utils/apiTransformers';
@@ -70,7 +70,7 @@ const navigateToActorDashboard = (actorId) => {
   }
 };
 
- 
+
 
 
   useEffect(() => {
@@ -327,8 +327,9 @@ const navigateToActorDashboard = (actorId) => {
         handleApplicationIdSubmit={handleApplicationIdSubmit}
         applicationId={applicationId}
         handleRefresh={handleRefresh}
-        toggleFilters={toggleFilters}
-        showFilters={showFilters}
+        // Remove toggleFilters and showFilters props since we're moving the button
+        // toggleFilters={toggleFilters}
+        // showFilters={showFilters}
       />
       <main className="max-w-7xl mx-auto px-4 py-4">
         {applicationId && (
@@ -337,10 +338,25 @@ const navigateToActorDashboard = (actorId) => {
           </div>
         )}
         {applicationId && (
-          <TabNavigation 
-            activeTab={activeTab} 
-            setActiveTab={setActiveTab} 
-          />
+          <div className="flex justify-between items-center mb-4">
+            <TabNavigation 
+              activeTab={activeTab} 
+              setActiveTab={setActiveTab} 
+            />
+            {/* Add the filter toggle button here */}
+            {applicationId && activeTab === 'list' && (
+              <button
+                onClick={toggleFilters}
+                className={`inline-flex items-center px-4 py-2 border ${
+                  showFilters 
+                    ? 'border-indigo-500 bg-indigo-50 text-indigo-700' 
+                    : 'border-gray-300 bg-white text-gray-700'
+                } rounded-md shadow-sm text-sm font-medium hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500`}
+              >
+                {showFilters ? 'Hide Filters' : 'Show Filters'}
+              </button>
+            )}
+          </div>
         )}
         {showFilters && applicationId && activeTab === 'list' && (
           <FilterPanel 
