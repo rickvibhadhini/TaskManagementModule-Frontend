@@ -40,7 +40,7 @@ const TaskRetriesByCount = ({ tasksByRetries, info }) => {
     );
   });
 
-  const numApplications = tasksByRetries?.number_of_applications || 0;
+  const numApplications = tasksByRetries?.retried_applications || 0;
 
   return (
     <Card
@@ -50,12 +50,13 @@ const TaskRetriesByCount = ({ tasksByRetries, info }) => {
           <div className="flex items-center mt-2">
             {/* <RetweetOutlined className="text-blue-500 mr-2" /> */}
             <Title level={4} className="m-0 text-xl">Tasks Grouped by Retry Count
-            {numApplications > 0 && <span className="text-base font-normal text-gray-500 ml-2">({numApplications} applications)</span>}
+            {/* {numApplications > 0 && <span className="text-base font-normal text-gray-500 ml-2">({numApplications} applications)</span>} */}
             </Title>
           </div>
           <Tooltip title={info}>
             <InfoCircleOutlined className="text-gray-400" />
           </Tooltip>
+          {numApplications > 0 && <span className="text-base font-normal text-gray-500 ml-2">{numApplications} applications</span>}
         </div>
       }
     >

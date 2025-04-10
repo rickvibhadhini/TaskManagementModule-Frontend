@@ -111,13 +111,13 @@ const MetricCard = ({ title, info, taskDurations, formatTime }) => {
       }
       className="h-full shadow-sm hover:shadow-lg transition-shadow"
       extra={
-        <Search
+        <Input
           placeholder="Search tasks..."
-          value={searchText}
-          onChange={(e) => handleSearch(e.target.value)}
-          style={{ width: 200 }}
-          allowClear
           prefix={<SearchOutlined />}
+          value={searchText}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          style={{width: 200}}
+          allowClear
         />
       }
     >

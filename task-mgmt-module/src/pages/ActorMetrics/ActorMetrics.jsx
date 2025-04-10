@@ -6,12 +6,14 @@ import {
   WarningOutlined,
   FieldTimeOutlined,
   RetweetOutlined,
-  AuditOutlined
+  AuditOutlined,
+  HourglassOutlined,
+  CalendarOutlined
 } from '@ant-design/icons'; 
 
 import axios from 'axios';
 import ACTOR_METRICS_ENDPOINT from '../../api/ActorMetricsEndpoint';
-import { useLocation } from 'react-router-dom'; // Add this import
+import { useLocation, useParams, useNavigate } from 'react-router-dom'; // Add this import
 
 import {DashboardHeader, AgentInfoCard, StatCard, MetricCard, ChartCard, PendingTasksTable, DashboardFooter, TaskListByRetries} from './components/index';
 
@@ -20,17 +22,24 @@ const { Content } = Layout;
 const AgentMetricsDashboard = () => {
   const location = useLocation(); // Get location for URL params
   const [timeFrame, setTimeFrame] = useState('30');
-  const [actorId, setActorId] = useState('');
+  
   const [agentType, setAgentType] = useState(''); 
+  const {actorId: urlActorId} = useParams();
+  const [actorId, setActorId] = useState(urlActorId || '');
+  const navigate = useNavigate();
 
   // Parse URL parameters on component mount
   useEffect(() => {
     const params = new URLSearchParams(location.search);
-    const urlActorId = params.get('actorId');
     if (urlActorId) {
       setActorId(urlActorId);
     }
-  }, [location.search]);
+
+    // const queryTimeFrame = params.get('timeFrame');
+    // if (queryTimeFrame) {
+    //   setTimeFrame(queryTimeFrame);
+    // }
+  }, [urlActorId]);
 
   const formatTime = (value) => {
     if (value === undefined || value === null) return 'N/A';
@@ -80,6 +89,9 @@ const AgentMetricsDashboard = () => {
 
   const handleTimeFrameChange = (value) => {
     setTimeFrame(value);
+    // if (actorId) {
+    //   navigate(`/actorMetrics/${actorId}?timeFrame=${value}`, { replace: true });
+    // }
   };
 
   const handleAgentIdChange = (e) => {
@@ -251,20 +263,24 @@ const AgentMetricsDashboard = () => {
 
         {/* Agent Info Card Component */}
         <Row gutter={16} className="mb-8">
-          <Col span={6}>
+          <Col span={5}>
             <AgentInfoCard label={"Actor ID"} value={actorId} />
           </Col>
-          <Col span={11}>
+          <Col span={9}>
             <AgentInfoCard label={"E-mail"} value={metrics.handled_by} />
           </Col>
-          <Col span={7}>
+          <Col span={4}>
+            <AgentInfoCard label={"Total leads"} value={metrics.total_leads}/>
+          </Col>
+          <Col span={6}>
             <AgentInfoCard label={"Actor Type"} value={metrics.actor_type} />
           </Col>
         </Row>
+
         {/* Stats Cards */}
         <div className="mb-8">
-            <Row gutter={24}>
-        <Col span={12}>
+            <Row gutter={16}>
+        <Col span={6}>
           <StatCard
             title="Total Tasks Completed"
             value={metrics.total_tasks_completed}
@@ -274,33 +290,53 @@ const AgentMetricsDashboard = () => {
             info="Total number of tasks the actor has completed successfully."
           />
         </Col>
-      <Col span={12}>
-        <StatCard
-          title="Efficiency Score"
-          value={metrics.task_efficiency_score !== undefined 
-            ? Number(metrics.task_efficiency_score.toFixed(2)) 
-            : '0'}
-          
-          suffix="%"
-          prefix={<AuditOutlined className="text-green-500" />}
-          valueStyle={{ color: getEfficiencyColor(metrics.task_efficiency_score !== undefined 
-            ? Number(metrics.task_efficiency_score.toFixed(2)) 
-            : '0') }}
-          showProgress={true}
-          progressPercent={metrics.task_efficiency_score !== undefined 
-            ? Number(metrics.task_efficiency_score.toFixed(2)) 
-            : '0'}
-          progressStatus={
-            metrics.task_efficiency_score >= 80
-              ? "success"
-              : metrics.task_efficiency_score >= 60
-              ? "normal"
-              : "exception"
-          }
-          // badgeText="Efficiency of agent"
-          info="An efficiency score measuring the actor's task performance against other actors of the same funnel."
-        />
-      </Col>
+        <Col span={6}>
+          <StatCard
+            title="Pending Tasks"
+            value={metrics.pending_tasks !== undefined ? metrics.pending_tasks : 0}
+            prefix={<HourglassOutlined className="text-orange-500" />}
+            valueStyle={{ color: '#fa8c16' }}
+            info="Number of tasks awaiting completion."
+          />
+        </Col>
+        <Col span={6}>
+          <StatCard
+            title="Avg Application Time"
+            value={metrics.average_application_time !== undefined 
+              ? formatTime(metrics.average_application_time / 60)
+              : 'N/A'}
+            prefix={<CalendarOutlined className="text-purple-500" />}
+            valueStyle={{ color: '#722ed1' }}
+            info="Average time taken per application."
+          />
+        </Col>
+        <Col span={6}>
+          <StatCard
+            title="Efficiency Score"
+            value={metrics.task_efficiency_score !== undefined 
+              ? Number(metrics.task_efficiency_score.toFixed(2)) 
+              : '0'}
+            
+            suffix="%"
+            prefix={<AuditOutlined className="text-green-500" />}
+            valueStyle={{ color: getEfficiencyColor(metrics.task_efficiency_score !== undefined 
+              ? Number(metrics.task_efficiency_score.toFixed(2)) 
+              : '0') }}
+            showProgress={true}
+            progressPercent={metrics.task_efficiency_score !== undefined 
+              ? Number(metrics.task_efficiency_score.toFixed(2)) 
+              : '0'}
+            progressStatus={
+              metrics.task_efficiency_score >= 80
+                ? "success"
+                : metrics.task_efficiency_score >= 60
+                ? "normal"
+                : "exception"
+            }
+            // badgeText="Efficiency of agent"
+            info="An efficiency score measuring the actor's task performance against other actors of the same funnel."
+          />
+        </Col>
     </Row>
 
         </div>
