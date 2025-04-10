@@ -117,7 +117,7 @@ function Login({ setIsAuthenticated }) {
         }}>
           
           <Title level={3} style={{ textAlign: 'center', marginBottom: '24px' }}>
-            Login to Dashboard
+            Login
           </Title>
           
           {error && (

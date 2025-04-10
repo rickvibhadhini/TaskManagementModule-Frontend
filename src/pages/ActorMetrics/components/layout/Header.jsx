@@ -12,7 +12,6 @@ const DashboardHeader = ({ agentId, setAgentId, handleAgentIdChange, timeFrame, 
   const navigate = useNavigate(); 
   const [tempAgentId, setTempAgentId] = useState(agentId || '');
 
-  // Sync tempAgentId with agentId prop when it changes
   useEffect(() => {
     if (agentId) {
       setTempAgentId(agentId);
@@ -24,7 +23,10 @@ const DashboardHeader = ({ agentId, setAgentId, handleAgentIdChange, timeFrame, 
   }
 
   const handleSearch = () => {
-    setAgentId(tempAgentId)
+    if (tempAgentId.trim() !== '') {
+      navigate(`/actorMetrics/${tempAgentId}?`);
+      setAgentId(tempAgentId);
+    }
   } 
 
   const handleSystemView = () => {

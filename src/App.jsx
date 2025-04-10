@@ -28,6 +28,7 @@ function App() {
       <Route path="/TMM" element={isAuthenticated ? <HomePage isAuthenticated={isAuthenticated}/> : <Navigate to="/" />} />
         <Route path="/activityLog" element={isAuthenticated ? <ActivityLog /> : <Navigate to="/" />} />
         <Route path="/actorMetrics" element={isAuthenticated ? <ActorMetrics /> : <Navigate to="/" />} />
+        <Route path="/actorMetrics/:actorId" element={isAuthenticated ? <ActorMetrics /> : <Navigate to="/" />} />
         <Route path="/actorMetrics/system" element={isAuthenticated ? <SystemMetrics /> : <Navigate to="/" />} />
         <Route path="/SLA" element={isAuthenticated ? <SLA /> : <Navigate to="/" />} />
         
