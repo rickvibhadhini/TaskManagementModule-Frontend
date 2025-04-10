@@ -1,7 +1,37 @@
 import React, { useMemo } from 'react';
-import { Card, Space, Radio, Row, Col, Divider, Tag, Button, Tooltip as AntTooltip } from 'antd';
-import { BarChartOutlined, LineChartOutlined, TableOutlined, CheckCircleFilled, WarningFilled, CloseCircleFilled } from '@ant-design/icons';
-import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } from 'recharts';
+import { 
+  Card, 
+  Space, 
+  Radio, 
+  Row, 
+  Col, 
+  Divider, 
+  Tag, 
+  Button, 
+  Tooltip as AntTooltip 
+} from 'antd';
+import { 
+  BarChartOutlined, 
+  LineChartOutlined, 
+  TableOutlined, 
+  CheckCircleFilled, 
+  WarningFilled, 
+  CloseCircleFilled,
+  InfoCircleOutlined
+} from '@ant-design/icons';
+import { 
+  BarChart, 
+  Bar, 
+  LineChart, 
+  Line, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  Legend, 
+  ResponsiveContainer, 
+  Cell 
+} from 'recharts';
 
 const DashboardCharts = ({ 
   data, 
@@ -14,7 +44,7 @@ const DashboardCharts = ({
   toggleView,
   getButtonColor
 }) => {
- 
+
   const convertTimeToMinutes = (timeStr) => {
     if (!timeStr) return 0;
     const parts = timeStr.split(' ');
@@ -115,17 +145,25 @@ const DashboardCharts = ({
     return [];
   }, [getTasksByFunnel, selectedFunnel]);
 
-  
-  const tickInterval = useMemo(() => {
-    return getLineChartData.length > 10 ? Math.ceil(getLineChartData.length / 10) : 0;
-  }, [getLineChartData]);
-
-  
   const maxTaskMinutes = useMemo(() => {
     if (getLineChartData.length > 0) {
-      return Math.max(...getLineChartData.map(item => item.minutes));
+      const max = Math.max(...getLineChartData.map(item => item.minutes));
+      return Math.ceil(max * 1.1);
     }
-    return 100;
+    return 50;
+  }, [getLineChartData]);
+
+
+  const lineChartMinWidth = useMemo(() => {
+    const tasksCount = getLineChartData.length;
+
+    if (tasksCount < 13) {
+      return "100%";
+    }
+
+    const perTaskWidth = 80;
+    const computedWidth = tasksCount * perTaskWidth;
+    return Math.max(computedWidth, 800);
   }, [getLineChartData]);
 
   const handleBarClick = (data) => {
@@ -201,6 +239,9 @@ const DashboardCharts = ({
             <Space>
               <BarChartOutlined />
               <span>Average Time Per Funnel</span>
+              <AntTooltip title="Shows the average time taken for each funnel stage. Click on a bar to filter the timeline.">
+                <Button type="text" size="small" icon={<InfoCircleOutlined />} />
+              </AntTooltip>
             </Space>
           }
           hoverable
@@ -239,6 +280,9 @@ const DashboardCharts = ({
               </BarChart>
             </ResponsiveContainer>
           </div>
+          <div style={{ textAlign: 'center', marginTop: 8, fontWeight: 'bold', color: '#1890ff' }}>
+            Funnels
+          </div>
         </Card>
       </Col>
       <Col xs={24} lg={12}>
@@ -246,7 +290,10 @@ const DashboardCharts = ({
           title={
             <Space>
               <LineChartOutlined />
-              <span>Task Sequence Timeline</span>
+              <span>Task Timeline</span>
+              <AntTooltip title="Displays the time taken by each task in sequence. Click on a data point for details.">
+                <Button type="text" size="small" icon={<InfoCircleOutlined />} />
+              </AntTooltip>
             </Space>
           }
           hoverable
@@ -285,43 +332,46 @@ const DashboardCharts = ({
           }
           style={{ marginBottom: 0 }}
         >
-          <div style={{ height: CHART_HEIGHT }}>
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart
-                data={getLineChartData}
-                margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-                onClick={handleTaskClick}
-                style={{ cursor: 'pointer' }}
-              >
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis
-                  dataKey="name"
-                  angle={-45}
-                  textAnchor="end"
-                  height={100}
-                  interval={tickInterval}
-                  tick={{ fontSize: 10 }}
-                />
-                <YAxis
-                  label={{ value: 'Minutes', angle: -90, position: 'insideLeft' }}
-                  domain={[0, maxTaskMinutes]}
-                />
-                <Tooltip content={<TaskTooltip />} />
-                <Legend />
-                <Line
-                  type="monotone"
-                  dataKey="minutes"
-                  name="Task"
-                  stroke="#1890ff"
-                  strokeWidth={2}
-                  dot={<CustomizedDot />}
-                  activeDot={{ r: 8 }}
-                  isAnimationActive={true}
-                  animationDuration={1500}
-                />
-              </LineChart>
-            </ResponsiveContainer>
+          <div style={{ overflowX: 'auto', width: '100%' }}>
+            <div style={{ minWidth: typeof lineChartMinWidth === 'number' ? `${lineChartMinWidth}px` : lineChartMinWidth }}>
+              <ResponsiveContainer width="100%" height={CHART_HEIGHT}>
+                <LineChart
+                  data={getLineChartData}
+                  margin={{ top: 20, right: 30, left: 20, bottom: 50 }}
+                  onClick={handleTaskClick}
+                  style={{ cursor: 'pointer' }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis
+                    dataKey="name"
+                    angle={-45}
+                    textAnchor="end"
+                    height={100}
+                    interval={0}
+                    tick={{ fontSize: 10, width: 80 }}
+                  />
+                  <YAxis
+                    label={{ value: 'Minutes', angle: -90, position: 'insideLeft' }}
+                    domain={[0, maxTaskMinutes]}
+                  />
+                  <Tooltip content={<TaskTooltip />} />
+                  <Legend />
+                  <Line
+                    type="monotone"
+                    dataKey="minutes"
+                    name="Task"
+                    stroke="#1890ff"
+                    strokeWidth={2}
+                    dot={<CustomizedDot />}
+                    activeDot={{ r: 8 }}
+                    isAnimationActive={true}
+                    animationDuration={1500}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
           </div>
+
           <Divider />
           <Row align="middle" justify="space-between">
             <Col>

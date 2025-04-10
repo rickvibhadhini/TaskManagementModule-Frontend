@@ -1,11 +1,11 @@
 export const funnelColors = {
-  sourcing: '#52c41a', 
-  credit: '#1890ff',      
-  risk: '#eb2f96',        // New
-  conversion: '#faad14',  
-  rto: '#13c2c2',         // New
-  fulfillment: '#722ed1',
-  disbursal: '#f5222d'     // New
+  sourcing: '#b30000', 
+  credit: '#7c1158',      
+  risk: '#4421af',        
+  conversion: '#0d88e6', 
+  rto: '#00b7c7',         
+  fulfillment: '#5ad45a',
+  disbursal: '#8be04e'     
 };
 
 export const funnelOrder = [

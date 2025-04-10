@@ -1,15 +1,16 @@
 import React, { useState, useEffect } from "react";
-import { Layout, Typography, Row, Col, Divider, Switch, Space, Badge } from "antd";
-import { ThemeProvider, useTheme } from "./ThemeContext";
+import { Layout, Typography, Row, Col, Divider, Badge, Space, Button, message } from "antd";
+import { UserOutlined, LockOutlined, LogoutOutlined } from '@ant-design/icons';
 import ModuleCard from "./ModuleCard";
 import { ActivityLogPic, AgentPic, SlaPic } from "./assets/index";
+import { cars24Logo } from "./assets/index";
+import { AlignCenter } from "lucide-react";
+import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 const { Header, Content, Footer } = Layout;
 const { Title, Text, Paragraph } = Typography;
 
-
 const GlobalStyles = () => {
-  const { themeValues } = useTheme();
-  
   return (
     <style>{`
       @keyframes fadeIn {
@@ -23,9 +24,7 @@ const GlobalStyles = () => {
       
       .module-card:hover {
         transform: translateY(-4px);
-        box-shadow: ${themeValues.theme === 'light' 
-          ? '0 12px 24px rgba(0, 0, 0, 0.10)' 
-          : '0 12px 24px rgba(0, 0, 0, 0.35)'} !important;
+        box-shadow: 0 12px 24px rgba(0, 0, 0, 0.10) !important;
       }
       
       .module-card:hover .card-image {
@@ -41,18 +40,38 @@ const GlobalStyles = () => {
   );
 };
 
-
-const HomePageContent = () => {
-  const { theme, toggleTheme, themeValues } = useTheme();
+const HomePage = (isAuthenticated) => {
   const [loaded, setLoaded] = useState(false);
 
+  const navigate = useNavigate(); 
 
+  const handleLogout = async () => {
+    isAuthenticated = false
+    navigate("/");
+  };
+  
+
+  // Light theme values
+  const themeValues = {
+    background: 'linear-gradient(to bottom right, #f0f5ff, #ffffff, #f0f7ff)',
+    headerBackground: 'rgba(255, 255, 255, 0.95)',
+    headerShadow: '0 2px 8px rgba(0,0,0,0.06)',
+    primaryText: 'rgba(0, 0, 0, 0.85)',
+    secondaryText: 'rgba(0, 0, 0, 0.65)',
+    tertiaryText: 'rgba(0, 0, 0, 0.45)',
+    accentColor: '#1890ff',
+    dividerColor: '#f0f0f0',
+    cardBackground: '#fff',
+    cardBorder: '#f0f0f0',
+    cardShadow: '0 4px 12px rgba(0, 0, 0, 0.05)',
+    particleColor: 'rgba(24, 144, 255, 0.12)',
+  };
 
   const views = [
     { 
       id: 1, 
       name: "Activity Logs", 
-      path: "/view-1", 
+      path: "/activityLog", 
       image: ActivityLogPic, 
       description: "Track the application movement through the different stages",
       icon: "📊",
@@ -61,29 +80,99 @@ const HomePageContent = () => {
     },
     { 
       id: 2, 
-      name: "Agent Tracking", 
-      path: "/view-2", 
+      name: "Actor Tracking", 
+      path: "/actorMetrics", 
       image: AgentPic, 
-      description: "Monitor the agent performance",
+      description: "Monitor the actor performance",
       icon: "👨‍💼",
-      color: "#722ed1",
+      color: "#1890ff",
       badgeText: "Management"
     },
     { 
       id: 3, 
-      name: "SLA Monitoring", 
+      name: "SLA Time Monitoring", 
       hoverName: "SLA Time Monitoring", 
       path: "/SLA", 
       image: SlaPic, 
       description: "Monitor the time taken for funnels/stages",
       icon: "⏱️",
-      color: "#faad14",
+      color: "#1890ff",
       badgeText: "Monitoring"
     }
   ];
 
   useEffect(() => {
     setLoaded(true);
+    
+   
+    let canvas = document.getElementById('particles-canvas');
+    
+    if (!canvas) {
+      canvas = document.createElement('canvas');
+      canvas.id = 'particles-canvas';
+      canvas.style.position = 'fixed';
+      canvas.style.top = '0';
+      canvas.style.left = '0';
+      canvas.style.width = '100%';
+      canvas.style.height = '100%';
+      canvas.style.pointerEvents = 'none';
+      canvas.style.zIndex = '1';
+      document.body.appendChild(canvas);
+    }
+
+    const ctx = canvas.getContext('2d');
+    const particles = [];
+    const particleCount = 30; 
+
+   
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    for (let i = 0; i < particleCount; i++) {
+      particles.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        radius: Math.random() * 2.5 + 0.5, 
+        color: themeValues.particleColor,
+        speedX: Math.random() * 0.25 - 0.125,
+        speedY: Math.random() * 0.25 - 0.125
+      });
+    }
+
+    const animate = () => {
+      requestAnimationFrame(animate);
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      
+      particles.forEach(particle => {
+        ctx.beginPath();
+        ctx.arc(particle.x, particle.y, particle.radius, 0, Math.PI * 2);
+        ctx.fillStyle = particle.color;
+        ctx.fill();
+        
+        particle.x += particle.speedX;
+        particle.y += particle.speedY;
+        
+        if (particle.x < 0) particle.x = canvas.width;
+        if (particle.x > canvas.width) particle.x = 0;
+        if (particle.y < 0) particle.y = canvas.height;
+        if (particle.y > canvas.height) particle.y = 0;
+      });
+    };
+    
+    const animationId = requestAnimationFrame(animate);
+    
+    const handleResize = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    };
+    
+    window.addEventListener('resize', handleResize);
+    
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      cancelAnimationFrame(animationId);
+      if (canvas) canvas.remove();
+    };
   }, []);
   
   return (
@@ -97,62 +186,64 @@ const HomePageContent = () => {
       }}
     >
       <Header
+  style={{
+    background: themeValues.headerBackground,
+    backdropFilter: 'blur(8px)',
+    WebkitBackdropFilter: 'blur(8px)',
+    boxShadow: themeValues.headerShadow,
+    padding: '0 24px',
+    position: 'sticky',
+    top: 0,
+    zIndex: 10,
+    height: '68px',
+    maxWidth: '100%'
+  }}
+>
+  <div style={{ display: 'flex', alignItems: 'center', width: '100%' }}>
+   
+    <div style={{ flex: '0 0 auto', display: 'flex', alignItems: 'center' }}>
+      <img
+        src={cars24Logo}
+        alt="Cars24 Logo"
+        style={{ margin: '16px 0', height: '40px', cursor: 'pointer' }}
+      />
+      <Divider
+        type="vertical"
         style={{
-          background: themeValues.headerBackground,
-          backdropFilter: 'blur(8px)',
-          WebkitBackdropFilter: 'blur(8px)',
-          boxShadow: themeValues.headerShadow,
-          padding: '0 24px',
-          position: 'sticky',
-          top: 0,
-          zIndex: 10,
-          height: '68px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          maxWidth: '100%'
+          height: '24px',
+          margin: '0 16px',
+          background: themeValues.dividerColor
+        }}
+      />
+    </div>
+    
+    
+    <div style={{ flex: 1, textAlign: 'center', marginRight: '90px' }}>
+      <Text
+        strong
+        style={{
+          fontSize: '28px',
+          color: themeValues.primaryText
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center' }}>
-          <Text strong style={{ 
-            fontSize: '18px', 
-            color: themeValues.accentColor
-          }}>
-            CARS24
-          </Text>
-          <Divider type="vertical" style={{ 
-            height: '24px', 
-            margin: '0 16px',
-            background: themeValues.dividerColor
-          }} />
-          <Text strong style={{ 
-            fontSize: '18px', 
-            color: themeValues.primaryText
-          }}>
-            Dashboard
-          </Text>
-        </div>
-        
-        <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-          <Text style={{ 
-            fontSize: '14px',
-            color: themeValues.tertiaryText
-          }}>
-            Task Management Module
-          </Text>
-          
-          <Space align="center">
-            <Text style={{ marginRight: '8px' }}>
-              {theme === 'light' ? '☀️' : '🌙'}
-            </Text>
-            <Switch 
-              checked={theme === 'dark'}
-              onChange={toggleTheme}
-              size="small"
-            />
-          </Space>
-        </div>
-      </Header>
+        Task Management Module
+      </Text>
+    </div>
+    
+    
+    <div style={{ flex: '0 0 auto' }}>
+      <Button 
+      type="text" 
+      icon={<LogoutOutlined />} 
+      onClick={handleLogout}
+      style={{ color: themeValues.primaryText }}
+    >
+      Logout
+    </Button>
+    </div>
+  </div>
+</Header>
+
 
       <Content 
         style={{ 
@@ -169,98 +260,85 @@ const HomePageContent = () => {
             color: themeValues.primaryText,
             marginBottom: '8px'
           }}>
-            Module Selection
+            
           </Title>
           <Paragraph style={{ 
             color: themeValues.secondaryText,
             maxWidth: '700px',
             margin: '0 auto'
           }}>
-            Select one of the following modules to access specialized monitoring and management abilities.
+
           </Paragraph>
         </div>
 
         <Row gutter={[24, 24]}>
           {views.map((view, index) => (
-            <ModuleCard key={view.id} view={view} index={index} />
+            <ModuleCard key={view.id} view={view} index={index} themeValues={themeValues} />
           ))}
         </Row>
       </Content>
 
-      <Footer 
-        style={{ 
-          background: themeValues.cardBackground,
-          borderTop: `1px solid ${themeValues.dividerColor}`,
-          maxWidth: '100%',
-          padding: '24px'
-        }}
-      >
-        <Row gutter={[32, 24]} style={{ maxWidth: '1440px', margin: '0 auto' }}>
-          <Col xs={24} md={8}>
-            <Title level={4} style={{ 
-              color: themeValues.primaryText,
-              marginBottom: '16px'
-            }}>
-              CARS24 CFSPL
-            </Title>
-            <Paragraph style={{ 
-              color: themeValues.secondaryText,
-              fontSize: '14px'
-            }}>
-              Transforming the way India buys and sells cars, providing technology-driven solutions for a seamless experience.
-            </Paragraph>
-          </Col>
-          
-          <Col xs={24} md={8}>
-            <Title level={5} style={{ 
-              color: themeValues.primaryText,
-              marginBottom: '16px'
-            }}>
-              
-            </Title>
-          </Col>
-          
-          <Col xs={24} md={8} style={{ textAlign: 'right' }}>
-            <Space style={{ marginBottom: '16px' }}>
-              <Badge 
-                count="Version 2.1.4" 
-                style={{ 
-                  backgroundColor: theme === 'light' ? '#e6f7ff' : '#111d2c',
-                  color: theme === 'light' ? '#1890ff' : '#69c0ff',
-                  fontSize: '12px',
-                  fontWeight: 500
-                }} 
-              />
-              <Badge 
-                count="" 
-                style={{ 
-                  backgroundColor: theme === 'light' ? '#f6ffed' : '#162312',
-                  color: theme === 'light' ? '#52c41a' : '#73d13d',
-                  fontSize: '12px',
-                  fontWeight: 500
-                }} 
-              />
-            </Space>
-            <Paragraph style={{ 
-              color: themeValues.tertiaryText,
-              fontSize: '14px'
-            }}>
-              ©️ 2025 CARS24 CFSPL. All rights reserved.
-            </Paragraph>
-          </Col>
-        </Row>
-      </Footer>
+ <Footer 
+  style={{ 
+    background: themeValues.cardBackground,
+    borderTop: `1px solid ${themeValues.dividerColor}`,
+    padding: '12px',
+    position: 'fixed',
+    bottom: 0,
+    left: 0,
+    width: '100%',
+    zIndex: 10
+  }}
+>
+  <Row gutter={[32, 24]} style={{ maxWidth: '1440px', margin: '0 auto' }}>
+    <Col xs={24} md={8}>
+      <Title level={4} style={{ 
+        color: themeValues.primaryText,
+        marginBottom: '16px'
+      }}>
+        CARS24 CFSPL
+      </Title>
+      <Paragraph style={{ 
+        color: themeValues.secondaryText,
+        fontSize: '14px'
+      }}>
+       Better drives, better lives
+      </Paragraph>
+    </Col>
+    
+    <Col xs={24} md={8}>
+      <Title level={5} style={{ 
+        color: themeValues.primaryText,
+        marginBottom: '16px'
+      }}>
+       
+      </Title>
+    </Col>
+    
+    <Col xs={24} md={8} style={{ textAlign: 'right' }}>
+      <Space style={{ marginBottom: '16px' }}>
+        <Badge 
+          count="" 
+          style={{ 
+            backgroundColor: '#f6ffed',
+            color: '#52c41a',
+            fontSize: '12px',
+            fontWeight: 500
+          }} 
+        />
+      </Space>
+      <Paragraph style={{ 
+        color: themeValues.tertiaryText,
+        fontSize: '14px'
+      }}>
+        ©️ 2025 CARS24 CFSPL. All rights reserved.
+      </Paragraph>
+    </Col>
+  </Row>
+</Footer>
+
       <GlobalStyles />
     </Layout>
-  );
-};
-
-
-const HomePage = () => {
-  return (
-    <ThemeProvider>
-      <HomePageContent />
-    </ThemeProvider>
   );
 };
 
